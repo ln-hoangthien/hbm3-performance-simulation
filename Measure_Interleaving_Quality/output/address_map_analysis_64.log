@@ -1,0 +1,3263 @@
+num_banks: 64, img_hb: 512, img_v: 64, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 1.93		| 1.93	| 1.93	| 1.93
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 0
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 2,048 slots
+Occupied Slots            | 2,048 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 1024, img_v: 128, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 3.16		| 2.29	| 2.29	| 2.29
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 8,192 slots
+Occupied Slots            | 8,192 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 1536, img_v: 192, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 3.69		| 3.65	| 3.26	| 2.66
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 9
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 20,480 slots
+Occupied Slots            | 18,432 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 10.0000%
+num_banks: 64, img_hb: 2048, img_v: 256, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 3.95		| 2.40	| 2.40	| 2.40
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 15
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 32,768 slots
+Occupied Slots            | 32,768 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 2560, img_v: 320, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.16		| 4.13	| 3.72	| 2.82
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 25
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 53,248 slots
+Occupied Slots            | 51,200 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 3.8462%
+num_banks: 64, img_hb: 3072, img_v: 384, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.19		| 3.35	| 3.34	| 2.81
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 36
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 75,776 slots
+Occupied Slots            | 73,728 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 2.7027%
+num_banks: 64, img_hb: 3584, img_v: 448, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.22		| 4.34	| 3.90	| 4.17
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 50
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 104,448 slots
+Occupied Slots            | 100,352 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 3.9216%
+num_banks: 64, img_hb: 4096, img_v: 512, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.56		| 2.65	| 2.65	| 2.90
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 63
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 131,072 slots
+Occupied Slots            | 131,072 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 4608, img_v: 576, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.71		| 4.46	| 4.01	| 3.44
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 81
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 167,936 slots
+Occupied Slots            | 165,888 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 1.2195%
+num_banks: 64, img_hb: 5120, img_v: 640, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.77		| 3.56	| 3.56	| 2.90
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 100
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 206,848 slots
+Occupied Slots            | 204,800 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.9901%
+num_banks: 64, img_hb: 5632, img_v: 704, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.74		| 4.53	| 4.07	| 4.24
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 122
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 251,904 slots
+Occupied Slots            | 247,808 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 1.6260%
+num_banks: 64, img_hb: 6144, img_v: 768, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.77		| 3.07	| 3.06	| 2.84
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 144
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 296,960 slots
+Occupied Slots            | 294,912 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.6897%
+num_banks: 64, img_hb: 6656, img_v: 832, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.81		| 4.59	| 4.12	| 4.23
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 170
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 350,208 slots
+Occupied Slots            | 346,112 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 1.1696%
+num_banks: 64, img_hb: 7168, img_v: 896, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.83		| 3.66	| 3.65	| 3.65
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 197
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 405,504 slots
+Occupied Slots            | 401,408 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 1.0101%
+num_banks: 64, img_hb: 7680, img_v: 960, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.80		| 4.62	| 4.15	| 2.96
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 227
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 466,944 slots
+Occupied Slots            | 460,800 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 1.3158%
+num_banks: 64, img_hb: 8192, img_v: 1024, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.87		| 2.78	| 2.78	| 3.15
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 255
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 524,288 slots
+Occupied Slots            | 524,288 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 8704, img_v: 1088, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 4.65	| 4.18	| 4.18
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 289
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 593,920 slots
+Occupied Slots            | 591,872 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.3448%
+num_banks: 64, img_hb: 9216, img_v: 1152, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.95		| 3.71	| 3.70	| 3.35
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 324
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 665,600 slots
+Occupied Slots            | 663,552 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.3077%
+num_banks: 64, img_hb: 9728, img_v: 1216, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 4.67	| 4.20	| 4.31
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 362
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 743,424 slots
+Occupied Slots            | 739,328 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.5510%
+num_banks: 64, img_hb: 10240, img_v: 1280, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 3.20	| 3.20	| 2.91
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 400
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 821,248 slots
+Occupied Slots            | 819,200 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.2494%
+num_banks: 64, img_hb: 10752, img_v: 1344, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.95		| 4.69	| 4.21	| 3.96
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 442
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 907,264 slots
+Occupied Slots            | 903,168 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.4515%
+num_banks: 64, img_hb: 11264, img_v: 1408, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.95		| 3.74	| 3.74	| 3.74
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 485
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 995,328 slots
+Occupied Slots            | 991,232 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.4115%
+num_banks: 64, img_hb: 11776, img_v: 1472, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 4.71	| 4.23	| 4.49
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 531
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,089,536 slots
+Occupied Slots            | 1,083,392 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.5639%
+num_banks: 64, img_hb: 12288, img_v: 1536, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 2.98	| 2.98	| 3.12
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 576
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,181,696 slots
+Occupied Slots            | 1,179,648 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.1733%
+num_banks: 64, img_hb: 12800, img_v: 1600, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.01		| 4.72	| 4.24	| 3.65
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 626
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,284,096 slots
+Occupied Slots            | 1,280,000 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.3190%
+num_banks: 64, img_hb: 13312, img_v: 1664, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.02		| 3.76	| 3.76	| 3.76
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 677
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,388,544 slots
+Occupied Slots            | 1,384,448 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.2950%
+num_banks: 64, img_hb: 13824, img_v: 1728, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.00		| 4.73	| 4.25	| 4.15
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 731
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,499,136 slots
+Occupied Slots            | 1,492,992 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.4098%
+num_banks: 64, img_hb: 14336, img_v: 1792, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.00		| 3.26	| 3.26	| 3.26
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 785
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,609,728 slots
+Occupied Slots            | 1,605,632 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.2545%
+num_banks: 64, img_hb: 14848, img_v: 1856, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.01		| 4.74	| 4.26	| 4.49
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 843
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,728,512 slots
+Occupied Slots            | 1,722,368 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.3555%
+num_banks: 64, img_hb: 15360, img_v: 1920, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.01		| 3.78	| 3.77	| 2.98
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 902
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,849,344 slots
+Occupied Slots            | 1,843,200 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.3322%
+num_banks: 64, img_hb: 15872, img_v: 1984, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.99		| 4.75	| 4.26	| 4.64
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 964
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 1,976,320 slots
+Occupied Slots            | 1,968,128 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.4145%
+num_banks: 64, img_hb: 16384, img_v: 2048, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.02		| 2.84	| 2.84	| 3.27
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1023
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 2,097,152 slots
+Occupied Slots            | 2,097,152 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 16896, img_v: 2112, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.05		| 4.76	| 4.27	| 4.34
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1089
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 2,232,320 slots
+Occupied Slots            | 2,230,272 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0917%
+num_banks: 64, img_hb: 17408, img_v: 2176, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.06		| 3.79	| 3.79	| 3.79
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1156
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 2,369,536 slots
+Occupied Slots            | 2,367,488 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0864%
+num_banks: 64, img_hb: 17920, img_v: 2240, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.04		| 4.76	| 4.28	| 3.88
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1226
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 2,512,896 slots
+Occupied Slots            | 2,508,800 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.1630%
+num_banks: 64, img_hb: 18432, img_v: 2304, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.04		| 3.29	| 3.29	| 3.28
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1296
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 2,656,256 slots
+Occupied Slots            | 2,654,208 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0771%
+num_banks: 64, img_hb: 18944, img_v: 2368, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.05		| 4.77	| 4.28	| 4.40
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1370
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 2,807,808 slots
+Occupied Slots            | 2,803,712 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.1459%
+num_banks: 64, img_hb: 19456, img_v: 2432, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.05		| 3.80	| 3.80	| 3.80
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1445
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 2,961,408 slots
+Occupied Slots            | 2,957,312 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.1383%
+num_banks: 64, img_hb: 19968, img_v: 2496, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.03		| 4.77	| 4.29	| 4.52
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1523
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 3,121,152 slots
+Occupied Slots            | 3,115,008 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.1969%
+num_banks: 64, img_hb: 20480, img_v: 2560, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.05		| 3.05	| 3.05	| 3.13
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1600
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 3,278,848 slots
+Occupied Slots            | 3,276,800 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0625%
+num_banks: 64, img_hb: 20992, img_v: 2624, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.07		| 4.78	| 4.29	| 4.59
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1682
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 3,446,784 slots
+Occupied Slots            | 3,442,688 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.1188%
+num_banks: 64, img_hb: 21504, img_v: 2688, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.08		| 3.81	| 3.81	| 3.79
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1765
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 3,616,768 slots
+Occupied Slots            | 3,612,672 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.1133%
+num_banks: 64, img_hb: 22016, img_v: 2752, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.06		| 4.78	| 4.29	| 3.89
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1851
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 3,792,896 slots
+Occupied Slots            | 3,786,752 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.1620%
+num_banks: 64, img_hb: 22528, img_v: 2816, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.06		| 3.31	| 3.31	| 3.31
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 1937
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 3,969,024 slots
+Occupied Slots            | 3,964,928 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.1032%
+num_banks: 64, img_hb: 23040, img_v: 2880, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.07		| 4.79	| 4.30	| 3.31
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2027
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 4,153,344 slots
+Occupied Slots            | 4,147,200 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.1479%
+num_banks: 64, img_hb: 23552, img_v: 2944, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.07		| 3.81	| 3.81	| 3.81
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2118
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 4,339,712 slots
+Occupied Slots            | 4,333,568 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.1416%
+num_banks: 64, img_hb: 24064, img_v: 3008, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.05		| 4.79	| 4.30	| 4.30
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2212
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 4,532,224 slots
+Occupied Slots            | 4,524,032 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.1808%
+num_banks: 64, img_hb: 24576, img_v: 3072, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.07		| 2.94	| 2.94	| 3.31
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2304
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 4,720,640 slots
+Occupied Slots            | 4,718,592 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0434%
+num_banks: 64, img_hb: 25088, img_v: 3136, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.09		| 4.79	| 4.30	| 3.70
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2402
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 4,921,344 slots
+Occupied Slots            | 4,917,248 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0832%
+num_banks: 64, img_hb: 25600, img_v: 3200, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.10		| 3.82	| 3.82	| 3.58
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2501
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 5,124,096 slots
+Occupied Slots            | 5,120,000 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0799%
+num_banks: 64, img_hb: 26112, img_v: 3264, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.08		| 4.80	| 4.31	| 4.58
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2603
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 5,332,992 slots
+Occupied Slots            | 5,326,848 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.1152%
+num_banks: 64, img_hb: 26624, img_v: 3328, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.08		| 3.32	| 3.32	| 3.32
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2705
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 5,541,888 slots
+Occupied Slots            | 5,537,792 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0739%
+num_banks: 64, img_hb: 27136, img_v: 3392, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.09		| 4.80	| 4.31	| 4.16
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2811
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 5,758,976 slots
+Occupied Slots            | 5,752,832 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.1067%
+num_banks: 64, img_hb: 27648, img_v: 3456, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.09		| 3.82	| 3.82	| 3.82
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 2918
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 5,978,112 slots
+Occupied Slots            | 5,971,968 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.1028%
+num_banks: 64, img_hb: 28160, img_v: 3520, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.07		| 4.80	| 4.31	| 4.30
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3028
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 6,203,392 slots
+Occupied Slots            | 6,195,200 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.1321%
+num_banks: 64, img_hb: 28672, img_v: 3584, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.09		| 3.08	| 3.08	| 3.33
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3137
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 6,426,624 slots
+Occupied Slots            | 6,422,528 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0637%
+num_banks: 64, img_hb: 29184, img_v: 3648, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.10		| 4.80	| 4.31	| 4.58
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3251
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 6,660,096 slots
+Occupied Slots            | 6,653,952 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0923%
+num_banks: 64, img_hb: 29696, img_v: 3712, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.11		| 3.83	| 3.83	| 3.83
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3366
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 6,895,616 slots
+Occupied Slots            | 6,889,472 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0891%
+num_banks: 64, img_hb: 30208, img_v: 3776, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.09		| 4.81	| 4.32	| 4.43
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3484
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 7,137,280 slots
+Occupied Slots            | 7,129,088 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.1148%
+num_banks: 64, img_hb: 30720, img_v: 3840, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.09		| 3.33	| 3.33	| 2.99
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3602
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 7,378,944 slots
+Occupied Slots            | 7,372,800 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0833%
+num_banks: 64, img_hb: 31232, img_v: 3904, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.10		| 4.81	| 4.32	| 4.48
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3724
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 7,628,800 slots
+Occupied Slots            | 7,620,608 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.1074%
+num_banks: 64, img_hb: 31744, img_v: 3968, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.10		| 3.83	| 3.83	| 3.83
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3847
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 7,880,704 slots
+Occupied Slots            | 7,872,512 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.1040%
+num_banks: 64, img_hb: 32256, img_v: 4032, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 5.09		| 4.81	| 4.32	| 4.39
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 3973
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 8,138,752 slots
+Occupied Slots            | 8,128,512 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.1258%
+num_banks: 64, img_hb: 32768, img_v: 4096, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.81		| 2.87	| 2.90	| 3.34
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 4095
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 8,388,608 slots
+Occupied Slots            | 8,388,608 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 33280, img_v: 4160, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.82		| 4.81	| 4.32	| 4.51
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 4225
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 8,654,848 slots
+Occupied Slots            | 8,652,800 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0237%
+num_banks: 64, img_hb: 33792, img_v: 4224, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.82		| 3.83	| 3.83	| 3.83
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 4356
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 8,923,136 slots
+Occupied Slots            | 8,921,088 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0230%
+num_banks: 64, img_hb: 34304, img_v: 4288, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.82		| 4.81	| 4.32	| 4.50
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 4490
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 9,197,568 slots
+Occupied Slots            | 9,193,472 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0445%
+num_banks: 64, img_hb: 34816, img_v: 4352, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.82		| 3.34	| 3.34	| 3.34
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 4624
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 9,472,000 slots
+Occupied Slots            | 9,469,952 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0216%
+num_banks: 64, img_hb: 35328, img_v: 4416, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.83		| 4.81	| 4.32	| 4.44
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 4762
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 9,754,624 slots
+Occupied Slots            | 9,750,528 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0420%
+num_banks: 64, img_hb: 35840, img_v: 4480, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.83		| 3.84	| 3.84	| 3.81
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 4901
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 10,039,296 slots
+Occupied Slots            | 10,035,200 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0408%
+num_banks: 64, img_hb: 36352, img_v: 4544, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.82		| 4.82	| 4.32	| 3.79
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 5043
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 10,330,112 slots
+Occupied Slots            | 10,323,968 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0595%
+num_banks: 64, img_hb: 36864, img_v: 4608, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.84		| 3.09	| 3.09	| 3.34
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 5184
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 10,618,880 slots
+Occupied Slots            | 10,616,832 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0193%
+num_banks: 64, img_hb: 37376, img_v: 4672, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.85		| 4.82	| 4.33	| 4.56
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 5330
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 10,917,888 slots
+Occupied Slots            | 10,913,792 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0375%
+num_banks: 64, img_hb: 37888, img_v: 4736, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 3.84	| 3.84	| 3.84
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 5477
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 11,218,944 slots
+Occupied Slots            | 11,214,848 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0365%
+num_banks: 64, img_hb: 38400, img_v: 4800, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.85		| 4.82	| 4.33	| 3.56
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 5627
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 11,526,144 slots
+Occupied Slots            | 11,520,000 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0533%
+num_banks: 64, img_hb: 38912, img_v: 4864, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 3.35	| 3.35	| 3.35
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 5777
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 11,833,344 slots
+Occupied Slots            | 11,829,248 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0346%
+num_banks: 64, img_hb: 39424, img_v: 4928, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 4.82	| 4.33	| 4.23
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 5931
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 12,148,736 slots
+Occupied Slots            | 12,142,592 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0506%
+num_banks: 64, img_hb: 39936, img_v: 4992, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.87		| 3.84	| 3.84	| 3.84
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 6086
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 12,466,176 slots
+Occupied Slots            | 12,460,032 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0493%
+num_banks: 64, img_hb: 40448, img_v: 5056, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 4.82	| 4.33	| 3.72
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 6244
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 12,789,760 slots
+Occupied Slots            | 12,781,568 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0641%
+num_banks: 64, img_hb: 40960, img_v: 5120, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.87		| 2.97	| 2.97	| 3.35
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 6400
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 13,109,248 slots
+Occupied Slots            | 13,107,200 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0156%
+num_banks: 64, img_hb: 41472, img_v: 5184, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 4.82	| 4.33	| 4.33
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 6562
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 13,441,024 slots
+Occupied Slots            | 13,436,928 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0305%
+num_banks: 64, img_hb: 41984, img_v: 5248, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 3.84	| 3.84	| 3.84
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 6725
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 13,774,848 slots
+Occupied Slots            | 13,770,752 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0297%
+num_banks: 64, img_hb: 42496, img_v: 5312, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 4.82	| 4.33	| 3.76
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 6891
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 14,114,816 slots
+Occupied Slots            | 14,108,672 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0435%
+num_banks: 64, img_hb: 43008, img_v: 5376, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 3.35	| 3.35	| 3.35
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 7057
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 14,454,784 slots
+Occupied Slots            | 14,450,688 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0283%
+num_banks: 64, img_hb: 43520, img_v: 5440, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 4.82	| 4.33	| 4.66
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 7227
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 14,802,944 slots
+Occupied Slots            | 14,796,800 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0415%
+num_banks: 64, img_hb: 44032, img_v: 5504, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.90		| 3.85	| 3.85	| 3.58
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 7398
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 15,153,152 slots
+Occupied Slots            | 15,147,008 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0405%
+num_banks: 64, img_hb: 44544, img_v: 5568, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 4.83	| 4.33	| 4.02
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 7572
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 15,509,504 slots
+Occupied Slots            | 15,501,312 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0528%
+num_banks: 64, img_hb: 45056, img_v: 5632, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.90		| 3.10	| 3.10	| 3.35
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 7745
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 15,863,808 slots
+Occupied Slots            | 15,859,712 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0258%
+num_banks: 64, img_hb: 45568, img_v: 5696, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 4.83	| 4.33	| 4.32
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 7923
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 16,228,352 slots
+Occupied Slots            | 16,222,208 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0379%
+num_banks: 64, img_hb: 46080, img_v: 5760, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 3.85	| 3.85	| 3.29
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 8102
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 16,594,944 slots
+Occupied Slots            | 16,588,800 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0370%
+num_banks: 64, img_hb: 46592, img_v: 5824, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 4.83	| 4.33	| 4.25
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 8284
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 16,967,680 slots
+Occupied Slots            | 16,959,488 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0483%
+num_banks: 64, img_hb: 47104, img_v: 5888, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 3.36	| 3.35	| 3.35
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 8466
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 17,340,416 slots
+Occupied Slots            | 17,334,272 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0354%
+num_banks: 64, img_hb: 47616, img_v: 5952, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 4.83	| 4.34	| 4.67
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 8652
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 17,721,344 slots
+Occupied Slots            | 17,713,152 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0462%
+num_banks: 64, img_hb: 48128, img_v: 6016, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 3.85	| 3.85	| 3.85
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 8839
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 18,104,320 slots
+Occupied Slots            | 18,096,128 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0452%
+num_banks: 64, img_hb: 48640, img_v: 6080, num_bankgroups: 16, super_page_size: 131072, k: 1
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 4.83	| 4.34	| 4.52
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 9029
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 18,493,440 slots
+Occupied Slots            | 18,483,200 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.0554%
+num_banks: 64, img_hb: 49152, img_v: 6144, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 2.92	| 2.92	| 3.36
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 9215
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 18,874,368 slots
+Occupied Slots            | 18,874,368 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 49664, img_v: 6208, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 4.83	| 4.59	| 3.55
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 9410
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 19,273,728 slots
+Occupied Slots            | 19,269,632 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0213%
+num_banks: 64, img_hb: 50176, img_v: 6272, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.94		| 3.85	| 3.85	| 3.85
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 9605
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 19,673,088 slots
+Occupied Slots            | 19,668,992 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0208%
+num_banks: 64, img_hb: 50688, img_v: 6336, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 4.83	| 4.10	| 4.51
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 9803
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 20,078,592 slots
+Occupied Slots            | 20,072,448 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0306%
+num_banks: 64, img_hb: 51200, img_v: 6400, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 3.36	| 3.36	| 3.36
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 10001
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 20,484,096 slots
+Occupied Slots            | 20,480,000 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0200%
+num_banks: 64, img_hb: 51712, img_v: 6464, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.94		| 4.83	| 4.10	| 3.66
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 10203
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 20,897,792 slots
+Occupied Slots            | 20,891,648 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0294%
+num_banks: 64, img_hb: 52224, img_v: 6528, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.94		| 3.85	| 3.73	| 3.54
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 10406
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 21,313,536 slots
+Occupied Slots            | 21,307,392 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0288%
+num_banks: 64, img_hb: 52736, img_v: 6592, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 4.83	| 4.59	| 4.45
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 10612
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 21,735,424 slots
+Occupied Slots            | 21,727,232 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0377%
+num_banks: 64, img_hb: 53248, img_v: 6656, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.94		| 3.11	| 3.11	| 3.36
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 10817
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 22,155,264 slots
+Occupied Slots            | 22,151,168 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0185%
+num_banks: 64, img_hb: 53760, img_v: 6720, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.95		| 4.83	| 4.59	| 4.58
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 11027
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 22,585,344 slots
+Occupied Slots            | 22,579,200 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0272%
+num_banks: 64, img_hb: 54272, img_v: 6784, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.96		| 3.85	| 3.73	| 3.76
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 11238
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 23,017,472 slots
+Occupied Slots            | 23,011,328 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0267%
+num_banks: 64, img_hb: 54784, img_v: 6848, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.95		| 4.83	| 4.10	| 4.51
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 11452
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 23,455,744 slots
+Occupied Slots            | 23,447,552 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0349%
+num_banks: 64, img_hb: 55296, img_v: 6912, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.95		| 3.36	| 3.36	| 3.36
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 11666
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 23,894,016 slots
+Occupied Slots            | 23,887,872 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0257%
+num_banks: 64, img_hb: 55808, img_v: 6976, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.96		| 4.83	| 4.10	| 3.75
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 11884
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 24,340,480 slots
+Occupied Slots            | 24,332,288 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0337%
+num_banks: 64, img_hb: 56320, img_v: 7040, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.96		| 3.85	| 3.85	| 3.67
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 12103
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 24,788,992 slots
+Occupied Slots            | 24,780,800 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0330%
+num_banks: 64, img_hb: 56832, img_v: 7104, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.95		| 4.83	| 4.59	| 4.49
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 12325
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 25,243,648 slots
+Occupied Slots            | 25,233,408 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.0406%
+num_banks: 64, img_hb: 57344, img_v: 7168, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.96		| 2.99	| 2.99	| 3.36
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 12545
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 25,694,208 slots
+Occupied Slots            | 25,690,112 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0159%
+num_banks: 64, img_hb: 57856, img_v: 7232, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 4.83	| 4.59	| 4.04
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 12771
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 26,157,056 slots
+Occupied Slots            | 26,150,912 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0235%
+num_banks: 64, img_hb: 58368, img_v: 7296, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 3.85	| 3.85	| 3.67
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 12998
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 26,621,952 slots
+Occupied Slots            | 26,615,808 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0231%
+num_banks: 64, img_hb: 58880, img_v: 7360, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 4.84	| 4.10	| 4.73
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 13228
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 27,092,992 slots
+Occupied Slots            | 27,084,800 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0302%
+num_banks: 64, img_hb: 59392, img_v: 7424, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 3.36	| 3.36	| 3.36
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 13458
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 27,564,032 slots
+Occupied Slots            | 27,557,888 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0223%
+num_banks: 64, img_hb: 59904, img_v: 7488, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 4.84	| 4.10	| 4.52
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 13692
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 28,043,264 slots
+Occupied Slots            | 28,035,072 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0292%
+num_banks: 64, img_hb: 60416, img_v: 7552, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 3.86	| 3.74	| 3.55
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 13927
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 28,524,544 slots
+Occupied Slots            | 28,516,352 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0287%
+num_banks: 64, img_hb: 60928, img_v: 7616, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 4.84	| 4.59	| 3.50
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 14165
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 29,011,968 slots
+Occupied Slots            | 29,001,728 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.0353%
+num_banks: 64, img_hb: 61440, img_v: 7680, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.97		| 3.12	| 3.12	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 14402
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 29,497,344 slots
+Occupied Slots            | 29,491,200 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0208%
+num_banks: 64, img_hb: 61952, img_v: 7744, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.98		| 4.84	| 4.59	| 3.62
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 14644
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 29,992,960 slots
+Occupied Slots            | 29,984,768 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0273%
+num_banks: 64, img_hb: 62464, img_v: 7808, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.98		| 3.86	| 3.74	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 14887
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 30,490,624 slots
+Occupied Slots            | 30,482,432 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0269%
+num_banks: 64, img_hb: 62976, img_v: 7872, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.98		| 4.84	| 4.10	| 4.61
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 15133
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 30,994,432 slots
+Occupied Slots            | 30,984,192 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.0330%
+num_banks: 64, img_hb: 63488, img_v: 7936, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.98		| 3.37	| 3.37	| 2.96
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 15379
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 31,498,240 slots
+Occupied Slots            | 31,490,048 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0260%
+num_banks: 64, img_hb: 64000, img_v: 8000, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.98		| 4.84	| 4.10	| 4.68
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 15629
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 32,010,240 slots
+Occupied Slots            | 32,000,000 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.0320%
+num_banks: 64, img_hb: 64512, img_v: 8064, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.98		| 3.86	| 3.86	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 15880
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 32,524,288 slots
+Occupied Slots            | 32,514,048 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.0315%
+num_banks: 64, img_hb: 65024, img_v: 8128, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.98		| 4.84	| 4.59	| 4.63
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 16134
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 33,044,480 slots
+Occupied Slots            | 33,032,192 slots
+Empty/Wasted Slots        | 12,288 slots
+----------------------------------------
+Empty Space %             | 0.0372%
+num_banks: 64, img_hb: 65536, img_v: 8192, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.84		| 2.90	| 2.93	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 16383
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 33,554,432 slots
+Occupied Slots            | 33,554,432 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 66048, img_v: 8256, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.84		| 4.84	| 4.59	| 4.69
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 16641
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 34,082,816 slots
+Occupied Slots            | 34,080,768 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0060%
+num_banks: 64, img_hb: 66560, img_v: 8320, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.85		| 3.86	| 3.86	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 16900
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 34,613,248 slots
+Occupied Slots            | 34,611,200 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0059%
+num_banks: 64, img_hb: 67072, img_v: 8384, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.84		| 4.84	| 4.10	| 4.11
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 17162
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 35,149,824 slots
+Occupied Slots            | 35,145,728 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0117%
+num_banks: 64, img_hb: 67584, img_v: 8448, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.84		| 3.37	| 3.37	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 17424
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 35,686,400 slots
+Occupied Slots            | 35,684,352 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0057%
+num_banks: 64, img_hb: 68096, img_v: 8512, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.85		| 4.84	| 4.10	| 3.83
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 17690
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 36,231,168 slots
+Occupied Slots            | 36,227,072 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0113%
+num_banks: 64, img_hb: 68608, img_v: 8576, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.85		| 3.86	| 3.74	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 17957
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 36,777,984 slots
+Occupied Slots            | 36,773,888 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0111%
+num_banks: 64, img_hb: 69120, img_v: 8640, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.84		| 4.84	| 4.59	| 4.23
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 18227
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 37,330,944 slots
+Occupied Slots            | 37,324,800 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0165%
+num_banks: 64, img_hb: 69632, img_v: 8704, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.85		| 3.12	| 3.12	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 18496
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 37,881,856 slots
+Occupied Slots            | 37,879,808 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0054%
+num_banks: 64, img_hb: 70144, img_v: 8768, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 4.84	| 4.60	| 4.00
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 18770
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 38,443,008 slots
+Occupied Slots            | 38,438,912 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0107%
+num_banks: 64, img_hb: 70656, img_v: 8832, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 3.86	| 3.74	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 19045
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 39,006,208 slots
+Occupied Slots            | 39,002,112 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0105%
+num_banks: 64, img_hb: 71168, img_v: 8896, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 4.84	| 4.10	| 4.21
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 19323
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 39,575,552 slots
+Occupied Slots            | 39,569,408 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0155%
+num_banks: 64, img_hb: 71680, img_v: 8960, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 3.37	| 3.37	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 19601
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 40,144,896 slots
+Occupied Slots            | 40,140,800 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0102%
+num_banks: 64, img_hb: 72192, img_v: 9024, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.87		| 4.84	| 4.11	| 4.49
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 19883
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 40,722,432 slots
+Occupied Slots            | 40,716,288 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0151%
+num_banks: 64, img_hb: 72704, img_v: 9088, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.87		| 3.86	| 3.86	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 20166
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 41,302,016 slots
+Occupied Slots            | 41,295,872 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0149%
+num_banks: 64, img_hb: 73216, img_v: 9152, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.86		| 4.84	| 4.59	| 4.54
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 20452
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 41,887,744 slots
+Occupied Slots            | 41,879,552 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0196%
+num_banks: 64, img_hb: 73728, img_v: 9216, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.87		| 3.00	| 3.00	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 20736
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 42,469,376 slots
+Occupied Slots            | 42,467,328 slots
+Empty/Wasted Slots        | 2,048 slots
+----------------------------------------
+Empty Space %             | 0.0048%
+num_banks: 64, img_hb: 74240, img_v: 9280, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.88		| 4.84	| 4.60	| 4.20
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 21026
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 43,063,296 slots
+Occupied Slots            | 43,059,200 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0095%
+num_banks: 64, img_hb: 74752, img_v: 9344, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.88		| 3.86	| 3.86	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 21317
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 43,659,264 slots
+Occupied Slots            | 43,655,168 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0094%
+num_banks: 64, img_hb: 75264, img_v: 9408, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.88		| 4.84	| 4.10	| 4.52
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 21611
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 44,261,376 slots
+Occupied Slots            | 44,255,232 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0139%
+num_banks: 64, img_hb: 75776, img_v: 9472, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.88		| 3.37	| 3.37	| 3.33
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 21905
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 44,863,488 slots
+Occupied Slots            | 44,859,392 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0091%
+num_banks: 64, img_hb: 76288, img_v: 9536, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.88		| 4.84	| 4.11	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 22203
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 45,473,792 slots
+Occupied Slots            | 45,467,648 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0135%
+num_banks: 64, img_hb: 76800, img_v: 9600, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.88		| 3.86	| 3.74	| 3.35
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 22502
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 46,086,144 slots
+Occupied Slots            | 46,080,000 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0133%
+num_banks: 64, img_hb: 77312, img_v: 9664, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.88		| 4.84	| 4.60	| 4.68
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 22804
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 46,704,640 slots
+Occupied Slots            | 46,696,448 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0175%
+num_banks: 64, img_hb: 77824, img_v: 9728, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 3.12	| 3.12	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 23105
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 47,321,088 slots
+Occupied Slots            | 47,316,992 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0087%
+num_banks: 64, img_hb: 78336, img_v: 9792, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 4.84	| 4.60	| 4.25
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 23411
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 47,947,776 slots
+Occupied Slots            | 47,941,632 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0128%
+num_banks: 64, img_hb: 78848, img_v: 9856, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.90		| 3.86	| 3.74	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 23718
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 48,576,512 slots
+Occupied Slots            | 48,570,368 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0126%
+num_banks: 64, img_hb: 79360, img_v: 9920, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 4.84	| 4.11	| 3.29
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 24028
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 49,211,392 slots
+Occupied Slots            | 49,203,200 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0166%
+num_banks: 64, img_hb: 79872, img_v: 9984, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 3.37	| 3.37	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 24338
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 49,846,272 slots
+Occupied Slots            | 49,840,128 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0123%
+num_banks: 64, img_hb: 80384, img_v: 10048, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.90		| 4.84	| 4.11	| 4.60
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 24652
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 50,489,344 slots
+Occupied Slots            | 50,481,152 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0162%
+num_banks: 64, img_hb: 80896, img_v: 10112, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.90		| 3.86	| 3.86	| 3.76
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 24967
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 51,134,464 slots
+Occupied Slots            | 51,126,272 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0160%
+num_banks: 64, img_hb: 81408, img_v: 10176, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.89		| 4.84	| 4.60	| 3.56
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 25285
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 51,785,728 slots
+Occupied Slots            | 51,775,488 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.0198%
+num_banks: 64, img_hb: 81920, img_v: 10240, num_bankgroups: 16, super_page_size: 131072, k: 2
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.90		| 2.94	| 2.94	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 25599
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 52,428,800 slots
+Occupied Slots            | 52,428,800 slots
+Empty/Wasted Slots        | 0 slots
+----------------------------------------
+Empty Space %             | 0.0000%
+num_banks: 64, img_hb: 82432, img_v: 10304, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 4.84	| 4.01	| 4.28
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 25922
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 53,090,304 slots
+Occupied Slots            | 53,086,208 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0077%
+num_banks: 64, img_hb: 82944, img_v: 10368, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 3.86	| 3.86	| 3.45
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 26245
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 53,751,808 slots
+Occupied Slots            | 53,747,712 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0076%
+num_banks: 64, img_hb: 83456, img_v: 10432, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 4.84	| 4.03	| 3.51
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 26571
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 54,419,456 slots
+Occupied Slots            | 54,413,312 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0113%
+num_banks: 64, img_hb: 83968, img_v: 10496, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 3.37	| 3.37	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 26897
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 55,087,104 slots
+Occupied Slots            | 55,083,008 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0074%
+num_banks: 64, img_hb: 84480, img_v: 10560, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 4.84	| 4.35	| 4.63
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 27227
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 55,762,944 slots
+Occupied Slots            | 55,756,800 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0110%
+num_banks: 64, img_hb: 84992, img_v: 10624, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 3.86	| 3.86	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 27558
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 56,440,832 slots
+Occupied Slots            | 56,434,688 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0109%
+num_banks: 64, img_hb: 85504, img_v: 10688, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 4.85	| 4.68	| 4.15
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 27892
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 57,124,864 slots
+Occupied Slots            | 57,116,672 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0143%
+num_banks: 64, img_hb: 86016, img_v: 10752, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.91		| 3.12	| 3.12	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 28225
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 57,806,848 slots
+Occupied Slots            | 57,802,752 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0071%
+num_banks: 64, img_hb: 86528, img_v: 10816, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 4.85	| 4.68	| 4.50
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 28563
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 58,499,072 slots
+Occupied Slots            | 58,492,928 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0105%
+num_banks: 64, img_hb: 87040, img_v: 10880, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 3.86	| 3.86	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 28902
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 59,193,344 slots
+Occupied Slots            | 59,187,200 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0104%
+num_banks: 64, img_hb: 87552, img_v: 10944, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 4.85	| 4.35	| 4.34
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 29244
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 59,893,760 slots
+Occupied Slots            | 59,885,568 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0137%
+num_banks: 64, img_hb: 88064, img_v: 11008, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 3.38	| 3.37	| 3.37
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 29586
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 60,594,176 slots
+Occupied Slots            | 60,588,032 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0101%
+num_banks: 64, img_hb: 88576, img_v: 11072, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 4.85	| 4.03	| 4.12
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 29932
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 61,302,784 slots
+Occupied Slots            | 61,294,592 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0134%
+num_banks: 64, img_hb: 89088, img_v: 11136, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 3.86	| 3.86	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 30279
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 62,013,440 slots
+Occupied Slots            | 62,005,248 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0132%
+num_banks: 64, img_hb: 89600, img_v: 11200, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.92		| 4.85	| 4.03	| 3.77
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 30629
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 62,730,240 slots
+Occupied Slots            | 62,720,000 slots
+Empty/Wasted Slots        | 10,240 slots
+----------------------------------------
+Empty Space %             | 0.0163%
+num_banks: 64, img_hb: 90112, img_v: 11264, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 3.00	| 3.00	| 3.38
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 30977
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 63,442,944 slots
+Occupied Slots            | 63,438,848 slots
+Empty/Wasted Slots        | 4,096 slots
+----------------------------------------
+Empty Space %             | 0.0065%
+num_banks: 64, img_hb: 90624, img_v: 11328, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 4.85	| 4.35	| 4.63
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 31331
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 64,167,936 slots
+Occupied Slots            | 64,161,792 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0096%
+num_banks: 64, img_hb: 91136, img_v: 11392, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 3.86	| 3.62	| 3.86
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 31686
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 64,894,976 slots
+Occupied Slots            | 64,888,832 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0095%
+num_banks: 64, img_hb: 91648, img_v: 11456, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 4.85	| 4.68	| 4.61
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 32044
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 65,628,160 slots
+Occupied Slots            | 65,619,968 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0125%
+num_banks: 64, img_hb: 92160, img_v: 11520, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 3.38	| 3.38	| 3.38
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 32402
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 66,361,344 slots
+Occupied Slots            | 66,355,200 slots
+Empty/Wasted Slots        | 6,144 slots
+----------------------------------------
+Empty Space %             | 0.0093%
+num_banks: 64, img_hb: 92672, img_v: 11584, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 4.85	| 4.69	| 4.52
+
+[OK] No overlaps found. All addresses are unique.
+
+[Memory Fragmentation Analysis]
+Metric                    | Value
+----------------------------------------
+Max Row Index             | 32764
+Active Banks              | 63
+Cols per Bank             | 31
+----------------------------------------
+Total Window Capacity     | 67,102,720 slots
+Occupied Slots            | 67,094,528 slots
+Empty/Wasted Slots        | 8,192 slots
+----------------------------------------
+Empty Space %             | 0.0122%
+num_banks: 64, img_hb: 93184, img_v: 11648, num_bankgroups: 16, super_page_size: 131072, k: 3
+Matrix Quality  | Proposal	| LIAM	| BFAM	| BGFAM
+Quality Results | 4.93		| 3.87	| 3.62	| 3.86
+
+[!] OVERLAP DETECTED: 737280 unique addresses have collisions.
