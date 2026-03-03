@@ -113,10 +113,54 @@
 #include <assert.h>
 #include <iostream>
 #include <string>
+#include <array>
 
 #include "CAddrGen.h"
 #include "Memory.h"
 
+/**
+ * Remaps bits from a 64-bit input into a 32-bit sequence based on a fixed-size map.
+ * * @param 	bit_order A fixed-size array of 32 integers. 
+ * 	bit_order[i] is the source position in 'input_val' for the i-th bit of the result.
+ * @param input_val The 64-bit source integer.
+ * @return          The remapped integer (effectively 32 bits, stored in int64_t).
+ */
+int64_t remap_bits_32(const std::array<uint8_t, 32>& bit_order, int64_t input_val) {
+    // Cast to unsigned to prevent arithmetic shifting issues
+    uint64_t u_input = static_cast<uint64_t>(input_val);
+    uint64_t result = 0;
+	std::array<uint8_t, (32+COL2_WIDTH)> new_bit_order;
+
+	// Filling the new array with your custom logic
+    for (int i = 32; i < (32 + COL2_WIDTH); ++i) {
+        new_bit_order[i] = i - 32; 
+    }
+    // Fill the rest from the passed bit_order
+    for (int i = 0; i < 32; ++i) {
+        new_bit_order[i] = bit_order[i] + COL2_WIDTH;
+    }
+
+	//for (int8_t i = (sizeof(new_bit_order) - 1); i >= 0; i = i-1){
+	//	printf("bit_order[%d]: %d - new_bit_order[%d]: %d\n", i, bit_order[i], i, new_bit_order[i]);
+	//}
+
+    // The compiler will likely unroll this loop because the size (32) is constant.
+    //for (uint64_t i = 0; i < sizeof(bit_order); ++i) {
+	for (int8_t i = (sizeof(new_bit_order) - 1); i >= 0; i = i-1) {
+        int src_pos = 	new_bit_order[i];
+
+        // Safety check: Ensure we don't read outside the 64-bit input boundaries
+        if (src_pos >= 0 && src_pos < 64) {
+            // 1. Shift the input right to move the target bit to position 0
+            // 2. Mask with 1 to isolate it
+            // 3. Shift it left to the new position 'i'
+            // 4. OR it into the result
+            uint64_t bit = (u_input >> src_pos) & 1ULL;
+            result |= (bit << ((sizeof(new_bit_order) - 1) - i));
+        }
+    }
+    return static_cast<int64_t>(result);
+}
 
 // Construct
 CAddrGen::CAddrGen(string cName, ETransDirType eDir, string cOperation, int64_t nStartAddr) {
@@ -398,10 +442,11 @@ EResultType CAddrGen::Reset() {
 		};
 	}
 	else if (this->cOperation == "RASTER_SCAN" or 
-			this->cOperation == "TILE" or 
-		 	this->cOperation == "ROTATION"    or 
-		 	this->cOperation == "ROTATION_LEFT_TOP_VER"  or 
-		 	this->cOperation == "RANDOM") {
+		 this->cOperation == "STRIDE"    or 
+		 this->cOperation == "TILE" or
+		 this->cOperation == "ROTATION"    or 
+		 this->cOperation == "ROTATION_LEFT_TOP_VER"  or 
+		 this->cOperation == "RANDOM") {
 
 		// Initial block coordinate
 		this->nA = 0;
@@ -1077,8 +1122,23 @@ int64_t CAddrGen::GetAddr(string cAddrMap) {
 	else if (cAddrMap == "TILE") {
 		nAddr = this->GetAddr_TILE();
 	}
-	else if (cAddrMap == "HBM_INTERLEAVE") {
-		nAddr = this->GetAddr_HBM_Interleaving();
+	else if (cAddrMap == "OIRAM") {
+		nAddr = this->GetAddr_OIRAM();
+	}
+	else if (cAddrMap == "MIN_K_UNION") {
+		nAddr = this->GetAddr_MIN_K_UNION();
+	}
+	else if (cAddrMap == "FLATFISH") {
+		nAddr = this->GetAddr_FlatFish();
+	}
+	else if (cAddrMap == "NEAR_OPTIMAL_ROW_WISE") {
+		nAddr = this->GetAddr_NEAR_OPTIMAL_ROW_WISE();
+	}
+	else if (cAddrMap == "NEAR_OPTIMAL_COL_WISE") {
+		nAddr = this->GetAddr_NEAR_OPTIMAL_COL_WISE();
+	}
+	else if (cAddrMap == "NEAR_OPTIMAL_BOTH_WISE") {
+		nAddr = this->GetAddr_NEAR_OPTIMAL_BOTH_WISE();
 	}
 	else {
 		printf("Error: AddrGen %s, Unknown address map %s\n", this->cName.c_str(), cAddrMap.c_str());
@@ -1141,7 +1201,6 @@ int64_t CAddrGen::GetAddr_LIAM() {
 	uint16_t nBank    = nRowBank%BANK_NUM;
 	uint16_t nCol     = (uint64_t)(nAddr << (BANK_WIDTH+ROW_WIDTH)) >> (BANK_WIDTH+ROW_WIDTH);
 	nAddr = (nRow << (BANK_WIDTH+COL_WIDTH)) + (nBank << COL_WIDTH) + nCol;
-	//printf("LIAM Addr Calc: Apos=%d, Bpos=%d, ImgHB=%d => Addr=0x%llx (Row=%d, Bank=%d, Col=%d)\n", this->nApos, this->nBpos, ImgHB, nAddr, nRow, nBank, nCol);
 
 	nAddr = nAddr + this->nStartAddr;
 
@@ -1954,7 +2013,7 @@ int64_t CAddrGen::GetAddr_TILE() {
 };
 
 //---------------------------------------------------
-// Get Address (HBM's experimental address map)
+// Get Address (BGFAM)
 //	Bank interleaved address map
 //	1. Get LIAM address
 //	2. Do the Bank-Group-Interleaving
@@ -2012,14 +2071,234 @@ int64_t CAddrGen::GetAddr_BGFAM() {
 	return (nAddr_new);
 }
 
+// Helper function: Get bit at position
+static int get_bit(int64_t value, int position) {
+    return (value >> position) & 1;
+}
+
+// Helper function: Calculate row jump
+static int cal_row_jump(int curr_col_offset, int img_width_pixels, int bit_num) {
+    int previous_bit = 0;
+    int jump_value = 0;
+    for (int i = 1; i <= bit_num; i++) {
+        int curr_bit = bit_num - i;
+        int curr_col_offset_bit = get_bit(curr_col_offset, curr_bit);
+        int img_width_pixels_bit = get_bit(img_width_pixels, curr_bit);
+        int power_of_two = ((curr_col_offset_bit ^ 1) & img_width_pixels_bit) & (previous_bit ^ 1);
+        jump_value += (power_of_two << curr_bit);
+        previous_bit |= power_of_two;
+    }
+    return jump_value;
+}
+
+// Helper function: Count set bits
+static int bit_count(int n) {
+    int count = 0;
+    while (n > 0) {
+        if (n & 1) count++;
+        n >>= 1;
+    }
+    return count;
+}
+
+// Helper function: Integer log2
+static int log2_int(int n) {
+    if (n <= 0) return 0;
+    int log = 0;
+    while (n >>= 1) ++log;
+    return log;
+}
+
 //---------------------------------------------------
-// Get Address (HBM's experimental address map)
+// Get Address (Proposal address map)
+//	Matching Python generate_bankgroup_interleaving_matrix_proposal
+//---------------------------------------------------
+//---------------------------------------------------
+// Get Address (Proposal address map)
+//	Matching Python generate_bankgroup_interleaving_matrix_proposal
+//---------------------------------------------------
+int64_t CAddrGen::GetAddr_OIRAM() {
+    // Check AddrGen finished
+    if (this->eFinalTrans == ERESULT_TYPE_YES) {
+        return (-1);
+    };
+
+    // Configuration and Constants
+    int num_cols            = 32;                   // Fixed as per Python default
+    int num_cols_log        = log2_int(num_cols);   // 5
+    int block_size_trans    = BANK_NUM * num_cols;
+    int block_size_trans_log = log2_int(block_size_trans);
+
+    this->SetNumPixelTrans();
+    
+    // Current coordinates
+    // Assuming IMG_HORIZONTAL_SIZE is in pixels and PIXELS_PER_TRANS is 16
+    int image_width_trans_all = IMG_HORIZONTAL_SIZE / PIXELS_PER_TRANS;
+    int curr_col_offset       = this->nApos / PIXELS_PER_TRANS;
+    int curr_row_offset       = this->nBpos;
+
+    // Row Accumulate Loop 
+    int row_accumulate = 0;
+    for (int i = 0; i <= curr_col_offset; i++) {
+        int rj = cal_row_jump(i, image_width_trans_all, 64);
+        if (i == 0) {
+            row_accumulate = rj;
+        } else {
+            // Match Python: (accumulate_value[i-1] | row_jump[i]) if (i % img_width_trans != 0) else row_jump[i]
+            if (i % image_width_trans_all != 0) {
+                row_accumulate = row_accumulate | rj;
+            } else {
+                row_accumulate = rj;
+            }
+        }
+    }
+
+    // Row Jump for current column
+    int row_jump = cal_row_jump(curr_col_offset, image_width_trans_all, 64);
+
+    // Row Jump Pre-calculation (matching Python)
+    int row_jump_lsb_val = (row_jump == num_cols) ? row_jump : ((row_jump & (num_cols - 1)) | (row_jump == num_cols));
+    int row_jump_msb_val = row_jump >> num_cols_log;
+
+    // log2_int handles 0 safely (returning 0), so std::max is not required.
+    int row_jump_log     = log2_int(row_jump);
+    int row_jump_lsb_log = log2_int(row_jump_lsb_val);
+    int row_jump_msb_log = log2_int(row_jump_msb_val);
+
+    // Bank Pre-calculation
+    int num_bankgroup_per_row = (row_jump >> num_cols_log) >> log2_int(BANK_NUM_PER_GROUP);
+    int num_bank_per_row      = (row_jump >> num_cols_log);
+    
+    int num_row_per_banks     = (num_cols >> row_jump_lsb_log) * (row_jump_msb_val == 0);
+    int num_row_per_bankgroup = (BANK_NUM_PER_GROUP << row_jump_msb_log << num_cols_log) >> row_jump_log;
+
+    // Apply Logs (Decoder logic)
+    num_row_per_banks = log2_int(num_row_per_banks);
+    num_bank_per_row  = log2_int(num_bank_per_row);
+    num_bankgroup_per_row = log2_int(num_bankgroup_per_row);
+
+    int num_row_per_allbanks = 0;
+
+    if (BANK_NUM != 48) {
+        num_row_per_bankgroup = log2_int(num_row_per_bankgroup);
+        
+        int val = (BANK_NUM << num_cols_log) >> row_jump_log;
+        num_row_per_allbanks = log2_int(val);
+    } else {
+        // Special handling for 48 banks: logic matches Python else block
+        // Note: Python does NOT apply log2 to num_bankgroup/row in the else block
+        int denominator = (BANK_NUM << num_cols_log) % row_jump;
+        if (denominator == 0) {
+            num_row_per_allbanks = 0; 
+        } else {
+            num_row_per_allbanks = (row_jump / denominator) + 1;
+        }
+    }
+
+    // Row: Reduction calculation
+    int high_bit_num = bit_count(image_width_trans_all - row_accumulate);
+    int row_reduce_location = 0;
+    int row_utilization = 0;
+    int term_common = image_width_trans_all - row_accumulate;
+    
+    if (BANK_NUM != 48) {
+        row_utilization = term_common - (((term_common * (IMG_VERTICAL_SIZE & (block_size_trans - 1))) >> block_size_trans_log) + high_bit_num);
+    } else {
+        row_utilization = term_common - (((term_common * (IMG_VERTICAL_SIZE % block_size_trans)) / block_size_trans) + high_bit_num);
+    }
+
+    // Row: Pre calculation
+    int row_reducion = 0;
+    int row_inc_firstblock = image_width_trans_all - row_accumulate;
+    
+    int row_linear = 0;
+    int row_inc_block = 0;
+    int row_compenstation = 0;
+
+    if (BANK_NUM != 48) {
+        row_reduce_location = IMG_VERTICAL_SIZE >> block_size_trans_log;
+        row_reducion = ((curr_row_offset >> block_size_trans_log) == row_reduce_location) ? row_utilization : 0;
+
+        int shift_val = log2_int(block_size_trans >> row_jump_log);
+        row_linear = curr_row_offset >> shift_val;
+        row_inc_block = (curr_row_offset >> block_size_trans_log) * (image_width_trans_all - row_jump);
+    } else {
+        row_reduce_location = IMG_VERTICAL_SIZE / block_size_trans;
+        row_reducion = ((curr_row_offset / block_size_trans) == row_reduce_location) ? row_utilization : 0;
+
+        int row_temp = (num_bank_per_row == 0) ? BANK_NUM : (BANK_NUM & ((1 << num_bank_per_row) - 1));
+        bool row_col_linear_cond = curr_col_offset < ((curr_row_offset * (row_temp << num_cols_log)) % block_size_trans);
+        int row_col_linear = row_col_linear_cond ? 1 : 0;
+        
+        int divisor = (block_size_trans >> row_jump_log);
+        row_linear = (curr_row_offset / (divisor > 0 ? divisor : 1)) - row_col_linear;
+        
+        if (num_row_per_allbanks != 0) {
+            row_compenstation = curr_row_offset / num_row_per_allbanks;
+        }
+        
+        row_inc_block = (curr_row_offset / block_size_trans) * (image_width_trans_all - row_jump);
+    }
+
+    // Bank: Pre calculation
+    int bank_inc_imgcol = (curr_col_offset >> num_cols_log);
+    int bank_linear = (curr_row_offset >> num_row_per_banks) * (BANK_NUM_PER_GROUP << num_bankgroup_per_row);
+    int bank_inc_img_allbanks = 0;
+    int bank_inc_img_bankgroup = 0;
+
+    if (BANK_NUM != 48) {
+        bank_inc_img_allbanks = (curr_row_offset >> num_row_per_allbanks);
+        
+        int mask = (1 << num_row_per_allbanks) - 1;
+        bank_inc_img_bankgroup = ((curr_row_offset & mask) >> num_row_per_bankgroup) << num_bank_per_row;
+    } else {
+        if (num_row_per_allbanks != 0) {
+            bank_inc_img_allbanks = curr_row_offset / num_row_per_allbanks;
+        }
+        
+        bank_inc_img_bankgroup = (curr_row_offset / num_row_per_bankgroup) << num_bank_per_row;
+    }
+
+    // Calculate new address components
+    int64_t new_row_val = (int64_t)row_linear + row_inc_firstblock + row_inc_block - row_compenstation - row_reducion;
+    // Ensure positive result for modulo
+    uint64_t num_rows_const = 2ULL << ROW_WIDTH; // Or logic to match Python's global num_rows
+    uint64_t new_row = new_row_val % num_rows_const;
+
+    int new_bank = (bank_linear + bank_inc_img_allbanks + bank_inc_img_bankgroup + bank_inc_imgcol) % BANK_NUM;
+    int new_col  = (curr_col_offset + (curr_row_offset << row_jump_log)) % num_cols;
+
+    // Debug
+	assert(new_row_val >= 0);
+	assert(new_row >= 0);
+    assert(new_row < num_rows_const);
+    assert(new_bank >= 0);
+    assert(new_bank < BANK_NUM);
+    assert(new_col >= 0);
+    assert(new_col < num_cols);
+
+    // Get final physical address using the global address map function
+    int64_t nAddr_new = GetAddr_AMap_Global(new_row, new_bank, new_col);
+
+    // Check last transaction application
+    if (this->nCurTrans == this->nNumTotalTrans) {
+        this->eFinalTrans = ERESULT_TYPE_YES;
+    };
+
+    // Set temp signal
+    this->IsTransGenThisCycle = ERESULT_TYPE_YES;
+
+    return (nAddr_new);
+}
+
+//---------------------------------------------------
+// Get Address (Min-K-Union's address map)
 //	Bank interleaved address map
 //	1. Get LIAM address
-//	2. Do the Bank-Interleaving
+//	2. Do the Min-K-Union address mapping
 //---------------------------------------------------
-int64_t CAddrGen::GetAddr_HBM_Interleaving() {
-		// Check AddrGen finished
+int64_t CAddrGen::GetAddr_MIN_K_UNION() {
+	// Check AddrGen finished
 	if (this->eFinalTrans == ERESULT_TYPE_YES) {
 		return (-1);
 	};
@@ -2030,53 +2309,519 @@ int64_t CAddrGen::GetAddr_HBM_Interleaving() {
 	//int64_t nRow  = GetRowNum_AMap_Global(nAddr);			// Global. Address map
 	int     nBank = GetBankNum_AMap_Global(nAddr);
 	int     nCol  = GetColNum_AMap_Global(nAddr);
-	
-	//printf("Row = %d, Bank = %d, Col = %d\n", nRow, nBank, nCol);
+	int     nRow  = GetRowNum_AMap_Global(nAddr);
 
-	//nBank = (nCol/64) % BANK_NUM; // FOR Test Bank/BankGroup/SID interleaving only
-	int nBank_new = (nBank*4)%BANK_NUM;
-	int nRow_new = nBank_new / 4;
-	int img_row = nAddr / IMGHB;
+	int 	nBank_new = nBank ^ (nRow % BANK_NUM);					// Only XOR the Row[BANK_WIDTH-1 : 0]
+	int64_t nAddr_new = GetAddr_AMap_Global(nRow, nBank_new, nCol); // Address map
 
-	if(img_row > 0) {
-		nBank_new = ((nBank_new + (img_row*4)) % BANK_NUM) + (((nBank_new + (img_row*4)) / ((uint64_t)1 << ROW_WIDTH)));
-		nRow_new = nRow_new + img_row;
-	}
+	assert (nBank 		>= 0);
+	assert (nRow 		>= 0);
+	assert (nBank_new 	>= 0);
+	assert (nBank_new 	< BANK_NUM);
+	return (nAddr_new);
+}
 
-/*
-	#if defined(BANKGROUP_INTERLEAVING)
-		nBank_new = (nBank*4) % BANK_NUM + static_cast<int>(std::floor((nBank*4) / BANK_NUM));
-	#elif defined(SID_INTERLEAVING)
-		nBank_new = (nBank*8) % BANK_NUM + (nBank*8) / BANK_NUM;
-	#elif defined(BANK_INTERLEAVING)
-		nBank_new = nBank; // Bank Interleaving
-	#else
-		assert(0);
-	#endif
-*/
+//---------------------------------------------------
+// Get Address (Min-K-Union's address map)
+//	Bank interleaved address map
+//	1. Get LIAM address
+//	2. Do the Min-K-Union address mapping
+//---------------------------------------------------
+int64_t CAddrGen::GetAddr_FlatFish() {
+	std::array<uint8_t, 32> bit_order;
 
-	// Debug
-	assert (nBank_new >= 0);
-	assert (nBank_new < BANK_NUM);
-
-	// Get bank-flipped address
-	int64_t nAddr_new = GetAddr_AMap_Global(nRow_new, nBank_new, nCol); 			// Address map
-
-	// Check last transaction application
-	if (this->nCurTrans == this->nNumTotalTrans) {
-		// this->SetFinalTrans(ERESULT_TYPE_YES);
-		this->eFinalTrans = ERESULT_TYPE_YES;
+	// Check AddrGen finished
+	if (this->eFinalTrans == ERESULT_TYPE_YES) {
+		return (-1);
 	};
 
-	// Set temp signal
-	this->IsTransGenThisCycle = ERESULT_TYPE_YES;
+	// Generate LIAM address	
+	int64_t nAddr = this->GetAddr_LIAM();
 
-	// Debug
-	// this->CheckAddr();
+	if (BANK_NUM == 16) {
+		if (IMG_HORIZONTAL_SIZE == 512 && IMG_VERTICAL_SIZE == 64) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 20, 18, 19, 16, 12, 7, 10, 2, 21, 17, 11, 3, 4, 14, 5, 6, 1, 9, 22, 15, 8, 13, 0};
+		else if (IMG_HORIZONTAL_SIZE == 1024 && IMG_VERTICAL_SIZE == 128) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 1536 && IMG_VERTICAL_SIZE == 192) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 2048 && IMG_VERTICAL_SIZE == 256) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 18, 3, 11, 21, 17, 14, 15, 16, 13, 19, 12, 10, 5, 9, 7, 8, 4, 0, 6, 2, 1, 20};
+		else if (IMG_HORIZONTAL_SIZE == 2560 && IMG_VERTICAL_SIZE == 320) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 0, 1};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 20, 22, 16, 19, 18, 17, 4, 15, 14, 13, 21, 11, 10, 9, 8, 7, 6, 3, 12, 5, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 3584 && IMG_VERTICAL_SIZE == 448) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 16, 19, 18, 17, 20, 15, 14, 13, 10, 11, 5, 12, 8, 7, 9, 6, 4, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 4096 && IMG_VERTICAL_SIZE == 512) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 21, 6, 16, 14, 7, 17, 3, 1, 15, 18, 2, 4, 13, 20, 19, 10, 12, 11, 5, 9, 22, 8, 0};
+		else if (IMG_HORIZONTAL_SIZE == 4608 && IMG_VERTICAL_SIZE == 576) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 3, 4, 5, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 5120 && IMG_VERTICAL_SIZE == 640) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 10, 2, 13, 15, 18, 17, 4, 16, 22, 14, 20, 19, 11, 7, 6, 12, 9, 3, 8, 0, 5, 21, 1};
+		else if (IMG_HORIZONTAL_SIZE == 5632 && IMG_VERTICAL_SIZE == 704) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 8, 21, 20, 18, 14, 17, 16, 9, 19, 13, 12, 15, 10, 22, 5, 7, 6, 11, 4, 0, 2, 1, 3};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 13, 18, 17, 8, 15, 14, 4, 12, 19, 10, 9, 0, 7, 6, 11, 16, 3, 2, 1, 5};
+		else if (IMG_HORIZONTAL_SIZE == 6656 && IMG_VERTICAL_SIZE == 832) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 0, 1};
+		else if (IMG_HORIZONTAL_SIZE == 7168 && IMG_VERTICAL_SIZE == 896) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 15, 12, 4, 19, 7, 6, 17, 11, 1, 22, 3, 14, 13, 8, 10, 9, 2, 0, 18, 16, 20, 5, 21};
+		else if (IMG_HORIZONTAL_SIZE == 7680 && IMG_VERTICAL_SIZE == 960) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 9, 21, 7, 17, 20, 2, 15, 13, 22, 10, 11, 3, 16, 18, 8, 6, 19, 5, 1, 4, 12, 14, 0};
+		else if (IMG_HORIZONTAL_SIZE == 8192 && IMG_VERTICAL_SIZE == 1024) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 3, 4, 21, 0, 15, 13, 22, 19, 17, 8, 16, 14, 12, 7, 1, 2, 18, 10, 20, 6, 11, 5, 9};
+		else if (IMG_HORIZONTAL_SIZE == 8704 && IMG_VERTICAL_SIZE == 1088) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 0, 6, 5, 4, 3, 2, 1, 7};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 0, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 17};
+		else if (IMG_HORIZONTAL_SIZE == 9728 && IMG_VERTICAL_SIZE == 1216) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 3, 12, 15, 1, 22, 17, 16, 21, 19, 14, 18, 11, 6, 13, 8, 7, 5, 20, 4, 10, 2, 9, 0};
+		else if (IMG_HORIZONTAL_SIZE == 10240 && IMG_VERTICAL_SIZE == 1280) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 16, 7, 18, 10, 3, 12, 14, 13, 17, 11, 15, 4, 8, 0, 6, 9, 19, 2, 20, 1, 5};
+		else if (IMG_HORIZONTAL_SIZE == 10752 && IMG_VERTICAL_SIZE == 1344) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 19, 4, 6, 2, 18, 13, 15, 0, 1, 20, 17, 9, 12, 7, 5, 8, 22, 10, 11, 14, 21, 16, 3};
+		else if (IMG_HORIZONTAL_SIZE == 11264 && IMG_VERTICAL_SIZE == 1408) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 0, 1};
+		else if (IMG_HORIZONTAL_SIZE == 11776 && IMG_VERTICAL_SIZE == 1472) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 15, 3, 14, 19, 18, 2, 16, 21, 11, 9, 20, 13, 10, 22, 17, 7, 6, 5, 4, 8, 12, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 7, 3, 22, 4, 16, 0, 13, 18, 6, 14, 12, 17, 19, 21, 10, 9, 20, 5, 2, 11, 15, 1, 8};
+		else if (IMG_HORIZONTAL_SIZE == 12800 && IMG_VERTICAL_SIZE == 1600) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 1, 11, 16, 10, 13, 4, 8, 3, 21, 22, 20, 18, 14, 9, 7, 6, 5, 0, 12, 19, 15, 17, 2};
+		else if (IMG_HORIZONTAL_SIZE == 13312 && IMG_VERTICAL_SIZE == 1664) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 14, 19, 18, 17, 5, 15, 16, 13, 12, 20, 1, 0, 9, 7, 3, 10, 8, 4, 2, 11, 6};
+		else if (IMG_HORIZONTAL_SIZE == 13824 && IMG_VERTICAL_SIZE == 1728) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 0, 1};
+		else if (IMG_HORIZONTAL_SIZE == 14336 && IMG_VERTICAL_SIZE == 1792) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 2, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 17, 3, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 14848 && IMG_VERTICAL_SIZE == 1856) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 19, 1, 18, 22, 15, 17, 16, 10, 14, 13, 20, 11, 21, 9, 8, 7, 6, 5, 4, 2, 12, 3, 0};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 15872 && IMG_VERTICAL_SIZE == 1984) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 21, 2, 14, 22, 4, 20, 16, 9, 15, 19, 17, 13, 10, 8, 7, 5, 18, 12, 11, 3, 0, 1, 6};
+		else if (IMG_HORIZONTAL_SIZE == 16384 && IMG_VERTICAL_SIZE == 2048) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 0, 14, 7, 4, 3, 19, 12, 13, 15, 20, 17, 6, 5, 1, 18, 2, 16, 9, 11, 22, 8, 21, 10};
+		else {
+			printf("Error: Unsupported IMG size for Flatfish address mapping!");
+			assert(0);
+		}
+	} else if (BANK_NUM == 32) {
+		if (IMG_HORIZONTAL_SIZE == 1024 && IMG_VERTICAL_SIZE == 128) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 20, 18, 15, 10, 21, 13, 3, 12, 1, 14, 11, 17, 4, 22, 16, 0, 23, 5, 19, 9, 6, 2, 8, 7};
+		else if (IMG_HORIZONTAL_SIZE == 2048 && IMG_VERTICAL_SIZE == 256) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 0, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 20};
+		else if (IMG_HORIZONTAL_SIZE == 4096 && IMG_VERTICAL_SIZE == 512) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 13, 16, 20, 6, 12, 4, 22, 17, 8, 2, 7, 11, 3, 10, 1, 9, 5, 19, 21, 15, 14, 18, 0};
+		else if (IMG_HORIZONTAL_SIZE == 5120 && IMG_VERTICAL_SIZE == 640) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 0, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 14};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 0, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 19};
+		else if (IMG_HORIZONTAL_SIZE == 7168 && IMG_VERTICAL_SIZE == 896) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 0, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 18};
+		else if (IMG_HORIZONTAL_SIZE == 8192 && IMG_VERTICAL_SIZE == 1024) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 13, 1, 20, 3, 19, 21, 4, 16, 18, 14, 5, 6, 8, 0, 17, 22, 12, 2, 10, 15, 23, 11, 7, 9};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 0, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 21};
+		else if (IMG_HORIZONTAL_SIZE == 10240 && IMG_VERTICAL_SIZE == 1280) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 3, 15, 16, 18, 5, 17, 23, 19, 11, 13, 22, 21, 12, 8, 14, 9, 7, 10, 4, 1, 2, 20, 6, 0};
+		else if (IMG_HORIZONTAL_SIZE == 11264 && IMG_VERTICAL_SIZE == 1408) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 15, 20, 12, 1, 5, 2, 6, 13, 11, 16, 7, 21, 9, 8, 17, 10, 0, 4, 19, 14, 18, 3};
+		else if (IMG_HORIZONTAL_SIZE == 13312 && IMG_VERTICAL_SIZE == 1664) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 10, 21, 20, 19, 18, 17, 16, 15, 14, 3, 22, 11, 13, 9, 12, 7, 6, 5, 4, 8, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 14336 && IMG_VERTICAL_SIZE == 1792) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 18, 22, 23, 20, 8, 16, 17, 4, 15, 14, 13, 19, 11, 10, 9, 12, 7, 6, 5, 21, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 15, 21, 6, 12, 18, 3, 13, 20, 22, 17, 19, 8, 11, 23, 9, 5, 10, 7, 2, 4, 14, 0, 16, 1};
+		else if (IMG_HORIZONTAL_SIZE == 16384 && IMG_VERTICAL_SIZE == 2048) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 6, 14, 7, 5, 15, 21, 9, 20, 3, 23, 12, 1, 19, 16, 11, 0, 13, 22, 8, 4, 10, 2, 17, 18};
+		else if (IMG_HORIZONTAL_SIZE == 17408 && IMG_VERTICAL_SIZE == 2176) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 0, 1};
+		else if (IMG_HORIZONTAL_SIZE == 18432 && IMG_VERTICAL_SIZE == 2304) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 19, 22, 21, 20, 4, 13, 18, 17, 6, 14, 16, 12, 11, 10, 9, 5, 7, 15, 8, 3, 0, 23, 1, 2};
+		else if (IMG_HORIZONTAL_SIZE == 19456 && IMG_VERTICAL_SIZE == 2432) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 16, 19, 15, 10, 2, 11, 17, 8, 20, 23, 4, 12, 5, 3, 6, 1, 13, 7, 22, 14, 18, 21, 9, 0};
+		else if (IMG_HORIZONTAL_SIZE == 20480 && IMG_VERTICAL_SIZE == 2560) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 11, 21, 12, 23, 4, 15, 17, 18, 7, 14, 13, 8, 16, 3, 9, 22, 10, 6, 5, 19, 20, 0, 2, 1};
+		else if (IMG_HORIZONTAL_SIZE == 21504 && IMG_VERTICAL_SIZE == 2688) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 18, 21, 20, 19, 17, 14, 16, 15, 22, 4, 12, 9, 10, 11, 0, 8, 6, 5, 13, 3, 2, 1, 7};
+		else if (IMG_HORIZONTAL_SIZE == 22528 && IMG_VERTICAL_SIZE == 2816) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 16};
+		else if (IMG_HORIZONTAL_SIZE == 23552 && IMG_VERTICAL_SIZE == 2944) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 0, 1, 2};
+		else if (IMG_HORIZONTAL_SIZE == 24576 && IMG_VERTICAL_SIZE == 3072) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 2, 6, 21, 1, 8, 9, 22, 3, 13, 16, 17, 10, 20, 18, 12, 5, 11, 14, 4, 15, 0, 7, 19, 23};
+		else if (IMG_HORIZONTAL_SIZE == 25600 && IMG_VERTICAL_SIZE == 3200) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 11, 4, 14, 15, 21, 5, 17, 7, 23, 20, 3, 13, 16, 22, 9, 8, 6, 2, 10, 19, 12, 18, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 26624 && IMG_VERTICAL_SIZE == 3328) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 21, 22, 2, 20, 6, 18, 11, 15, 23, 3, 14, 12, 7, 19, 9, 8, 13, 10, 5, 4, 17, 16, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 27648 && IMG_VERTICAL_SIZE == 3456) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 18, 22, 21, 20, 23, 11, 4, 16, 15, 14, 13, 12, 19, 10, 9, 8, 7, 6, 5, 17, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 28672 && IMG_VERTICAL_SIZE == 3584) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 10, 16, 22, 23, 6, 18, 12, 5, 15, 7, 17, 19, 13, 1, 0, 14, 20, 21, 9, 4, 3, 2, 11, 8};
+		else if (IMG_HORIZONTAL_SIZE == 29696 && IMG_VERTICAL_SIZE == 3712) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 19, 3, 20, 9, 4, 15, 17, 7, 14, 10, 23, 13, 2, 16, 8, 22, 12, 6, 18, 21, 11, 0, 5, 1};
+		else if (IMG_HORIZONTAL_SIZE == 30720 && IMG_VERTICAL_SIZE == 3840) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 31744 && IMG_VERTICAL_SIZE == 3968) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 0, 3, 2, 1, 4};
+		else if (IMG_HORIZONTAL_SIZE == 32768 && IMG_VERTICAL_SIZE == 4096) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 22, 2, 23, 5, 14, 6, 18, 4, 7, 15, 16, 8, 20, 21, 11, 17, 3, 10, 13, 19, 0, 1, 12, 9};
+		else {
+			printf("Error: Unsupported IMG size for Flatfish address mapping!");
+			assert(0);
+		}
+	} else if (BANK_NUM == 48) {
+		if (IMG_HORIZONTAL_SIZE == 1536 && IMG_VERTICAL_SIZE == 192) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 0, 8, 7, 6, 5, 4, 3, 2, 1, 9};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 16, 23, 22, 3, 5, 19, 18, 21, 20, 15, 14, 13, 2, 11, 10, 9, 8, 7, 24, 12, 4, 6, 17, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 4608 && IMG_VERTICAL_SIZE == 576) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 18, 4, 3, 17, 19, 0, 16, 15, 20, 13, 12, 22, 6, 9, 8, 5, 21, 11, 10, 7, 2, 1, 14};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 7, 10, 19, 18, 17, 16, 21, 14, 6, 12, 11, 13, 9, 8, 15, 20, 5, 4, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 7680 && IMG_VERTICAL_SIZE == 960) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 18, 9, 7, 22, 8, 17, 16, 15, 20, 13, 12, 11, 10, 14, 0, 19, 6, 5, 4, 3, 2, 1, 21};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 9, 20, 19, 10, 17, 16, 15, 14, 2, 12, 11, 13, 1, 8, 7, 3, 5, 4, 6, 18, 21, 0};
+		else if (IMG_HORIZONTAL_SIZE == 10752 && IMG_VERTICAL_SIZE == 1344) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 0, 9, 8, 7, 6, 5, 4, 3, 2, 1, 10};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 16, 21, 14, 24, 19, 3, 20, 17, 9, 18, 22, 15, 4, 23, 8, 10, 13, 0, 6, 7, 12, 5, 2, 1, 11};
+		else if (IMG_HORIZONTAL_SIZE == 13824 && IMG_VERTICAL_SIZE == 1728) bit_order = {31, 30, 29, 28, 27, 26, 25, 18, 23, 14, 4, 10, 15, 8, 11, 2, 7, 20, 19, 17, 16, 12, 6, 1, 5, 9, 22, 24, 3, 0, 21, 13};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 22, 4, 17, 21, 19, 18, 5, 16, 15, 14, 13, 12, 23, 10, 9, 8, 7, 6, 20, 11, 3, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 16896 && IMG_VERTICAL_SIZE == 2112) bit_order = {31, 30, 29, 28, 27, 26, 25, 4, 23, 22, 21, 20, 19, 18, 17, 16, 15, 1, 9, 12, 11, 10, 13, 8, 7, 6, 5, 3, 24, 2, 14, 0};
+		else if (IMG_HORIZONTAL_SIZE == 18432 && IMG_VERTICAL_SIZE == 2304) bit_order = {31, 30, 29, 28, 27, 26, 25, 18, 4, 19, 17, 22, 20, 2, 15, 8, 7, 14, 6, 13, 10, 9, 24, 11, 12, 5, 1, 23, 3, 21, 0, 16};
+		else if (IMG_HORIZONTAL_SIZE == 19968 && IMG_VERTICAL_SIZE == 2496) bit_order = {31, 30, 29, 28, 27, 26, 25, 1, 23, 19, 12, 9, 16, 14, 24, 17, 5, 22, 15, 21, 3, 13, 0, 18, 6, 10, 11, 4, 8, 2, 20, 7};
+		else if (IMG_HORIZONTAL_SIZE == 21504 && IMG_VERTICAL_SIZE == 2688) bit_order = {31, 30, 29, 28, 27, 26, 25, 10, 22, 3, 18, 24, 5, 14, 15, 4, 13, 19, 1, 12, 16, 7, 8, 6, 20, 2, 11, 17, 9, 0, 23, 21};
+		else if (IMG_HORIZONTAL_SIZE == 23040 && IMG_VERTICAL_SIZE == 2880) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 0, 5, 4, 3, 2, 1, 6};
+		else if (IMG_HORIZONTAL_SIZE == 24576 && IMG_VERTICAL_SIZE == 3072) bit_order = {31, 30, 29, 28, 27, 26, 25, 17, 7, 2, 20, 3, 19, 24, 8, 16, 0, 6, 23, 4, 22, 11, 5, 15, 13, 10, 1, 12, 14, 9, 21, 18};
+		else if (IMG_HORIZONTAL_SIZE == 26112 && IMG_VERTICAL_SIZE == 3264) bit_order = {31, 30, 29, 28, 27, 26, 25, 19, 6, 18, 9, 12, 23, 5, 17, 3, 15, 24, 20, 21, 14, 16, 13, 7, 2, 22, 10, 4, 1, 11, 8, 0};
+		else if (IMG_HORIZONTAL_SIZE == 27648 && IMG_VERTICAL_SIZE == 3456) bit_order = {31, 30, 29, 28, 27, 26, 25, 9, 23, 21, 18, 19, 24, 16, 13, 3, 20, 22, 11, 17, 7, 10, 12, 8, 14, 6, 15, 4, 5, 2, 1, 0};
+		else if (IMG_HORIZONTAL_SIZE == 29184 && IMG_VERTICAL_SIZE == 3648) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 0, 5, 4, 3, 2, 1, 6};
+		else if (IMG_HORIZONTAL_SIZE == 30720 && IMG_VERTICAL_SIZE == 3840) bit_order = {31, 30, 29, 28, 27, 26, 25, 17, 5, 6, 4, 9, 21, 20, 16, 23, 18, 19, 3, 24, 10, 11, 1, 14, 13, 7, 22, 15, 8, 12, 2, 0};
+		else if (IMG_HORIZONTAL_SIZE == 32256 && IMG_VERTICAL_SIZE == 4032) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 0, 1};
+		else if (IMG_HORIZONTAL_SIZE == 33792 && IMG_VERTICAL_SIZE == 4224) bit_order = {31, 30, 29, 28, 27, 26, 25, 9, 23, 22, 21, 20, 19, 18, 17, 24, 15, 14, 12, 4, 11, 16, 13, 8, 7, 6, 5, 0, 3, 2, 1, 10};
+		else if (IMG_HORIZONTAL_SIZE == 35328 && IMG_VERTICAL_SIZE == 4416) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+		else {
+			printf("Error: Unsupported IMG size for Flatfish address mapping!");
+			assert(0);
+		}
+	} else {
+		printf("Error: Unsupported this number of banks!");
+		assert(0);
+	}
 
+	// Apply Near Optimal address mapping
+	int64_t nAddr_new = remap_bits_32(bit_order, nAddr);
+	return (nAddr_new);
+}
+
+//---------------------------------------------------
+// Get Address (Near Optimal's address map)
+//	Bank interleaved address map
+//	1. Get LIAM address
+//	2. Do the Near Optimal address mapping for Row-Wise access
+//---------------------------------------------------
+int64_t CAddrGen::GetAddr_NEAR_OPTIMAL_ROW_WISE() {
+	// Check AddrGen finished
+	if (this->eFinalTrans == ERESULT_TYPE_YES) {
+		return (-1);
+	};
+
+	// Generate LIAM address	
+	int64_t nAddr = this->GetAddr_LIAM();
+
+	//int64_t nRow  = GetRowNum_AMap_Global(nAddr);			// Global. Address map
+	int     nBank = GetBankNum_AMap_Global(nAddr);
+	int     nCol  = GetColNum_AMap_Global(nAddr);
+	int     nRow  = GetRowNum_AMap_Global(nAddr);
+	int64_t nAddr_new = GetAddr_AMap_Global(nRow, nBank, nCol); // NEAR_OPTIMAL_ROW_WISE = LIAM
 
 	return (nAddr_new);
 }
+
+//---------------------------------------------------
+// Get Address (Near Optimal's address map)
+//	Bank interleaved address map
+//	1. Get LIAM address
+//	2. Do the Near Optimal address mapping for Col-Wise access
+//---------------------------------------------------
+int64_t CAddrGen::GetAddr_NEAR_OPTIMAL_COL_WISE() {
+	std::array<uint8_t, 32> bit_order;
+
+	// Check AddrGen finished
+	if (this->eFinalTrans == ERESULT_TYPE_YES) {
+		return (-1);
+	};
+
+	// Generate LIAM address	
+	int64_t nAddr = this->GetAddr_LIAM();
+
+	// ========== Column-Wise: True + Row-Wise: False ==========
+	if (BANK_NUM == 16) {
+		if (IMG_HORIZONTAL_SIZE == 512 && IMG_VERTICAL_SIZE == 64) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 4, 3, 10, 2, 1, 0, 9, 8, 7, 6, 5};
+		else if (IMG_HORIZONTAL_SIZE == 1024 && IMG_VERTICAL_SIZE == 128) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 2, 12, 11, 1, 0, 10, 9, 8, 7, 6};
+		else if (IMG_HORIZONTAL_SIZE == 1536 && IMG_VERTICAL_SIZE == 192) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 10, 9, 8, 6, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 2048 && IMG_VERTICAL_SIZE == 256) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 2, 1, 14, 13, 12, 0, 11, 10, 9, 8, 7};
+		else if (IMG_HORIZONTAL_SIZE == 2560 && IMG_VERTICAL_SIZE == 320) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 10, 9, 6, 8, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 5, 4, 3, 2, 1, 0, 14, 13, 12, 11, 10, 9, 7, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 3584 && IMG_VERTICAL_SIZE == 448) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 10, 7, 9, 6, 8, 5};
+		else if (IMG_HORIZONTAL_SIZE == 4096 && IMG_VERTICAL_SIZE == 512) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 7, 6, 5, 4, 3, 2, 1, 0, 16, 15, 14, 13, 12, 11, 10, 9, 8};
+		else if (IMG_HORIZONTAL_SIZE == 4608 && IMG_VERTICAL_SIZE == 576) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 7, 10, 6, 9, 8, 5};
+		else if (IMG_HORIZONTAL_SIZE == 5120 && IMG_VERTICAL_SIZE == 640) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 5, 4, 3, 2, 1, 0, 14, 13, 12, 11, 10, 7, 9, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 5632 && IMG_VERTICAL_SIZE == 704) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 10, 6, 8, 9, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 10, 8, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 6656 && IMG_VERTICAL_SIZE == 832) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 8, 10, 6, 7, 9, 5};
+		else if (IMG_HORIZONTAL_SIZE == 7168 && IMG_VERTICAL_SIZE == 896) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 5, 4, 3, 2, 1, 0, 14, 13, 12, 11, 8, 10, 7, 9, 6};
+		else if (IMG_HORIZONTAL_SIZE == 7680 && IMG_VERTICAL_SIZE == 960) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 8, 7, 10, 6, 9, 5};
+		else if (IMG_HORIZONTAL_SIZE == 8192 && IMG_VERTICAL_SIZE == 1024) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 8, 7, 6, 5, 4, 3, 2, 1, 0, 17, 16, 15, 14, 13, 12, 11, 10, 9};
+		else if (IMG_HORIZONTAL_SIZE == 8704 && IMG_VERTICAL_SIZE == 1088) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 8, 7, 11, 6, 10, 9, 5};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 5, 4, 3, 2, 1, 0, 14, 13, 12, 8, 11, 7, 10, 9, 6};
+		else if (IMG_HORIZONTAL_SIZE == 9728 && IMG_VERTICAL_SIZE == 1216) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 8, 6, 10, 7, 9, 5};
+		else if (IMG_HORIZONTAL_SIZE == 10240 && IMG_VERTICAL_SIZE == 1280) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 11, 8, 10, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 10752 && IMG_VERTICAL_SIZE == 1344) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 6, 8, 10, 9, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 11264 && IMG_VERTICAL_SIZE == 1408) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 5, 4, 3, 2, 1, 0, 14, 13, 12, 11, 7, 9, 10, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 11776 && IMG_VERTICAL_SIZE == 1472) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 7, 6, 9, 10, 8, 5};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 7, 6, 5, 4, 3, 2, 1, 0, 16, 15, 14, 13, 12, 11, 9, 10, 8};
+		else if (IMG_HORIZONTAL_SIZE == 12800 && IMG_VERTICAL_SIZE == 1600) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 7, 9, 6, 10, 8, 5};
+		else if (IMG_HORIZONTAL_SIZE == 13312 && IMG_VERTICAL_SIZE == 1664) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 5, 4, 3, 2, 1, 0, 14, 13, 12, 9, 11, 7, 8, 10, 6};
+		else if (IMG_HORIZONTAL_SIZE == 13824 && IMG_VERTICAL_SIZE == 1728) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 11, 9, 6, 8, 7, 10, 5};
+		else if (IMG_HORIZONTAL_SIZE == 14336 && IMG_VERTICAL_SIZE == 1792) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 6, 5, 4, 3, 2, 1, 0, 15, 14, 13, 12, 9, 11, 8, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 14848 && IMG_VERTICAL_SIZE == 1856) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 9, 8, 11, 6, 7, 10, 5};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 5, 4, 3, 2, 1, 0, 14, 13, 12, 9, 8, 11, 7, 10, 6};
+		else if (IMG_HORIZONTAL_SIZE == 15872 && IMG_VERTICAL_SIZE == 1984) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 0, 13, 12, 9, 8, 7, 11, 6, 10, 5};
+		else if (IMG_HORIZONTAL_SIZE == 16384 && IMG_VERTICAL_SIZE == 2048) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 18, 17, 16, 15, 14, 13, 12, 11, 10};
+		else {
+			printf("Error: Unsupported IMG size for NEAR_OPTIMAL_COL_WISE address mapping!");
+			return -1;
+		}
+	} else if (BANK_NUM == 32) {
+		if (IMG_HORIZONTAL_SIZE == 1024 && IMG_VERTICAL_SIZE == 128) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 0, 12, 11, 2, 1, 10, 9, 8, 7, 6};
+		else if (IMG_HORIZONTAL_SIZE == 2048 && IMG_VERTICAL_SIZE == 256) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 2, 0, 14, 13, 12, 1, 11, 10, 9, 8, 7};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 11, 15, 14, 13, 12, 10, 9, 7, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 4096 && IMG_VERTICAL_SIZE == 512) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 7, 6, 5, 4, 3, 2, 1, 0, 16, 15, 14, 13, 12, 11, 10, 9, 8};
+		else if (IMG_HORIZONTAL_SIZE == 5120 && IMG_VERTICAL_SIZE == 640) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 11, 15, 14, 13, 12, 10, 7, 9, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 12, 16, 15, 14, 13, 11, 10, 8, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 7168 && IMG_VERTICAL_SIZE == 896) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 11, 15, 14, 13, 12, 8, 10, 7, 9, 6};
+		else if (IMG_HORIZONTAL_SIZE == 8192 && IMG_VERTICAL_SIZE == 1024) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 8, 7, 6, 5, 4, 3, 2, 1, 0, 14, 18, 17, 16, 15, 13, 12, 11, 10, 9};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 8, 15, 14, 13, 12, 11, 7, 10, 9, 6};
+		else if (IMG_HORIZONTAL_SIZE == 10240 && IMG_VERTICAL_SIZE == 1280) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 12, 16, 15, 14, 13, 11, 8, 10, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 11264 && IMG_VERTICAL_SIZE == 1408) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 11, 15, 14, 13, 12, 7, 9, 10, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 7, 6, 5, 4, 3, 2, 1, 0, 13, 17, 16, 15, 14, 12, 11, 9, 10, 8};
+		else if (IMG_HORIZONTAL_SIZE == 13312 && IMG_VERTICAL_SIZE == 1664) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 9, 15, 14, 13, 12, 11, 7, 8, 10, 6};
+		else if (IMG_HORIZONTAL_SIZE == 14336 && IMG_VERTICAL_SIZE == 1792) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 12, 16, 15, 14, 13, 9, 11, 8, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 9, 8, 11, 7, 10, 6};
+		else if (IMG_HORIZONTAL_SIZE == 16384 && IMG_VERTICAL_SIZE == 2048) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 19, 18, 17, 16, 14, 13, 12, 11, 10};
+		else if (IMG_HORIZONTAL_SIZE == 17408 && IMG_VERTICAL_SIZE == 2176) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 8, 15, 14, 13, 9, 12, 7, 11, 10, 6};
+		else if (IMG_HORIZONTAL_SIZE == 18432 && IMG_VERTICAL_SIZE == 2304) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 9, 16, 15, 14, 13, 12, 8, 11, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 19456 && IMG_VERTICAL_SIZE == 2432) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 9, 15, 14, 13, 12, 7, 11, 8, 10, 6};
+		else if (IMG_HORIZONTAL_SIZE == 20480 && IMG_VERTICAL_SIZE == 2560) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 7, 6, 5, 4, 3, 2, 1, 0, 13, 17, 16, 15, 14, 12, 9, 11, 10, 8};
+		else if (IMG_HORIZONTAL_SIZE == 21504 && IMG_VERTICAL_SIZE == 2688) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 7, 15, 14, 13, 12, 9, 11, 10, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 22528 && IMG_VERTICAL_SIZE == 2816) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 12, 16, 15, 14, 13, 8, 10, 11, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 23552 && IMG_VERTICAL_SIZE == 2944) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 8, 7, 10, 11, 9, 6};
+		else if (IMG_HORIZONTAL_SIZE == 24576 && IMG_VERTICAL_SIZE == 3072) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 8, 7, 6, 5, 4, 3, 2, 1, 0, 14, 18, 17, 16, 15, 13, 12, 10, 11, 9};
+		else if (IMG_HORIZONTAL_SIZE == 25600 && IMG_VERTICAL_SIZE == 3200) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 8, 10, 7, 11, 9, 6};
+		else if (IMG_HORIZONTAL_SIZE == 26624 && IMG_VERTICAL_SIZE == 3328) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 10, 16, 15, 14, 13, 12, 8, 9, 11, 7};
+		else if (IMG_HORIZONTAL_SIZE == 27648 && IMG_VERTICAL_SIZE == 3456) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 10, 7, 9, 8, 11, 6};
+		else if (IMG_HORIZONTAL_SIZE == 28672 && IMG_VERTICAL_SIZE == 3584) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 7, 6, 5, 4, 3, 2, 1, 0, 13, 17, 16, 15, 14, 10, 12, 9, 11, 8};
+		else if (IMG_HORIZONTAL_SIZE == 29696 && IMG_VERTICAL_SIZE == 3712) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 9, 15, 14, 13, 10, 12, 7, 8, 11, 6};
+		else if (IMG_HORIZONTAL_SIZE == 30720 && IMG_VERTICAL_SIZE == 3840) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 13, 16, 15, 14, 10, 9, 12, 8, 11, 7};
+		else if (IMG_HORIZONTAL_SIZE == 31744 && IMG_VERTICAL_SIZE == 3968) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 13, 15, 14, 10, 9, 8, 12, 7, 11, 6};
+		else if (IMG_HORIZONTAL_SIZE == 32768 && IMG_VERTICAL_SIZE == 4096) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 16, 20, 19, 18, 17, 15, 14, 13, 12, 11};
+		else {
+			printf("Error: Unsupported IMG size for NEAR_OPTIMAL_COL_WISE address mapping!");
+			return -1;
+		}
+	} else if (BANK_NUM == 48) {
+		if (IMG_HORIZONTAL_SIZE == 1536 && IMG_VERTICAL_SIZE == 192) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 4, 3, 2, 1, 10, 13, 12, 11, 0, 9, 8, 6, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 11, 15, 14, 13, 12, 10, 9, 7, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 4608 && IMG_VERTICAL_SIZE == 576) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 10, 14, 13, 12, 11, 7, 9, 6, 8, 5};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 12, 16, 15, 14, 13, 11, 10, 8, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 7680 && IMG_VERTICAL_SIZE == 960) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 11, 14, 13, 12, 8, 7, 10, 6, 9, 5};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 11, 15, 14, 13, 12, 8, 10, 7, 9, 6};
+		else if (IMG_HORIZONTAL_SIZE == 10752 && IMG_VERTICAL_SIZE == 1344) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 10, 14, 13, 12, 11, 6, 8, 9, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 7, 6, 5, 4, 3, 2, 1, 0, 13, 17, 16, 15, 14, 12, 11, 10, 9, 8};
+		else if (IMG_HORIZONTAL_SIZE == 13824 && IMG_VERTICAL_SIZE == 1728) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 6, 14, 13, 12, 11, 10, 8, 9, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 8, 15, 14, 13, 12, 11, 7, 10, 9, 6};
+		else if (IMG_HORIZONTAL_SIZE == 16896 && IMG_VERTICAL_SIZE == 2112) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 7, 14, 13, 12, 8, 11, 6, 9, 10, 5};
+		else if (IMG_HORIZONTAL_SIZE == 18432 && IMG_VERTICAL_SIZE == 2304) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 12, 16, 15, 14, 13, 11, 9, 8, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 19968 && IMG_VERTICAL_SIZE == 2496) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 9, 14, 13, 12, 7, 11, 6, 10, 8, 5};
+		else if (IMG_HORIZONTAL_SIZE == 21504 && IMG_VERTICAL_SIZE == 2688) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 9, 15, 14, 13, 12, 11, 7, 10, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 23040 && IMG_VERTICAL_SIZE == 2880) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 8, 14, 13, 12, 9, 11, 6, 10, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 24576 && IMG_VERTICAL_SIZE == 3072) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 19, 18, 17, 16, 14, 13, 12, 11, 10};
+		else if (IMG_HORIZONTAL_SIZE == 26112 && IMG_VERTICAL_SIZE == 3264) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 8, 14, 13, 12, 9, 6, 11, 10, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 27648 && IMG_VERTICAL_SIZE == 3456) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 9, 7, 11, 10, 8, 6};
+		else if (IMG_HORIZONTAL_SIZE == 29184 && IMG_VERTICAL_SIZE == 3648) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 9, 14, 13, 12, 7, 6, 11, 10, 8, 5};
+		else if (IMG_HORIZONTAL_SIZE == 30720 && IMG_VERTICAL_SIZE == 3840) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 12, 16, 15, 14, 13, 8, 9, 11, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 32256 && IMG_VERTICAL_SIZE == 4032) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 12, 14, 13, 8, 7, 6, 9, 11, 10, 5};
+		else if (IMG_HORIZONTAL_SIZE == 33792 && IMG_VERTICAL_SIZE == 4224) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 12, 15, 14, 13, 8, 7, 10, 9, 11, 6};
+		else if (IMG_HORIZONTAL_SIZE == 35328 && IMG_VERTICAL_SIZE == 4416) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 10, 14, 13, 12, 6, 8, 9, 11, 7, 5};
+		else if (IMG_HORIZONTAL_SIZE == 36864 && IMG_VERTICAL_SIZE == 4608) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 7, 6, 5, 4, 3, 2, 1, 0, 13, 17, 16, 15, 14, 12, 10, 9, 11, 8};
+		else if (IMG_HORIZONTAL_SIZE == 38400 && IMG_VERTICAL_SIZE == 4800) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 6, 14, 13, 12, 10, 8, 9, 7, 11, 5};
+		else if (IMG_HORIZONTAL_SIZE == 39936 && IMG_VERTICAL_SIZE == 4992) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 10, 15, 14, 13, 8, 12, 7, 9, 11, 6};
+		else if (IMG_HORIZONTAL_SIZE == 41472 && IMG_VERTICAL_SIZE == 5184) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 10, 14, 13, 8, 7, 12, 6, 9, 11, 5};
+		else if (IMG_HORIZONTAL_SIZE == 43008 && IMG_VERTICAL_SIZE == 5376) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 6, 5, 4, 3, 2, 1, 0, 10, 16, 15, 14, 13, 12, 9, 8, 11, 7};
+		else if (IMG_HORIZONTAL_SIZE == 44544 && IMG_VERTICAL_SIZE == 5568) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 9, 14, 13, 10, 7, 12, 6, 8, 11, 5};
+		else if (IMG_HORIZONTAL_SIZE == 46080 && IMG_VERTICAL_SIZE == 5760) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 5, 4, 3, 2, 1, 0, 9, 15, 14, 13, 10, 12, 7, 8, 11, 6};
+		else if (IMG_HORIZONTAL_SIZE == 47616 && IMG_VERTICAL_SIZE == 5952) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 4, 3, 2, 1, 0, 8, 14, 13, 10, 9, 12, 6, 7, 11, 5};
+		else if (IMG_HORIZONTAL_SIZE == 49152 && IMG_VERTICAL_SIZE == 6144) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 16, 20, 19, 18, 17, 15, 14, 13, 12, 11};
+		else {
+			printf("Error: Unsupported IMG size for NEAR_OPTIMAL_COL_WISE address mapping!");
+			return -1;
+		}
+	} else if (BANK_NUM == 64) {
+		if (IMG_HORIZONTAL_SIZE == 2048 && IMG_VERTICAL_SIZE == 256) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 1, 0, 14, 13, 12, 2, 11, 10, 9, 8, 7};
+		else if (IMG_HORIZONTAL_SIZE == 4096 && IMG_VERTICAL_SIZE == 512) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 7, 6, 5, 4, 3, 2, 1, 0, 16, 15, 14, 13, 12, 11, 10, 9, 8};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 12, 17, 16, 15, 14, 11, 10, 8, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 8192 && IMG_VERTICAL_SIZE == 1024) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 8, 7, 6, 5, 4, 3, 2, 1, 14, 0, 18, 17, 16, 15, 13, 12, 11, 10, 9};
+		else if (IMG_HORIZONTAL_SIZE == 10240 && IMG_VERTICAL_SIZE == 1280) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 12, 17, 16, 15, 14, 11, 8, 10, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 7, 6, 5, 4, 3, 2, 1, 0, 14, 13, 18, 17, 16, 15, 12, 11, 9, 10, 8};
+		else if (IMG_HORIZONTAL_SIZE == 14336 && IMG_VERTICAL_SIZE == 1792) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 12, 17, 16, 15, 14, 9, 11, 8, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 16384 && IMG_VERTICAL_SIZE == 2048) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 16, 15, 20, 19, 18, 17, 14, 13, 12, 11, 10};
+		else if (IMG_HORIZONTAL_SIZE == 18432 && IMG_VERTICAL_SIZE == 2304) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 9, 17, 16, 15, 14, 12, 8, 11, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 20480 && IMG_VERTICAL_SIZE == 2560) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 7, 6, 5, 4, 3, 2, 1, 0, 14, 13, 18, 17, 16, 15, 12, 9, 11, 10, 8};
+		else if (IMG_HORIZONTAL_SIZE == 22528 && IMG_VERTICAL_SIZE == 2816) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 12, 17, 16, 15, 14, 8, 10, 11, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 24576 && IMG_VERTICAL_SIZE == 3072) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 19, 18, 17, 16, 13, 12, 10, 11, 9};
+		else if (IMG_HORIZONTAL_SIZE == 26624 && IMG_VERTICAL_SIZE == 3328) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 10, 17, 16, 15, 14, 12, 8, 9, 11, 7};
+		else if (IMG_HORIZONTAL_SIZE == 28672 && IMG_VERTICAL_SIZE == 3584) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 7, 6, 5, 4, 3, 2, 1, 0, 14, 13, 18, 17, 16, 15, 10, 12, 9, 11, 8};
+		else if (IMG_HORIZONTAL_SIZE == 30720 && IMG_VERTICAL_SIZE == 3840) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 10, 17, 16, 15, 14, 9, 12, 8, 11, 7};
+		else if (IMG_HORIZONTAL_SIZE == 32768 && IMG_VERTICAL_SIZE == 4096) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 17, 16, 21, 20, 19, 18, 15, 14, 13, 12, 11};
+		else if (IMG_HORIZONTAL_SIZE == 34816 && IMG_VERTICAL_SIZE == 4352) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 14, 9, 17, 16, 15, 10, 13, 8, 12, 11, 7};
+		else if (IMG_HORIZONTAL_SIZE == 36864 && IMG_VERTICAL_SIZE == 4608) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 7, 6, 5, 4, 3, 2, 1, 0, 14, 10, 18, 17, 16, 15, 13, 9, 12, 11, 8};
+		else if (IMG_HORIZONTAL_SIZE == 38912 && IMG_VERTICAL_SIZE == 4864) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 10, 17, 16, 15, 14, 8, 12, 9, 11, 7};
+		else if (IMG_HORIZONTAL_SIZE == 40960 && IMG_VERTICAL_SIZE == 5120) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 19, 18, 17, 16, 13, 10, 12, 11, 9};
+		else if (IMG_HORIZONTAL_SIZE == 43008 && IMG_VERTICAL_SIZE == 5376) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 8, 17, 16, 15, 14, 10, 12, 11, 9, 7};
+		else if (IMG_HORIZONTAL_SIZE == 45056 && IMG_VERTICAL_SIZE == 5632) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 7, 6, 5, 4, 3, 2, 1, 0, 14, 13, 18, 17, 16, 15, 9, 11, 12, 10, 8};
+		else if (IMG_HORIZONTAL_SIZE == 47104 && IMG_VERTICAL_SIZE == 5888) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 9, 17, 16, 15, 14, 8, 11, 12, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 49152 && IMG_VERTICAL_SIZE == 6144) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 16, 15, 20, 19, 18, 17, 14, 13, 11, 12, 10};
+		else if (IMG_HORIZONTAL_SIZE == 51200 && IMG_VERTICAL_SIZE == 6400) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 9, 17, 16, 15, 14, 11, 8, 12, 10, 7};
+		else if (IMG_HORIZONTAL_SIZE == 53248 && IMG_VERTICAL_SIZE == 6656) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 7, 6, 5, 4, 3, 2, 1, 0, 14, 11, 18, 17, 16, 15, 13, 9, 10, 12, 8};
+		else if (IMG_HORIZONTAL_SIZE == 55296 && IMG_VERTICAL_SIZE == 6912) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 13, 11, 17, 16, 15, 14, 8, 10, 9, 12, 7};
+		else if (IMG_HORIZONTAL_SIZE == 57344 && IMG_VERTICAL_SIZE == 7168) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 8, 7, 6, 5, 4, 3, 2, 1, 0, 15, 14, 19, 18, 17, 16, 11, 13, 10, 12, 9};
+		else if (IMG_HORIZONTAL_SIZE == 59392 && IMG_VERTICAL_SIZE == 7424) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 14, 10, 17, 16, 15, 11, 13, 8, 9, 12, 7};
+		else if (IMG_HORIZONTAL_SIZE == 61440 && IMG_VERTICAL_SIZE == 7680) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 7, 6, 5, 4, 3, 2, 1, 0, 14, 11, 18, 17, 16, 15, 10, 13, 9, 12, 8};
+		else if (IMG_HORIZONTAL_SIZE == 63488 && IMG_VERTICAL_SIZE == 7936) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 6, 5, 4, 3, 2, 1, 0, 14, 10, 17, 16, 15, 11, 9, 13, 8, 12, 7};
+		else if (IMG_HORIZONTAL_SIZE == 65536 && IMG_VERTICAL_SIZE == 8192) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 18, 17, 22, 21, 20, 19, 16, 15, 14, 13, 12};
+		else {
+			printf("Error: Unsupported IMG size for NEAR_OPTIMAL_COL_WISE address mapping!");
+			return -1;
+		}
+	}
+
+	// Apply Near Optimal address mapping
+	int64_t nAddr_new = remap_bits_32(bit_order, nAddr);
+	//printf("COL_WIDTH = %d | Old Address: %lx\t- New Col: %d - New Bank: %d - New Row: %ld\n", COL_WIDTH, nAddr, GetColNum_AMap_Global(nAddr), GetBankNum_AMap_Global(nAddr), GetRowNum_AMap_Global(nAddr));
+	//printf("COL_WIDTH = %d | New Address: %lx\t- New Col: %d - New Bank: %d - New Row: %ld\n", COL_WIDTH, nAddr_new, GetColNum_AMap_Global(nAddr_new), GetBankNum_AMap_Global(nAddr_new), GetRowNum_AMap_Global(nAddr_new));
+	return (nAddr_new);
+}
+
+//---------------------------------------------------
+// Get Address (Near Optimal's address map)
+//	Bank interleaved address map
+//	1. Get LIAM address
+//	2. Do the Near Optimal address mapping for Both-Wise access
+//---------------------------------------------------
+int64_t CAddrGen::GetAddr_NEAR_OPTIMAL_BOTH_WISE() {
+	std::array<uint8_t, 32> bit_order;
+
+	// Check AddrGen finished
+	if (this->eFinalTrans == ERESULT_TYPE_YES) {
+		return (-1);
+	};
+
+	// Generate LIAM address	
+	int64_t nAddr = this->GetAddr_LIAM();
+
+	// ========== Column-Wise: True + Row-Wise: True ==========
+	if (BANK_NUM == 16) {
+		if (IMG_HORIZONTAL_SIZE == 512 && IMG_VERTICAL_SIZE == 64) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 4, 9, 8, 3, 2, 7, 1, 6, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 1024 && IMG_VERTICAL_SIZE == 128) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 5, 4, 10, 9, 3, 2, 8, 1, 7, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 1536 && IMG_VERTICAL_SIZE == 192) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 4, 9, 8, 3, 2, 1, 6, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 2048 && IMG_VERTICAL_SIZE == 256) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 6, 5, 4, 11, 10, 3, 2, 9, 1, 8, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 2560 && IMG_VERTICAL_SIZE == 320) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 4, 3, 10, 9, 2, 1, 6, 8, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 5, 4, 10, 9, 3, 2, 1, 7, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 3584 && IMG_VERTICAL_SIZE == 448) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 4, 3, 10, 9, 7, 2, 1, 6, 8, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 4096 && IMG_VERTICAL_SIZE == 512) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 7, 6, 5, 4, 12, 11, 3, 2, 10, 1, 9, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 4608 && IMG_VERTICAL_SIZE == 576) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 4, 3, 10, 7, 2, 1, 6, 9, 8, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 5120 && IMG_VERTICAL_SIZE == 640) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 3, 11, 10, 2, 1, 7, 9, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 5632 && IMG_VERTICAL_SIZE == 704) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 4, 3, 10, 6, 2, 1, 8, 9, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 6, 5, 4, 11, 10, 3, 2, 1, 8, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 6656 && IMG_VERTICAL_SIZE == 832) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 4, 3, 10, 8, 2, 1, 6, 7, 9, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 7168 && IMG_VERTICAL_SIZE == 896) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 3, 11, 10, 8, 2, 1, 7, 9, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 7680 && IMG_VERTICAL_SIZE == 960) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 8, 4, 3, 11, 10, 7, 2, 1, 6, 9, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 8192 && IMG_VERTICAL_SIZE == 1024) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 8, 7, 6, 5, 4, 13, 12, 3, 2, 11, 1, 10, 0, 9};
+		else if (IMG_HORIZONTAL_SIZE == 8704 && IMG_VERTICAL_SIZE == 1088) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 8, 4, 3, 11, 7, 2, 1, 6, 10, 9, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 3, 11, 8, 2, 1, 7, 10, 9, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 9728 && IMG_VERTICAL_SIZE == 1216) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 2, 11, 8, 6, 1, 10, 7, 9, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 10240 && IMG_VERTICAL_SIZE == 1280) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 4, 3, 12, 11, 2, 1, 8, 10, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 10752 && IMG_VERTICAL_SIZE == 1344) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 2, 11, 8, 6, 1, 10, 9, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 11264 && IMG_VERTICAL_SIZE == 1408) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 3, 11, 7, 2, 1, 9, 10, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 11776 && IMG_VERTICAL_SIZE == 1472) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 2, 11, 7, 6, 1, 9, 10, 8, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 7, 6, 5, 4, 12, 11, 3, 2, 1, 9, 10, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 12800 && IMG_VERTICAL_SIZE == 1600) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 2, 11, 9, 7, 1, 6, 10, 8, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 13312 && IMG_VERTICAL_SIZE == 1664) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 3, 11, 9, 2, 1, 7, 8, 10, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 13824 && IMG_VERTICAL_SIZE == 1728) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 2, 11, 9, 6, 1, 8, 7, 10, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 14336 && IMG_VERTICAL_SIZE == 1792) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 4, 3, 12, 11, 9, 2, 1, 8, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 14848 && IMG_VERTICAL_SIZE == 1856) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 9, 4, 3, 11, 8, 2, 1, 6, 7, 10, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 9, 5, 4, 3, 12, 11, 8, 2, 1, 7, 10, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 15872 && IMG_VERTICAL_SIZE == 1984) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 9, 8, 4, 3, 12, 11, 7, 2, 1, 6, 10, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 16384 && IMG_VERTICAL_SIZE == 2048) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 9, 8, 7, 6, 5, 4, 14, 13, 3, 2, 12, 1, 11, 0, 10};
+		else {
+			printf("Error: Unsupported IMG size for NEAR_OPTIMAL_BOTH_WISE address mapping!");
+			return -1;
+		}
+	} else if (BANK_NUM == 32) {
+		if (IMG_HORIZONTAL_SIZE == 1024 && IMG_VERTICAL_SIZE == 128) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 5, 2, 10, 9, 4, 3, 8, 1, 7, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 2048 && IMG_VERTICAL_SIZE == 256) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 6, 5, 2, 11, 10, 4, 3, 9, 1, 8, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 9, 11, 10, 3, 2, 1, 7, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 4096 && IMG_VERTICAL_SIZE == 512) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 7, 6, 5, 2, 12, 11, 4, 3, 10, 1, 9, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 5120 && IMG_VERTICAL_SIZE == 640) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 10, 11, 3, 2, 1, 7, 9, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 4, 10, 12, 11, 3, 2, 1, 8, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 7168 && IMG_VERTICAL_SIZE == 896) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 10, 11, 8, 3, 2, 1, 7, 9, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 8192 && IMG_VERTICAL_SIZE == 1024) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 8, 7, 6, 5, 2, 13, 12, 4, 3, 11, 1, 10, 0, 9};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 11, 12, 8, 2, 1, 7, 10, 9, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 10240 && IMG_VERTICAL_SIZE == 1280) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 4, 11, 12, 3, 2, 1, 8, 10, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 11264 && IMG_VERTICAL_SIZE == 1408) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 7, 12, 11, 2, 1, 9, 10, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 7, 6, 5, 4, 11, 13, 12, 3, 2, 1, 9, 10, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 13312 && IMG_VERTICAL_SIZE == 1664) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 11, 12, 9, 2, 1, 7, 8, 10, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 14336 && IMG_VERTICAL_SIZE == 1792) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 4, 11, 12, 9, 3, 2, 1, 8, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 11, 12, 9, 8, 2, 1, 7, 10, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 16384 && IMG_VERTICAL_SIZE == 2048) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 9, 8, 7, 6, 5, 2, 14, 13, 4, 3, 12, 1, 11, 0, 10};
+		else if (IMG_HORIZONTAL_SIZE == 17408 && IMG_VERTICAL_SIZE == 2176) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 9, 5, 4, 3, 12, 13, 8, 2, 1, 7, 11, 10, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 18432 && IMG_VERTICAL_SIZE == 2304) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 3, 12, 13, 9, 2, 1, 8, 11, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 19456 && IMG_VERTICAL_SIZE == 2432) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 7, 12, 9, 2, 1, 11, 8, 10, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 20480 && IMG_VERTICAL_SIZE == 2560) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 7, 6, 5, 4, 12, 13, 3, 2, 1, 9, 11, 10, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 21504 && IMG_VERTICAL_SIZE == 2688) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 9, 12, 7, 2, 1, 11, 10, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 22528 && IMG_VERTICAL_SIZE == 2816) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 3, 8, 13, 12, 2, 1, 10, 11, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 23552 && IMG_VERTICAL_SIZE == 2944) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 7, 12, 8, 2, 1, 10, 11, 9, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 24576 && IMG_VERTICAL_SIZE == 3072) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 8, 7, 6, 5, 4, 12, 14, 13, 3, 2, 1, 10, 11, 0, 9};
+		else if (IMG_HORIZONTAL_SIZE == 25600 && IMG_VERTICAL_SIZE == 3200) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 10, 12, 8, 2, 1, 7, 11, 9, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 26624 && IMG_VERTICAL_SIZE == 3328) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 3, 12, 13, 10, 2, 1, 8, 9, 11, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 27648 && IMG_VERTICAL_SIZE == 3456) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 7, 12, 10, 2, 1, 9, 8, 11, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 28672 && IMG_VERTICAL_SIZE == 3584) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 7, 6, 5, 4, 12, 13, 10, 3, 2, 1, 9, 11, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 29696 && IMG_VERTICAL_SIZE == 3712) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 10, 5, 4, 3, 12, 13, 9, 2, 1, 7, 8, 11, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 30720 && IMG_VERTICAL_SIZE == 3840) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 3, 12, 13, 10, 9, 2, 1, 8, 11, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 31744 && IMG_VERTICAL_SIZE == 3968) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 10, 5, 4, 3, 12, 13, 9, 8, 2, 1, 7, 11, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 32768 && IMG_VERTICAL_SIZE == 4096) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 10, 9, 8, 7, 6, 5, 2, 15, 14, 4, 3, 13, 1, 12, 0, 11};
+		else {
+			printf("Error: Unsupported IMG size for NEAR_OPTIMAL_BOTH_WISE address mapping!");
+			return -1;
+		}
+	} else if (BANK_NUM == 48) {
+		if (IMG_HORIZONTAL_SIZE == 1536 && IMG_VERTICAL_SIZE == 192) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 4, 8, 10, 9, 3, 2, 1, 6, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 3072 && IMG_VERTICAL_SIZE == 384) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 9, 11, 10, 3, 2, 1, 7, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 4608 && IMG_VERTICAL_SIZE == 576) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 4, 9, 10, 7, 3, 2, 1, 6, 8, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 4, 10, 12, 11, 3, 2, 1, 9, 8, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 7680 && IMG_VERTICAL_SIZE == 960) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 10, 11, 8, 7, 2, 1, 6, 9, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 9216 && IMG_VERTICAL_SIZE == 1152) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 5, 4, 10, 11, 8, 3, 2, 1, 7, 9, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 10752 && IMG_VERTICAL_SIZE == 1344) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 6, 11, 10, 2, 1, 8, 9, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 7, 6, 5, 4, 2, 13, 12, 11, 3, 1, 10, 9, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 13824 && IMG_VERTICAL_SIZE == 1728) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 10, 11, 6, 2, 1, 8, 9, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 15360 && IMG_VERTICAL_SIZE == 1920) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 11, 12, 8, 2, 1, 7, 10, 9, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 16896 && IMG_VERTICAL_SIZE == 2112) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 8, 4, 3, 11, 12, 7, 2, 1, 6, 9, 10, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 18432 && IMG_VERTICAL_SIZE == 2304) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 4, 11, 12, 3, 2, 1, 9, 8, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 19968 && IMG_VERTICAL_SIZE == 2496) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 4, 3, 11, 9, 7, 2, 1, 6, 10, 8, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 21504 && IMG_VERTICAL_SIZE == 2688) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 11, 12, 9, 2, 1, 7, 10, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 23040 && IMG_VERTICAL_SIZE == 2880) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 9, 4, 3, 11, 12, 8, 2, 1, 6, 10, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 24576 && IMG_VERTICAL_SIZE == 3072) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 9, 8, 7, 6, 5, 2, 14, 13, 4, 3, 12, 1, 11, 10, 0};
+		else if (IMG_HORIZONTAL_SIZE == 26112 && IMG_VERTICAL_SIZE == 3264) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 9, 4, 3, 6, 12, 8, 2, 1, 11, 10, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 27648 && IMG_VERTICAL_SIZE == 3456) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 7, 12, 9, 2, 1, 11, 10, 8, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 29184 && IMG_VERTICAL_SIZE == 3648) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 4, 3, 2, 6, 12, 9, 7, 1, 11, 10, 8, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 30720 && IMG_VERTICAL_SIZE == 3840) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 3, 9, 13, 12, 2, 1, 8, 11, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 32256 && IMG_VERTICAL_SIZE == 4032) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 8, 4, 3, 6, 12, 7, 2, 1, 9, 11, 10, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 33792 && IMG_VERTICAL_SIZE == 4224) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 7, 12, 8, 2, 1, 10, 9, 11, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 35328 && IMG_VERTICAL_SIZE == 4416) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 4, 3, 2, 8, 12, 10, 6, 1, 9, 11, 7, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 36864 && IMG_VERTICAL_SIZE == 4608) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 7, 6, 5, 4, 12, 13, 3, 2, 1, 10, 9, 11, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 38400 && IMG_VERTICAL_SIZE == 4800) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 4, 3, 2, 8, 12, 10, 6, 1, 9, 7, 11, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 39936 && IMG_VERTICAL_SIZE == 4992) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 5, 4, 3, 12, 10, 8, 2, 1, 7, 9, 11, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 41472 && IMG_VERTICAL_SIZE == 5184) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 8, 4, 3, 12, 10, 7, 2, 1, 6, 9, 11, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 43008 && IMG_VERTICAL_SIZE == 5376) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 3, 12, 13, 10, 2, 1, 9, 8, 11, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 44544 && IMG_VERTICAL_SIZE == 5568) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 10, 4, 3, 12, 9, 7, 2, 1, 6, 8, 11, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 46080 && IMG_VERTICAL_SIZE == 5760) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 10, 5, 4, 3, 12, 13, 9, 2, 1, 7, 8, 11, 0, 6};
+		else if (IMG_HORIZONTAL_SIZE == 47616 && IMG_VERTICAL_SIZE == 5952) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 10, 9, 4, 3, 12, 13, 8, 2, 1, 6, 7, 11, 0, 5};
+		else if (IMG_HORIZONTAL_SIZE == 49152 && IMG_VERTICAL_SIZE == 6144) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 10, 9, 8, 7, 6, 5, 2, 15, 14, 4, 3, 13, 1, 12, 0, 11};
+		else {
+			printf("Error: Unsupported IMG size for NEAR_OPTIMAL_BOTH_WISE address mapping!");
+			return -1;
+		}
+	} else if (BANK_NUM == 64) {
+		if (IMG_HORIZONTAL_SIZE == 2048 && IMG_VERTICAL_SIZE == 256) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 3, 2, 12, 11, 10, 4, 9, 1, 8, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 4096 && IMG_VERTICAL_SIZE == 512) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 7, 6, 5, 3, 2, 13, 12, 11, 4, 10, 1, 9, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 6144 && IMG_VERTICAL_SIZE == 768) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 6, 5, 10, 2, 12, 11, 4, 3, 1, 8, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 8192 && IMG_VERTICAL_SIZE == 1024) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 8, 7, 6, 5, 3, 2, 14, 13, 12, 4, 11, 1, 10, 0, 9};
+		else if (IMG_HORIZONTAL_SIZE == 10240 && IMG_VERTICAL_SIZE == 1280) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 11, 1, 13, 12, 3, 2, 8, 10, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 12288 && IMG_VERTICAL_SIZE == 1536) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 7, 6, 5, 11, 2, 13, 12, 4, 3, 1, 9, 10, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 14336 && IMG_VERTICAL_SIZE == 1792) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 11, 9, 13, 12, 3, 2, 1, 8, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 16384 && IMG_VERTICAL_SIZE == 2048) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 9, 8, 7, 6, 5, 3, 2, 15, 14, 13, 4, 12, 1, 11, 0, 10};
+		else if (IMG_HORIZONTAL_SIZE == 18432 && IMG_VERTICAL_SIZE == 2304) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 12, 1, 13, 9, 3, 2, 8, 11, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 20480 && IMG_VERTICAL_SIZE == 2560) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 7, 6, 5, 4, 12, 1, 14, 13, 3, 2, 9, 11, 10, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 22528 && IMG_VERTICAL_SIZE == 2816) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 12, 8, 13, 3, 2, 1, 10, 11, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 24576 && IMG_VERTICAL_SIZE == 3072) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 8, 7, 6, 5, 12, 2, 14, 13, 4, 3, 1, 10, 11, 0, 9};
+		else if (IMG_HORIZONTAL_SIZE == 26624 && IMG_VERTICAL_SIZE == 3328) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 12, 10, 13, 3, 2, 1, 8, 9, 11, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 28672 && IMG_VERTICAL_SIZE == 3584) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 7, 6, 5, 4, 12, 10, 14, 13, 3, 2, 1, 9, 11, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 30720 && IMG_VERTICAL_SIZE == 3840) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 6, 5, 4, 12, 9, 13, 10, 3, 2, 1, 8, 11, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 32768 && IMG_VERTICAL_SIZE == 4096) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 10, 9, 8, 7, 6, 5, 3, 2, 16, 15, 14, 4, 13, 1, 12, 0, 11};
+		else if (IMG_HORIZONTAL_SIZE == 34816 && IMG_VERTICAL_SIZE == 4352) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 13, 1, 14, 10, 9, 2, 8, 12, 11, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 36864 && IMG_VERTICAL_SIZE == 4608) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 7, 6, 5, 4, 13, 1, 14, 10, 3, 2, 9, 12, 11, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 38912 && IMG_VERTICAL_SIZE == 4864) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 10, 8, 14, 13, 2, 1, 12, 9, 11, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 40960 && IMG_VERTICAL_SIZE == 5120) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 8, 7, 6, 5, 4, 13, 1, 15, 14, 3, 2, 10, 12, 11, 0, 9};
+		else if (IMG_HORIZONTAL_SIZE == 43008 && IMG_VERTICAL_SIZE == 5376) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 13, 10, 14, 8, 2, 1, 12, 11, 9, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 45056 && IMG_VERTICAL_SIZE == 5632) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 7, 6, 5, 4, 13, 9, 14, 3, 2, 1, 11, 12, 10, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 47104 && IMG_VERTICAL_SIZE == 5888) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 13, 8, 14, 9, 2, 1, 11, 12, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 49152 && IMG_VERTICAL_SIZE == 6144) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 9, 8, 7, 6, 5, 13, 2, 15, 14, 4, 3, 1, 11, 12, 0, 10};
+		else if (IMG_HORIZONTAL_SIZE == 51200 && IMG_VERTICAL_SIZE == 6400) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 13, 11, 14, 9, 2, 1, 8, 12, 10, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 53248 && IMG_VERTICAL_SIZE == 6656) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 7, 6, 5, 4, 13, 11, 14, 3, 2, 1, 9, 10, 12, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 55296 && IMG_VERTICAL_SIZE == 6912) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 13, 8, 14, 11, 2, 1, 10, 9, 12, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 57344 && IMG_VERTICAL_SIZE == 7168) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 8, 7, 6, 5, 4, 13, 11, 15, 14, 3, 2, 1, 10, 12, 0, 9};
+		else if (IMG_HORIZONTAL_SIZE == 59392 && IMG_VERTICAL_SIZE == 7424) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 6, 5, 4, 3, 13, 10, 14, 11, 2, 1, 8, 9, 12, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 61440 && IMG_VERTICAL_SIZE == 7680) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 7, 6, 5, 4, 13, 10, 14, 11, 3, 2, 1, 9, 12, 0, 8};
+		else if (IMG_HORIZONTAL_SIZE == 63488 && IMG_VERTICAL_SIZE == 7936) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 11, 6, 5, 4, 13, 9, 14, 10, 3, 2, 1, 8, 12, 0, 7};
+		else if (IMG_HORIZONTAL_SIZE == 65536 && IMG_VERTICAL_SIZE == 8192) bit_order = {31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 11, 10, 9, 8, 7, 6, 5, 3, 2, 17, 16, 15, 4, 14, 1, 13, 0, 12};
+		else {
+			printf("Error: Unsupported IMG size for NEAR_OPTIMAL_BOTH_WISE address mapping!");
+			return -1;
+		}
+	}
+
+	// Apply Near Optimal address mapping
+	int64_t nAddr_new = remap_bits_32(bit_order, nAddr);
+	return (nAddr_new);
+}
+
 
 //------------------------------------------
 // Update state 
@@ -2146,39 +2891,6 @@ EResultType CAddrGen::UpdateState() {
 		};
 		#endif
 
-	} else 	if (this->cOperation == "TILE") {
-	
-		// Set block size fixed
-		this->nAsizeT = TILEH;
-		this->nBsizeT = 1;
-		printf("Accessing (H = %d, V = %d)\n", this->nApos, this->nBpos);
-
-		// Update coordinate temp
-		if (((this->nApos - this->TileHBase) + this->nNumPixelTrans >= ImgH)            && 
-		    ((this->nApos - this->TileHBase) + this->nNumPixelTrans >= (TILE_SIZE - 1)) &&
-			(this->nBpos - this->TileHBase  == (TILE_SIZE - 1))
-		) {
-			this->TileHBase = 0;
-			this->TileVBase ++;
-			this->nApos = this->TileHBase;
-			this->nBpos = this->TileVBase;
-		}
-		if (((this->nApos - this->TileHBase) + this->nNumPixelTrans < ImgH)              &&
-		    ((this->nApos - this->TileHBase) + this->nNumPixelTrans >= (TILE_SIZE - 1))  &&
-			(this->nBpos - this->TileHBase  == (TILE_SIZE - 1))                           
-		) {
-			this->TileHBase++;
-			this->nApos = this->TileHBase;
-			this->nBpos = this->TileVBase;
-		}
-		else if ((this->nApos - this->TileHBase) + this->nNumPixelTrans >= (TILE_SIZE - 1)) {
-			this->nApos = this->TileHBase;
-			this->nBpos ++;
-		}
-		else {
-			this->nApos = this->nApos + TILEH;
-			this->nBpos = this->nBpos;
-		};
 	}
 	else if (this->cOperation == "ROTATION" or 
 		 this->cOperation == "ROTATION_LEFT_TOP_VER") {		// FIXME Different degree, different pattern (descending)
@@ -2513,7 +3225,17 @@ EResultType CAddrGen::SetNumPixelTrans() {
 
 	int nNumPixelTrans = -1; 
 
-	if (this->cAddrMap == "LIAM" or this->cAddrMap == "BFAM" or this->cAddrMap == "BGFAM" or this->cAddrMap == "CIAM" or this->cAddrMap == "HBM_INTERLEAVE" ) {
+	if (this->cAddrMap == "LIAM"  			or
+		this->cAddrMap == "BFAM"  			or
+		this->cAddrMap == "BGFAM" 			or
+		this->cAddrMap == "CIAM"  			or
+		this->cAddrMap == "OIRAM" 			or
+		this->cAddrMap == "MIN_K_UNION" 	or
+		this->cAddrMap == "FLATFISH" 	or
+		this->cAddrMap == "NEAR_OPTIMAL_ROW_WISE" or
+		this->cAddrMap == "NEAR_OPTIMAL_COL_WISE" or
+		this->cAddrMap == "NEAR_OPTIMAL_BOTH_WISE"
+	) {
 
 		nNumPixelTrans = this->nAsizeT;						// FIXME check
 	}
@@ -2638,7 +3360,6 @@ int CAddrGen::GetMask_PairNum(int r) {			// r : GRANULAR_ROW_EXPONENT
 
 	return mask;
 };
-
 
 // Get dir
 ETransDirType CAddrGen::GetTransDirType() {
