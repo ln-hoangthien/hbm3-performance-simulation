@@ -281,6 +281,8 @@ private:
 	// int		nCurRow;			// Current row 
 	// int		nCurCol;			// Current column
 	int		nSuperPageNum;			// Superpage number. Number of rows (in memory) for super-page
+	int		TileHBase;
+	int		TileVBase;
 
 	// SLIAM
 	int		ImgH0;				// Map0 (pixels)

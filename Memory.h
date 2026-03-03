@@ -68,7 +68,7 @@
 //-------------------------------------------------
 // JDESD238B.01 - March 2025 
 //-------------------------------------------------
-  #define tCK				        0.3125			// Clock cycle time (ns) in ns at 6.4Gb/s.
+  #define tCK				        0.625			  // Clock cycle time (ns) in ns at 6.4Gb/s.
   #define HBM_BURST_LENGTH	8				    // HBM burst length in bytes.
   #define BanksPerBGroup	  4					  // Number of banks per bank group. HBM3 has 4 banks per bank group.
   #define BanksPerSID		    16					// Number of banks per stack. HBM3 has 16 banks per stack.

@@ -143,6 +143,8 @@ CAddrGen::CAddrGen(string cName, ETransDirType eDir, string cOperation, int64_t 
 	this->ScalingFactor  = -1;
 
 	this->nSuperPageNum  = 0;
+	this->TileHBase  	 = 0;
+	this->TileVBase  	 = 0;
 
 	// SLIAM
 	this->ImgH0    = IMG_HORIZONTAL_SIZE;
@@ -213,6 +215,8 @@ CAddrGen::CAddrGen(string cName, ETransDirType eDir) {
 	this->IsTransGenThisCycle = ERESULT_TYPE_UNDEFINED;
 
 	this->nSuperPageNum = 0;
+	this->TileHBase  	 = 0;
+	this->TileVBase  	 = 0;
 
 	// SLIAM
 	this->ImgH0    = IMG_HORIZONTAL_SIZE;
@@ -290,7 +294,9 @@ EResultType CAddrGen::Reset() {
 	this->ScalingFactor  = 1; 				// No scaling
 
 	this->nSuperPageNum  = 0;
-
+	this->TileHBase  	 = 0;
+	this->TileVBase  	 = 0;
+	
 	// SLIAM
 	#ifdef SPLIT_BANK_SHUFFLE 
 	int ImgHB = IMG_HORIZONTAL_SIZE * BYTE_PER_PIXEL;
@@ -392,11 +398,10 @@ EResultType CAddrGen::Reset() {
 		};
 	}
 	else if (this->cOperation == "RASTER_SCAN" or 
-
-		 this->cOperation == "ROTATION"    or 
-		 this->cOperation == "ROTATION_LEFT_TOP_VER"  or 
-
-		 this->cOperation == "RANDOM") {
+			this->cOperation == "TILE" or 
+		 	this->cOperation == "ROTATION"    or 
+		 	this->cOperation == "ROTATION_LEFT_TOP_VER"  or 
+		 	this->cOperation == "RANDOM") {
 
 		// Initial block coordinate
 		this->nA = 0;
@@ -2116,7 +2121,7 @@ EResultType CAddrGen::UpdateState() {
 	int ImgH  = (this->ScalingFactor) * IMG_HORIZONTAL_SIZE;
 
 	if (this->cOperation == "RASTER_SCAN") {
-	
+		printf("Accessing (H = %d, V = %d)\n", this->nApos, this->nBpos);
 		// Set block size fixed
 		this->nAsizeT = TILEH;
 		this->nBsizeT = 1;
@@ -2132,15 +2137,48 @@ EResultType CAddrGen::UpdateState() {
 		};
 		#else
 		// Update coordinate temp
-		if (this->nApos + this->nNumPixelTrans == ImgH) {
+		if (this->nApos + this->nNumPixelTrans >= ImgH) {
 			this->nApos = 0;
 			this->nBpos ++;
 		}
 		else {
-			this->nApos = this->nApos + TILEH;
+			this->nApos = this->nApos + TILEH * TILE_SIZE;
 		};
 		#endif
 
+	} else 	if (this->cOperation == "TILE") {
+	
+		// Set block size fixed
+		this->nAsizeT = TILEH;
+		this->nBsizeT = 1;
+		printf("Accessing (H = %d, V = %d)\n", this->nApos, this->nBpos);
+
+		// Update coordinate temp
+		if (((this->nApos - this->TileHBase) + this->nNumPixelTrans >= ImgH)            && 
+		    ((this->nApos - this->TileHBase) + this->nNumPixelTrans >= (TILE_SIZE - 1)) &&
+			(this->nBpos - this->TileHBase  == (TILE_SIZE - 1))
+		) {
+			this->TileHBase = 0;
+			this->TileVBase ++;
+			this->nApos = this->TileHBase;
+			this->nBpos = this->TileVBase;
+		}
+		if (((this->nApos - this->TileHBase) + this->nNumPixelTrans < ImgH)              &&
+		    ((this->nApos - this->TileHBase) + this->nNumPixelTrans >= (TILE_SIZE - 1))  &&
+			(this->nBpos - this->TileHBase  == (TILE_SIZE - 1))                           
+		) {
+			this->TileHBase++;
+			this->nApos = this->TileHBase;
+			this->nBpos = this->TileVBase;
+		}
+		else if ((this->nApos - this->TileHBase) + this->nNumPixelTrans >= (TILE_SIZE - 1)) {
+			this->nApos = this->TileHBase;
+			this->nBpos ++;
+		}
+		else {
+			this->nApos = this->nApos + TILEH;
+			this->nBpos = this->nBpos;
+		};
 	}
 	else if (this->cOperation == "ROTATION" or 
 		 this->cOperation == "ROTATION_LEFT_TOP_VER") {		// FIXME Different degree, different pattern (descending)

@@ -69,65 +69,6 @@ def generate_bankgroup_interleaving_matrix_bgfam(num_bankgroups: int, img_hb: in
 
     return row_ids, bank_ids, col_ids
 
-
-#def generate_bankgroup_interleaving_matrix_proposal(num_bankgroups: int, img_width_pixels: int, tile_size: int) -> Tuple[np.ndarray, np.ndarray]:
-#    """Generate a bankgroup interleaving matrix for Proposal (fully vectorized)."""
-#    pages_ids, bank_ids, col_ids, transactions = calculate_pixel_values(img_v, img_width_pixels, super_page_size, num_banks)
-#    
-#    # Pre-calculate constants
-#    image_width_trans           = img_width_pixels  // pixels_per_col
-#    image_width_banks           = img_width_pixels  // pixels_per_col // num_cols
-#    image_width_banks_wo_int    = image_width_banks %  num_banks
-#    trans_within_sp             = num_banks         *  num_cols
-#    curr_col                    = transactions      %  image_width_trans
-#    curr_row                    = transactions      // image_width_trans
-#    curr_bank                   = curr_col          // num_cols
-#
-#    block_size_trans            = num_banks * num_cols
-#
-#    #col_addrs_by_img_row        = curr_col // num_banks
-#    col_addrs_by_img_row        = curr_row
-#    col_addrs_by_img_col        = curr_col // num_bankgroups
-#
-#    sum_linear_x4   = (curr_col    +  curr_row) << 2
-#    term_bg_col     = (curr_col    // (num_bankgroups * num_cols)) % num_bankgroups
-#    term_bg_row     = (curr_row    // (num_bankgroups * num_cols)) % num_bankgroups
-#
-#    is_integer_page             = (image_width_trans >= trans_within_sp) and (curr_col < trans_within_sp)
-#    image_height_rows           = curr_bank // num_banks  
-#
-#    # Calculate new address
-#    new_row_partitial       = (curr_row // block_size_trans) * image_width_trans + curr_col
-#    new_row_integer         = ((curr_row // num_banks) * image_width_banks_wo_int) + image_height_rows + curr_row * (image_width_banks // num_banks)
-#    
-#    new_row                 = np.where(is_integer_page, new_row_integer, new_row_partitial)
-#    new_bank                = (sum_linear_x4 + term_bg_col + term_bg_row) % num_banks
-#    new_col                 = (col_addrs_by_img_row + col_addrs_by_img_col) % num_cols
-#
-#    return new_row, new_bank, new_col
-
-#def generate_bankgroup_interleaving_matrix_proposal(num_bankgroups: int, img_width_pixels: int, tile_size: int) -> Tuple[np.ndarray, np.ndarray]:
-#    """Generate a bankgroup interleaving matrix for Proposal (fully vectorized)."""
-#    pages_ids, bank_ids, col_ids, transactions = calculate_pixel_values(img_v, img_width_pixels, super_page_size, num_banks)
-#    
-#    # Pre-calculate constants
-#    image_width_trans       = img_width_pixels // pixels_per_col # one transaction = 16 pixels
-#    curr_col                = transactions %  image_width_trans
-#    curr_row                = transactions // image_width_trans
-#
-#    block_size_trans        = num_banks * num_cols
-#
-#    sum_linear_x4           = (curr_col + (curr_row // num_cols))           *  (num_banks // num_bankgroups)
-#    term_bg_col             = (curr_col // num_bankgroups)                  * (num_banks // num_bankgroups)
-#    term_bg_row             = (curr_row // (num_bankgroups * num_cols))
-#
-#    # Calculate new address
-#    new_row                 = (curr_row // block_size_trans) * image_width_trans + curr_col
-#    new_bank                = (sum_linear_x4 + term_bg_col + term_bg_row) % num_banks
-#    new_col                 = curr_row % num_cols
-#
-#    return new_row, new_bank, new_col
-
 def get_bit(value, position):
     """
     Returns the bit (0 or 1) at the given position.
@@ -166,10 +107,24 @@ def cal_backward_forward_col(row_jump: np.ndarray, img_width_trans: int):
 
     return (img_width_trans & row_jump_backward), (img_width_trans & row_jump_forward)
 
-def cal_ratio(a: np.ndarray, b: np.ndarray):
+def cal_ratio_optimal(a: np.ndarray, b: np.ndarray):
     """Calculate ratio x/y compared to a/b."""
     a_lsb = np.log2(np.maximum(a, 1)).astype(int)
+    #a_lsb = np.log2(np.maximum(a & (~a + 1), 1)).astype(int)
     b_lsb = np.log2(np.maximum(b & (~b + 1), 1)).astype(int)
+
+    x = a >> np.minimum(a_lsb, b_lsb).astype(int)
+    y = b >> np.minimum(a_lsb, b_lsb).astype(int)
+
+    return x, y
+
+def cal_ratio(a: np.ndarray, b: np.ndarray):
+    """Calculate ratio x/y compared to a/b."""
+    #a_lsb = np.log2(np.maximum(a, 1)).astype(int)
+    a_lsb = np.log2(np.maximum(a & (~a + 1), 1)).astype(int)
+    b_lsb = np.log2(np.maximum(b & (~b + 1), 1)).astype(int)
+
+    print(f"a[32] = {a[32]} - a[48] = {a[48]} - a_lsb[32] = {a_lsb[32]} - a_lsb[48] = {a_lsb[48]} - b_lsb = {b_lsb}")
 
     x = a >> np.minimum(a_lsb, b_lsb).astype(int)
     y = b >> np.minimum(a_lsb, b_lsb).astype(int)
@@ -227,23 +182,30 @@ def generate_bankgroup_interleaving_matrix_proposal(num_bankgroups: int, img_wid
     num_row_per_allbankgroup        = num_bankgroups << num_row_per_banks
     num_row_per_allbankgroup_log    = np.log2(np.maximum(num_row_per_allbankgroup, 1)).astype(int)
 
-    n_sp_pages, n_rows            = cal_ratio(row_jump, block_size_trans) # Only for non-power-of-2 num_banks
-    n_sp_pages_log                = np.log2(n_sp_pages).astype(int)
-    n_rows_log                    = np.log2(n_rows).astype(int)
-
- 
     row_jump_backward, row_jump_forward = cal_backward_forward_col(row_jump, image_width_trans_all)
 
     row_jump_backward = np.where(row_jump_backward == 0, 1, row_jump_backward) # Sofware hack to avoid div-by-zero
     curr_col_offset_row_bank = np.where(row_jump_backward == 1, curr_col_offset, curr_col_offset % row_jump_backward)
 
+    n_sp_pages, n_rows            = cal_ratio_optimal(row_jump, block_size_trans) # Only for non-power-of-2 num_banks
+    n_sp_pages_log                = np.log2(n_sp_pages).astype(int)
+    n_rows_log                    = np.log2(n_rows).astype(int)
+
+    #n_sp_pages_forward, n_rows_forward  = cal_ratio(row_jump_forward, block_size_trans) # Only for non-power-of-2 num_banks
+    #n_sp_pages_forward                 = np.maximum(n_sp_pages_forward, 1).astype(int) 
+    #n_sp_pages_forward_log              = np.log2(np.maximum(n_sp_pages_forward, 1)).astype(int)
+    #n_rows_forward_log                  = np.log2(np.maximum(n_rows_forward, 1)).astype(int)
+
     # Row: Reduction calculation
+    # X * pages = Y * rows => X = Y * pages // block
+    # 64 = 2 banks => 1 row 2 banks, => 8 rows, 16 banks => 1 page = 8 row => 368 rows = (368 * 1 // 8) pages
     high_bit_num = np.array([bit_count(row_jump_forward[i]) for i in range(len(row_jump_forward))])
     if (math.log2(num_banks).is_integer()):
         row_utilization         = row_jump_forward - (((row_jump_forward * (img_height_pixels & (block_size_trans - 1))) >> block_size_trans_log) + high_bit_num)
+        #row_utilization         = ((row_jump_forward * (block_size_trans - (img_height_pixels & (block_size_trans - 1))))  >> block_size_trans_log) + high_bit_num
     else:
-        row_utilization         = row_jump_forward - (((row_jump_forward * (img_height_pixels % block_size_trans      )) // block_size_trans    ) + high_bit_num)
-
+        row_utilization         = row_jump_forward - (((row_jump_forward * (img_height_pixels % block_size_trans     ))  // block_size_trans    ) + high_bit_num)
+        #row_utilization         = ((row_jump_forward * (block_size_trans - (img_height_pixels % block_size_trans))) // block_size_trans) + high_bit_num
     # Row: Pre calculation
     row_inc_firstblock      = row_jump_forward
     #row_linear              = np.zeros_like(curr_row_offset)
@@ -285,7 +247,7 @@ def generate_bankgroup_interleaving_matrix_proposal(num_bankgroups: int, img_wid
     new_col                 = (curr_col_offset + (curr_row_offset << row_jump_log)) % num_cols
 
     #for i in range(len(new_row)):
-    #    print(f"({new_row[i]},{new_bank[i]},{new_col[i]}) - row_jump[{i}]: {row_jump[i]} - curr_col_offset[{i}]: {curr_col_offset[i]} - curr_col_offset_row_bank[{i}]: {curr_col_offset_row_bank[i]} - curr_row_offset[{i}]: {curr_row_offset[i]} - bank_linear[{i}]: {bank_linear[i]} - bank_inc_col[{i}]: {bank_inc_col[i]} - bank_inc_col_bg[{i}]: {bank_inc_col_bg[i]} - n_rows[{i}]: {n_rows[i]} - n_sp_pages[{i}]: {n_sp_pages[i]}")
+    #    print(f"({new_row[i]},{new_bank[i]},{new_col[i]}) - row_jump[{i}]: {row_jump[i]} - curr_col_offset[{i}]: {curr_col_offset[i]} - curr_row_offset[{i}]: {curr_row_offset[i]} - row_reducion[{i}]: {row_reducion[i]} - row_jump_forward[{i}]: {row_jump_forward[i]} - rơw_inc_firstblock[{i}]: {row_inc_firstblock[i]} - row_utilization[{i}]: {row_utilization[i]}")
     #    print(f"({new_row[i]},{new_bank[i]},{new_col[i]}) - row_jump[{i}]: {row_jump[i]} - curr_col_offset[{i}]: {curr_col_offset[i]} - curr_row_offset[{i}]: {curr_row_offset[i]} - bank_linear[{i}]: {bank_linear[i]} - bank_inc_col[{i}]: {bank_inc_col[i]} - bank_inc_col_bg[{i}]: {bank_inc_col_bg[i]} - n_rows[{i}]: {n_rows[i]} - n_sp_pages[{i}]: {n_sp_pages[i]} - num_row_per_banks[{i}]: {num_row_per_banks[i]}")
     #    print(f"({new_row[i]},{new_bank[i]},{new_col[i]}) - row_linear[{i}]: {row_linear[i]} - bank_linear[{i}]: {bank_linear[i]} - curr_col_offset[{i}]: {curr_col_offset[i]} - curr_row_offset[{i}]: {curr_row_offset[i]} - row_inc_firstblock[{i}]: {row_inc_firstblock[i]} - row_inc_block[{i}]: {row_inc_block[i]} - row_jump_backward[{i}]: {row_jump_backward[i]} - row_jump_forward[{i}]: {row_jump_forward[i]}")
               
@@ -443,6 +405,43 @@ def map_proposal_to_physical_memory(matrix_tuple: Tuple[np.ndarray, np.ndarray],
     np.add.at(physical_memory_map, (b_flat, r_flat, c_flat), 1)
 
     return physical_memory_map
+
+import math
+import numpy as np
+from numba import njit
+
+@njit
+def get_col_major_conflicts(row_ids: np.ndarray, bank_ids: np.ndarray, 
+                            img_v: int, img_hb_trans: int, num_banks: int) -> int:
+    """
+    Counts page conflicts (Row Buffer Misses) assuming a Column-Major access pattern.
+    
+    In a column-major scan, we access: (0,0), (1,0), (2,0)... then (0,1), (1,1)...
+    We must track the state of every bank's row buffer because the access jumps 
+    between banks constantly.
+    """
+    # 1. Initialize Row Buffer State for all banks
+    # -1 indicates the bank is closed/idle
+    conflicts = 0
+    
+    # 2. Iterate in Column-Major Order
+    # Outer Loop: Columns (Transactions)
+    # Inner Loop: Rows (Vertical height)
+    for c in range(img_hb_trans):
+        for r in range(img_v):
+            # Calculate the flat index in the Row-Major arrays
+            # The arrays from LIAM/BFAM are stored as [Row 0, Row 1, ...]
+
+            if r == 0:
+                flat_idx     = r * img_hb_trans + c 
+                flat_idx_pre = (img_v - 1) * img_hb_trans + (c - 1) if c > 0 else (img_v - 1) * img_hb_trans + (img_hb_trans - 1)
+            else:
+                flat_idx     = r * img_hb_trans + c
+                flat_idx_pre = (r - 1) * img_hb_trans + c if r > 0 else -1
+            
+            conflicts += 1 if ((bank_ids[flat_idx] == bank_ids[flat_idx_pre]) and (row_ids[flat_idx] != row_ids[flat_idx_pre])) else 0
+
+    return conflicts
 
 def save_heatmap_3D(physical_map: np.ndarray, filename: str = "heatmap_3d.png", img_hb=0, img_v=0):
     """
@@ -800,6 +799,31 @@ def final_result():
     phy_map_liam    = generate_bankgroup_interleaving_matrix_liam(img_hb)
     phy_map_bfam    = generate_bankgroup_interleaving_matrix_bfam(img_hb)
     phy_map_bgfam   = generate_bankgroup_interleaving_matrix_bgfam(num_bankgroups, img_hb)
+
+    liam_rows, liam_banks, _ = generate_bankgroup_interleaving_matrix_liam(img_hb)
+    
+    liam_conflicts = get_col_major_conflicts(
+        liam_rows.flatten(), 
+        liam_banks.flatten(), 
+        img_v, 
+        (img_hb // 16), 
+        num_banks
+    )
+    print(f"LIAM Page Conflicts: {liam_conflicts:,}")
+
+    # 2. Analyze BFAM
+    # (Assuming generate_bankgroup_interleaving_matrix_bfam is available in your scope)
+    print("Generating BFAM...")
+    bfam_rows, bfam_banks, _ = generate_bankgroup_interleaving_matrix_bfam(img_hb)
+    
+    bfam_conflicts = get_col_major_conflicts(
+        bfam_rows.flatten(), 
+        bfam_banks.flatten(), 
+        img_v, 
+        (img_hb // 16), 
+        num_banks
+    )
+    print(f"BFAM Page Conflicts: {bfam_conflicts:,}")
 
     print("Matrix Quality  | Proposal\t| LIAM\t| BFAM\t| BGFAM")
     print(f"Quality Results | {qualifying_matrix(phy_map):.2f}\t\t| {qualifying_matrix(phy_map_liam):.2f}\t| {qualifying_matrix(phy_map_bfam):.2f}\t| {qualifying_matrix(phy_map_bgfam):.2f}")

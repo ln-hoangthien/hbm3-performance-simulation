@@ -203,7 +203,11 @@ int main() {
 	//------------------------------
 	// Set total Ax NUM 
 	//------------------------------
-	int NUM = IMG_HORIZONTAL_SIZE*IMG_VERTICAL_SIZE*BYTE_PER_PIXEL/MAX_TRANS_SIZE;
+	#ifdef TILE
+		int NUM = (IMG_HORIZONTAL_SIZE*IMG_VERTICAL_SIZE*BYTE_PER_PIXEL/MAX_TRANS_SIZE)*(TILE_SIZE*TILE_SIZE);
+	#else
+		int NUM = IMG_HORIZONTAL_SIZE*IMG_VERTICAL_SIZE*BYTE_PER_PIXEL/MAX_TRANS_SIZE;
+	#endif
 
 	// Number of transactions
 	cpMST3->Set_nAR_GEN_NUM(0);
@@ -254,6 +258,9 @@ int main() {
 	#elif ROTATION
 		cpMST3->Set_AR_Operation("ROTATION");
 		cpMST3->Set_AW_Operation("RASTER_SCAN");
+	#elif TILE
+		cpMST3->Set_AR_Operation("TILE");
+		cpMST3->Set_AW_Operation("TILE");
 	#else
 		assert(0);
 	#endif
@@ -351,6 +358,9 @@ int main() {
 			//cpMST3->LoadTransfer_AW(nCycle, cAW_AddrMap, "RASTER_SCAN");  // DUONGTRAN comment
 		#elif ROTATION
 			cpMST3->LoadTransfer_AR(nCycle, cAR_AddrMap, "ROTATION");
+			//cpMST3->LoadTransfer_AW(nCycle, cAW_AddrMap, "ROTATION");  // DUONGTRAN comment
+		#elif TILE
+			cpMST3->LoadTransfer_AR(nCycle, cAR_AddrMap, "TILE");
 			//cpMST3->LoadTransfer_AW(nCycle, cAW_AddrMap, "ROTATION");  // DUONGTRAN comment
 		#else
 			assert(0);

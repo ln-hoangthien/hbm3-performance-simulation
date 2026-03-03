@@ -12,25 +12,53 @@ col_num = 32
 row_bits = 13
 col_bits = 5
 bank_bits = 0
-bytes_per_pixel = 4
+bytes_per_pixel = 4 
 page_size = 2048
 
 # ==========================================
 # 1. Trace Generation (Vectorized & Memory Optimized)
 # ==========================================
-
 def calculate_pixel_values(img_v: int, img_hb: int, num_banks: int):
-    total_pixels = img_hb * img_v
-    pixels = np.arange(total_pixels, dtype=np.uint32)
+    total_transactions = img_hb * img_v
+    transactions = np.arange(total_transactions, dtype=np.uint32)
     
-    div_col = pixels // col_num
+    div_col = transactions // col_num
     ri = (div_col // num_banks).astype(np.uint16)
     bi = (div_col % num_banks).astype(np.uint8)
-    ci = (pixels % col_num).astype(np.uint8)
+    ci = (transactions % col_num).astype(np.uint8)
     
     return ri, bi, ci
 
-def get_flat_trace(ri, bi, ci, img_v, img_hb, include_bank_col=False, row_major=False, col_major=False):
+#def reconstruct_address(r, b, c):
+#    """
+#    Helper to apply bit-shifting logic identical to source lines 4-6.
+#    """
+#    shift_bank = col_bits # col_bits = 5 
+#    # Calculate row shift based on max bank index 
+#    shift_row = int(math.log2(max(b) + 1)) + col_bits 
+#    
+#    if shift_row < (bank_bits + col_bits): 
+#        shift_row = bank_bits + col_bits 
+#
+#    # Reconstruct Physical Address 
+#    full_address = (r.astype(np.uint32) << shift_row) | \
+#                   (b.astype(np.uint32) << shift_bank) | \
+#                   c.astype(np.uint32)
+#                   
+#    return full_address
+@njit(fastmath=True)
+def reconstruct_address(r, b, c):
+    """Numba-accelerated address reconstruction."""
+    n = len(r)
+    shift_bank = col_bits
+    # Calculate row shift based on max bank index 
+    shift_row = int(math.log2(max(b) + 1)) + col_bits 
+    res = np.empty(n, dtype=np.uint32)
+    for i in range(n):
+        res[i] = (np.uint32(r[i]) << shift_row) | (np.uint32(b[i]) << shift_bank) | np.uint32(c[i])
+    return res
+
+def get_flat_trace(ri, bi, ci, img_v, img_hb, row_major=False, col_major=False):
     if row_major:
         # 1. Row-Major Trace
         r = ri
@@ -47,9 +75,6 @@ def get_flat_trace(ri, bi, ci, img_v, img_hb, include_bank_col=False, row_major=
         b = np.concatenate((b, b_p)) if row_major else b_p
         c = np.concatenate((c, c_p)) if row_major else c_p
 
-    if not include_bank_col:
-        return r.astype(np.uint32)
-
     # Reconstruct Physical Address
     shift_bank = col_bits
     shift_row = int(math.log2(max(b) + 1)) + col_bits 
@@ -61,6 +86,103 @@ def get_flat_trace(ri, bi, ci, img_v, img_hb, include_bank_col=False, row_major=
                    c.astype(np.uint32)
                    
     return full_address
+
+#def get_tile_trace(ri, bi, ci, img_v, img_hb, tile_h, tile_w, include_bank_col=False):
+#    """
+#    Generates a trace for memory accessed in tiles.
+#    Pads the image with 0 if dimensions are not divisible by tile size.
+#    """
+#    # Calculate padding needed to make dimensions divisible by tile size
+#    pad_v = (tile_h - (img_v % tile_h)) % tile_h
+#    pad_hb = (tile_w - (img_hb % tile_w)) % tile_w
+#
+#    # Reshape to 2D for padding, then apply padding (constant 0)
+#    r_2d = ri.reshape(img_v, img_hb)
+#    r_padded = np.pad(r_2d, ((0, pad_v), (0, pad_hb)), mode='constant', constant_values=0)
+#    
+#    new_v, new_hb = r_padded.shape
+#
+#    # Reshape into 4D: (num_tiles_v, tile_h, num_tiles_hb, tile_w)
+#    r_view = r_padded.reshape(new_v // tile_h, tile_h, new_hb // tile_w, tile_w)
+#    r = r_view.transpose(0, 2, 1, 3).flatten().astype(np.uint32)
+#
+#    if not include_bank_col:
+#        return r
+#
+#    # Repeat for Bank and Column indices if full address is needed
+#    b_2d = bi.reshape(img_v, img_hb)
+#    c_2d = ci.reshape(img_v, img_hb)
+#    
+#    b_padded = np.pad(b_2d, ((0, pad_v), (0, pad_hb)), mode='constant', constant_values=0)
+#    c_padded = np.pad(c_2d, ((0, pad_v), (0, pad_hb)), mode='constant', constant_values=0)
+#
+#    b_view = b_padded.reshape(new_v // tile_h, tile_h, new_hb // tile_w, tile_w)
+#    c_view = c_padded.reshape(new_v // tile_h, tile_h, new_hb // tile_w, tile_w)
+#    
+#    b = b_view.transpose(0, 2, 1, 3).flatten().astype(np.uint32)
+#    c = c_view.transpose(0, 2, 1, 3).flatten().astype(np.uint32)
+#
+#    return reconstruct_address(r, b, c)
+
+@njit(parallel=True, fastmath=True)
+def get_tile_trace(ri, bi, ci, img_v, img_hb, tile_h, tile_w):
+    """
+    Generates a tiled trace with address reconstruction matching get_flat_trace.
+    """
+    # 1. Calculate padded dimensions 
+    new_v = ((img_v + tile_h - 1) // tile_h) * tile_h
+    new_hb = ((img_hb + tile_w - 1) // tile_w) * tile_w
+    total_elements = new_v * new_hb
+    
+    # 2. Setup Address Reconstruction Parameters
+    shift_bank = col_bits # Fixed at 5
+    # Calculate row shift based on max bank index
+    max_b = 0
+    for val in bi:
+        if val > max_b: max_b = val
+    shift_row = int(math.log2(max_b + 1)) + col_bits 
+    
+    if shift_row < (bank_bits + col_bits): 
+        shift_row = bank_bits + col_bits 
+
+    full_address = np.empty(total_elements, dtype=np.uint32)
+    
+    # 3. Tiled Access Pattern
+    for tv in prange(new_v // tile_h):
+        for thb in range(new_hb // tile_w):
+            for i in range(tile_h):
+                for j in range(tile_w):
+                    curr_v = tv * tile_h + i
+                    curr_hb = thb * tile_w + j
+                    
+                    # Target index in the output trace
+                    out_idx = (tv * (new_hb // tile_w) * tile_h * tile_w) + \
+                              (thb * tile_h * tile_w) + (i * tile_w) + j
+                    
+                    if curr_v < img_v and curr_hb < img_hb:
+                        # Map back to the original index in ri, bi, ci 
+                        flat_idx = curr_v * img_hb + curr_hb
+                        
+                        # Reconstruct Physical Address
+                        r_val = np.uint32(ri[flat_idx])
+                        b_val = np.uint32(bi[flat_idx])
+                        c_val = np.uint32(ci[flat_idx])
+                        
+                        full_address[out_idx] = (r_val << shift_row) | (b_val << shift_bank) | c_val
+                    else:
+                        full_address[out_idx] = 0 # Padding 
+    return full_address
+
+def get_strided_trace(ri, bi, ci, stride):
+    """
+    Generates a trace by picking every Nth pixel (stride).
+    """
+    # Select every 'stride' element from the flattened arrays
+    r = ri[::stride]
+    b = bi[::stride]
+    c = ci[::stride]
+
+    return reconstruct_address(r, b, c)
 
 def get_diff_histogram(trace):
     diffs = trace[:-1] ^ trace[1:]
@@ -241,47 +363,88 @@ def solve_near_optimal_mapping(trace, num_bg, num_bk, num_col, total_width):
 # ==========================================
 # Main
 # ==========================================
-
 def final_result(args):
-    num_banks   = args.num_banks
-    img_hb      = args.img_hb
-    img_v       = args.img_v
-    col_major   = args.col_major
-    row_major   = args.row_major
+    num_banks = args.num_banks
+    img_hb = args.img_hb
+    img_v = args.img_v
+
+    img_hb = img_hb * bytes_per_pixel // 64 # 64-byte per transaction
     
+    # Configuration for patterns
+    # These will be iterated through for Tile and Strided modes
+    t_sizes = [16, 32, 64, 128]
+    stride_vals = [16, 32, 64, 128]
+    
+    # 1. Generate base indices 
     ri, bi, ci = calculate_pixel_values(img_v, img_hb, num_banks)
-    
-    # Min-K-Union
-    #print("--- Solving Min-K-Union ---")
-    row_trace = get_flat_trace(ri, bi, ci, img_v, img_hb, include_bank_col=False, row_major=row_major, col_major=col_major)
-    udiffs, ucounts = get_diff_histogram(row_trace)
-    best_bits, misses = solve_min_k_union(udiffs, ucounts, row_bits, row_bits)
-    print(f"Min-K-Union:\t\tRow Bits={best_bits} - Union-K={len(best_bits)} - Misses={misses}")
-    
-    # Near-Optimal Mapping
-    #print("--- Solving Near-Optimal Mapping ---")
-    full_trace = get_flat_trace(ri, bi, ci, img_v, img_hb, include_bank_col=True, row_major=row_major, col_major=col_major)
+    #for r_idx in range(0, len(ri), 512):
+    #    print(f"ri[{r_idx}] = {ri[r_idx]}")
+    #print(f"bi = {bi}")
+    #print(f"ci = {ci}")
     
     total_bank_bits = int(math.log2(num_banks))
-    n_bg = max(0, total_bank_bits - 4)
-    n_bk = total_bank_bits - n_bg
-    
-    mapping = solve_near_optimal_mapping(full_trace, 
-                                         num_bg=n_bg, 
-                                         num_bk=n_bk, 
-                                         num_col=col_bits, 
-                                         total_width=(row_bits + col_bits + total_bank_bits))
-    print(f"Near-Optimal:\t\tCol={mapping['Column']} - BankGroup={mapping['BankGroup']} - Bank={mapping['Bank']} - Row={mapping['Row']}")
+    n_bk = 4
+    n_bg = total_bank_bits - n_bk
+
+
+    # 2. Define patterns to evaluate
+    patterns = ["Row-Major", "Col-Major", "Both-Major", "Tile", "Strided"]
+    #patterns = ["Tile", "Strided"]
+    #patterns = ["Row-Major", "Col-Major", "Both-Major"]
+
+    for name in patterns:
+        print(f"\n{'='*20} {name} Analysis {'='*20}")
+
+        # Determine which values to iterate over for this pattern
+        current_iterations = [None] # Default for non-parameterized patterns
+        if name == "Tile":
+            current_iterations = t_sizes
+        elif name == "Strided":
+            current_iterations = stride_vals
+
+        for val in current_iterations:
+            # --- A. Generate Trace (Row Only for Min-K-Union, Full for Mapping) ---
+            if name == "Row-Major":
+                full_trace = get_flat_trace(ri, bi, ci, img_v, img_hb, row_major=True, col_major=False)
+            elif name == "Col-Major":
+                full_trace = get_flat_trace(ri, bi, ci, img_v, img_hb, row_major=False, col_major=True)
+            elif name == "Both-Major":
+                full_trace = get_flat_trace(ri, bi, ci, img_v, img_hb, row_major=True, col_major=True)
+            elif name == "Tile":
+                base_trace = get_flat_trace(ri, bi, ci, img_v, img_hb, row_major=True, col_major=False)
+                tiled_trace = get_tile_trace(ri, bi, ci, img_v, img_hb, val, val)
+                full_trace = np.concatenate((base_trace, tiled_trace))
+            elif name == "Strided":
+                base_trace = get_flat_trace(ri, bi, ci, img_v, img_hb, row_major=True, col_major=False)
+                strided_trace = get_strided_trace(ri, bi, ci, val)
+                full_trace = np.concatenate((base_trace, strided_trace))
+
+            # --- B. Solve Min-K-Union (Requires Row Trace Only) ---
+            udiffs, ucounts = get_diff_histogram(full_trace)
+            best_bits, misses = solve_min_k_union(udiffs, ucounts, (row_bits + col_bits + total_bank_bits), row_bits)
+            
+            # --- C. Solve Near-Optimal Mapping (Requires Full Trace) ---
+            mapping = solve_near_optimal_mapping(
+                full_trace, 
+                num_bg=n_bg, 
+                num_bk=n_bk, 
+                num_col=col_bits, 
+                total_width=(row_bits + col_bits + total_bank_bits)
+            )
+
+            # --- D. Unified Print Logic ---
+            param_str = f"[{val}]" if val is not None else ""
+            print(f"\n--- Sub-Pattern: {name}{param_str} ---")
+            print(f"Min-K-Union:\tRow Bits={best_bits} - Misses={misses}")
+            print(f"Near-Optimal:\tCol={mapping['Column']} - BG={mapping['BankGroup']} - Bank={mapping['Bank']} - Row={mapping['Row']}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--num_banks", required=True, type=int)
     parser.add_argument("--img_hb",    required=True, type=int)
     parser.add_argument("--img_v",     required=True, type=int)
-    parser.add_argument("--col_major", action="store_true", default=False)
-    parser.add_argument("--row_major", action="store_true", default=False)
     args = parser.parse_args()
     
     print("=" * 150)
-    print(f"Column-Wise: {args.col_major} + Row-Wise: {args.row_major} - num_banks: {args.num_banks}, img_hb: {args.img_hb}, img_v: {args.img_v}")
+    print(f"num_banks: {args.num_banks}, img_hb: {args.img_hb}, img_v: {args.img_v}")
     final_result(args)
