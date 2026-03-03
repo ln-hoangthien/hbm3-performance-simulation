@@ -27,9 +27,9 @@ CMST::CMST(string cName) {
 	this->cpRx_B  = new CTRx("MST_Rx_B",  ETRX_TYPE_RX, EPKT_TYPE_B);
 
 	// Generate FIFO
-	this->cpFIFO_AR = new CFIFO("MST_FIFO_AR", EUD_TYPE_AR, 16);
-	this->cpFIFO_AW = new CFIFO("MST_FIFO_AW", EUD_TYPE_AW, 16);
-	this->cpFIFO_W  = new CFIFO("MST_FIFO_W",  EUD_TYPE_W,  64);
+	this->cpFIFO_AR = new CFIFO("MST_FIFO_AR", EUD_TYPE_AR, MAX_MO_COUNT);
+	this->cpFIFO_AW = new CFIFO("MST_FIFO_AW", EUD_TYPE_AW, MAX_MO_COUNT);
+	this->cpFIFO_W  = new CFIFO("MST_FIFO_W",  EUD_TYPE_W,  MAX_MO_COUNT*4);
 
 	// this->cpFIFO_AR = new CFIFO("MST_FIFO_AR", EUD_TYPE_AR, 10000000);		// Debug. AR_ADDR_GEN_TEST
 	// this->cpFIFO_AW = new CFIFO("MST_FIFO_AW", EUD_TYPE_AW, 10000000);
@@ -4193,7 +4193,7 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
 	int nNumPixelTrans = this->cpAddrGen_AR->GetNumPixelTrans(); 
 	int nTransSizeByte = nNumPixelTrans * BYTE_PER_PIXEL;
 	int nLen = -1;
-	if	  (nTransSizeByte > (BURST_SIZE * 3))	nLen = 3; 
+	if	    (nTransSizeByte > (BURST_SIZE * 3))	nLen = 3; 
 	else if (nTransSizeByte > (BURST_SIZE * 2))	nLen = 2; 
 	else if (nTransSizeByte > (BURST_SIZE * 1))	nLen = 1; 
 	else if (nTransSizeByte > (BURST_SIZE * 0))	nLen = 0; 
@@ -4411,6 +4411,7 @@ EResultType CMST::Do_AR_fwd(int64_t nCycle) {
 
 	// Check MO
 	if (this->GetMO_AR() >= MAX_MO_COUNT) {
+		//printf("Full MO_AR = %d / %d\n", this->GetMO_AR(), MAX_MO_COUNT);
 		return (ERESULT_TYPE_FAIL);
 	};
 
@@ -4720,7 +4721,8 @@ EResultType CMST::Do_R_bwd(int64_t nCycle) {
 
 	// Check Rx valid
 	CPRPkt cpR = this->cpRx_R->GetR();
-		if (cpR == NULL) {
+	if (cpR == NULL) {
+			//printf("cpR is NULL\n");
 			return (ERESULT_TYPE_SUCCESS);
 	};
 

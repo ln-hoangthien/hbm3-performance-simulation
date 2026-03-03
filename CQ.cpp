@@ -293,7 +293,6 @@ EResultType CQ::SetMemStateCmdPkt(SPMemStatePkt spThis) {
 	while (spScan != NULL) {
 		spTarget = spScan;
 		spScan   = spScan->spNext;
-		// spTarget->spMemCmdPkt = this->GetMemCmdPkt(spTarget);	// FIXME Check spMemCmdPkt new. Be careful memory leak
 
 		// Get target bank row
 		if (this->eUDType == EUD_TYPE_AR) {

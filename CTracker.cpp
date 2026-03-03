@@ -232,7 +232,7 @@ UPUD CTracker::Pop(int nID, EUDType eUDType) {
 
 	// Get target node 
 	SPLinkedCUD spScan;
-	SPLinkedCUD spTarget;
+	SPLinkedCUD spTarget = NULL;
 	spScan = this->spCUDList_head;
 	while (spScan != NULL) {
 		if (spScan->nID == nID and spScan->eUDType == eUDType) {
@@ -299,7 +299,7 @@ UPUD CTracker::Pop(SPLinkedCUD spNode) {
 
 	// Get target node 
 	SPLinkedCUD spScan;
-	SPLinkedCUD spTarget;
+	SPLinkedCUD spTarget = NULL;
 	spScan = this->spCUDList_head;
 	while (spScan != NULL) {
 		if (spScan == spNode) {

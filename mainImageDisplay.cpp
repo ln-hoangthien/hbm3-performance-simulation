@@ -289,8 +289,20 @@ int main() {
 	cAR_AddrMap = "BGFAM";
 	#elif defined(AR_TILE)
 	cAR_AddrMap = "TILE";
-	#elif defined(AR_HBM_INTERLEAVE)
-	cAR_AddrMap = "HBM_INTERLEAVE";
+	#elif defined(AR_OIRAM)
+	cAR_AddrMap = "OIRAM";
+	#elif defined(AR_MIN_K_UNION)
+	cAR_AddrMap = "MIN_K_UNION";
+	#elif defined(AR_FLATFISH)
+	cAR_AddrMap = "FLATFISH";
+	#elif defined(AR_NEAR_OPTIMAL)
+		#ifdef RASTER_SCAN
+			cAR_AddrMap = "NEAR_OPTIMAL_ROW_WISE";
+		#elif ROTATION
+			cAR_AddrMap = "NEAR_OPTIMAL_COL_WISE";
+		#else
+			assert(0);
+		#endif
 	#endif
 	
 	#if defined(AW_LIAM)
@@ -301,13 +313,25 @@ int main() {
 	cAW_AddrMap = "BGFAM";
 	#elif defined(AW_TILE)
 	cAW_AddrMap = "TILE";
-	#elif defined(AW_HBM_INTERLEAVE)
-	cAW_AddrMap = "HBM_INTERLEAVE";
+	#elif defined(AW_OIRAM)
+	cAW_AddrMap = "OIRAM";
+	#elif defined(AW_MIN_K_UNION)
+	cAW_AddrMap = "MIN_K_UNION";
+	#elif defined(AW_FLATFISH)
+	cAW_AddrMap = "FLATFISH";
+	#elif defined(AW_NEAR_OPTIMAL)
+		#ifdef RASTER_SCAN
+			cAW_AddrMap = "NEAR_OPTIMAL_ROW_WISE";
+		#elif ROTATION
+			cAW_AddrMap = "NEAR_OPTIMAL_COL_WISE";
+		#else
+			assert(0);
+		#endif
 	#endif
 
 	// Simulate
 	while (1) {
-
+		
 		//---------------------------
 		// 3. Reset
 		//---------------------------
@@ -318,12 +342,9 @@ int main() {
 			cpCacheL3->Reset();
 			cpSLV->Reset();
 		};
-
-
 		//---------------------------------------------
 		// 4. Start simulation
 		//---------------------------------------------
-
 		// Master geneates transactions
 		#ifdef RASTER_SCAN
 			cpMST3->LoadTransfer_AR(nCycle, cAR_AddrMap, "RASTER_SCAN");
@@ -338,17 +359,12 @@ int main() {
 		//---------------------------------
 		// Propagate valid
 		//---------------------------------
-
-
 		//---------------------------------
 		// AR, AW, W VALID
 		//---------------------------------
-
 		cpMST3->Do_AR_fwd(nCycle);
 		//cpMST3->Do_AW_fwd(nCycle);   // DUONGTRAN comment
 		// cpMST3->Do_W_fwd(nCycle);
-
-
 		//--------------------------------
 		#ifdef MMU_OFF	
 		cpMMU3->Do_AR_fwd_MMU_OFF(nCycle);
@@ -359,19 +375,16 @@ int main() {
 		#ifdef MMU_ON
 			#ifdef AT_ENABLE
 				cpMMU3->Do_AR_fwd_SI_AT(nCycle);
-    		    cpMMU3->Do_AR_fwd_MI(nCycle);
+				cpMMU3->Do_AR_fwd_MI(nCycle);
 			#else // PCAD, TRAD
 				cpMMU3->Do_AR_fwd_SI(nCycle);
 				cpMMU3->Do_AR_fwd_MI(nCycle);
 			#endif
 		#endif
-
 		//-------------------------------
 		cpBUS->Do_AR_fwd(nCycle);
 		cpBUS->Do_AW_fwd(nCycle);
 		// cpBUS->Do_W_fwd(nCycle);
-
-
 		//--------------------------------
 		#ifdef Cache_OFF	
 		cpCacheL3->Do_AR_fwd_Cache_OFF(nCycle);
@@ -385,20 +398,17 @@ int main() {
 		cpCacheL3->Do_AW_fwd_MI(nCycle);
 		// cpCacheL3->Do_W_fwd(nCycle);
 		#endif
-
 		//-------------------------------
 		#ifdef IDEAL_MEMORY
 		cpSLV->Do_AR_fwd(nCycle);
 		cpSLV->Do_AW_fwd(nCycle);
 		// cpSLV->Do_W_fwd(nCycle);
 		#endif
-
 		#ifdef MEMORY_CONTROLLER
 		cpSLV->Do_AR_fwd_MC_Frontend(nCycle);
 		cpSLV->Do_AW_fwd_MC_Frontend(nCycle);
 		// cpSLV->Do_W_fwd_MC_Frontend(nCycle);
 		#endif
-
 		#ifdef MEMORY_CONTROLLER
 		cpSLV->Do_Ax_fwd_MC_Backend_Request(nCycle);
 		for (int i = 0; i < BANK_NUM; i++) {
@@ -406,14 +416,12 @@ int main() {
 			cpSLV->Do_AW_fwd_MC_Backend_Response(nCycle);
 		}
 		#endif
-
 		//---------------------------------
 		// R, B VALID
 		//---------------------------------
 		//---------------------------------
 		cpSLV->Do_R_fwd(nCycle);
 		cpSLV->Do_B_fwd(nCycle);
-
 		//---------------------------
 		#ifdef Cache_OFF
 		cpCacheL3->Do_R_fwd_Cache_OFF(nCycle);
@@ -425,18 +433,14 @@ int main() {
 		cpCacheL3->Do_B_fwd_MI(nCycle);
 		cpCacheL3->Do_B_fwd_SI(nCycle);
 		#endif
-
 		//---------------------------
 		cpBUS->Do_R_fwd(nCycle);
 		cpBUS->Do_B_fwd(nCycle);
-
-
 		//---------------------------
 		#ifdef MMU_OFF
 			cpMMU3->Do_R_fwd_MMU_OFF(nCycle);
 			cpMMU3->Do_B_fwd_MMU_OFF(nCycle);
 		#endif
-
 		#ifdef MMU_ON
 			#ifdef AT_ENABLE
 				cpMMU3->Do_R_fwd_AT(nCycle);
@@ -446,25 +450,18 @@ int main() {
 				cpMMU3->Do_B_fwd(nCycle);
 			#endif
 		#endif
-
-
 		//---------------------------
-
 		cpMST3->Do_R_fwd(nCycle);
 		//cpMST3->Do_B_fwd(nCycle);
-
-
 		//---------------------------------
 		// Propagate ready
 		//---------------------------------
-
 		//---------------------------------
 		// AR, AW, W READY
 		//---------------------------------
 		cpSLV->Do_AR_bwd(nCycle);
 		cpSLV->Do_AW_bwd(nCycle);
 		// cpSLV->Do_W_bwd(nCycle);
-
 		//-----------------------------
 		#ifdef Cache_OFF
 			cpCacheL3->Do_AR_bwd_Cache_OFF(nCycle);
@@ -476,40 +473,29 @@ int main() {
 			cpCacheL3->Do_AW_bwd(nCycle);
 			// cpCacheL3->Do_W_bwd(nCycle);
 		#endif
-
 		//-------------------------------
 		cpBUS->Do_AR_bwd(nCycle);
 		cpBUS->Do_AW_bwd(nCycle);
-
-
 		#ifdef MMU_OFF
 		cpMMU3->Do_AR_bwd_MMU_OFF(nCycle);
 		cpMMU3->Do_AW_bwd_MMU_OFF(nCycle);
 		// cpMMU3->Do_W_bwd_MMU_OFF(nCycle);
 		#endif
-
 		#ifdef MMU_ON
 		cpMMU3->Do_AR_bwd(nCycle);
 		//cpMMU3->Do_AW_bwd(nCycle);    // DUONGTRAN comment
 		//cpMMU3->Do_W_bwd(nCycle);
 		#endif
 		
-
 		//-----------------------------
-
 		cpMST3->Do_AR_bwd(nCycle);
 		//cpMST3->Do_AW_bwd(nCycle);  // DUONGTRAN comment
 		//cpMST3->Do_W_bwd(nCycle);
-
-
-
 		//---------------------------------
 		// R, B READY
 		//---------------------------------
-
 		cpMST3->Do_R_bwd(nCycle);
 		//cpMST3->Do_B_bwd(nCycle);   // DUONGTRAN comment
-
 		//---------------------------
 		#ifdef MMU_OFF
 		cpMMU3->Do_R_bwd_MMU_OFF(nCycle);
@@ -519,11 +505,9 @@ int main() {
 		cpMMU3->Do_R_bwd(nCycle);
 		cpMMU3->Do_B_bwd(nCycle);
 		#endif
-
 		//---------------------------
 		cpBUS->Do_R_bwd(nCycle);
 		cpBUS->Do_B_bwd(nCycle);
-
 		//---------------------------
 		#ifdef Cache_OFF
 		cpCacheL3->Do_R_bwd_Cache_OFF(nCycle);
@@ -535,11 +519,9 @@ int main() {
 		cpCacheL3->Do_B_bwd_SI(nCycle);
 		cpCacheL3->Do_B_bwd_MI(nCycle);
 		#endif
-
 		//---------------------------
 		cpSLV->Do_R_bwd(nCycle);
 		cpSLV->Do_B_bwd(nCycle);
-
 		//---------------------------------
 		// 5. Update state
 		//---------------------------------
@@ -552,9 +534,9 @@ int main() {
 		//---------------------------------
 		// 6. Check simulation finish 
 		//---------------------------------
-		if (cpMST3->IsARTransFinished() == ERESULT_TYPE_YES) {
-
-
+		if ((cpMST3->IsARTransFinished() == ERESULT_TYPE_YES)
+			// || (cpMST3->nARTrans == cpSLV->nAR)
+		) {
 			//--------------------------------------------------------------
 			printf("[Cycle %3ld] Simulation is finished. \n", nCycle);
 			printf("---------------------------------------------\n");
@@ -563,7 +545,6 @@ int main() {
 			#elif ROTATION
 			printf("MST3: \t Display read (rotation) \n");
 			#endif
-
 			printf("---------------------------------------------\n");
 			printf("\t Parameters \n");
 			printf("---------------------------------------------\n");
@@ -574,27 +555,22 @@ int main() {
 			printf("\t MAX_MO_COUNT			: %d\n", MAX_MO_COUNT);
 			// printf("\t AR_ADDR_INCREMENT		: 0x%x\n", AR_ADDR_INC);
 			// printf("\t AW_ADDR_INCREMENT		: 0x%x\n", AW_ADDR_INC);
-
 			#ifdef Cache_OFF
 			printf("\t Cache            : OFF \n");
 			#endif
 			#ifdef Cache_ON
 			printf("\t Cache            : ON \n");
 			#endif
-
 			#ifdef MMU_OFF 
 			printf("\t MMU				: OFF \n");
 			#endif
 			#ifdef MMU_ON
 			printf("\t MMU				: ON \n");
 			#endif
-
 			printf("\t PTW				: Single fetch\n");
-
 			#ifdef CONTIGUITY_DISABLE
 			printf("\t CONTIGUITY			: DISABLE \n");
 			#endif
-
 			#ifdef CONTIGUITY_ENABLE
 			#ifdef CONTIGUITY_0_PERCENT 
 			printf("\t CONTIGUITY			: 0 percent \n");
@@ -612,37 +588,29 @@ int main() {
 			printf("\t CONTIGUITY			: 100 percent \n");
 			#endif
 			#endif
-
 			#ifdef AR_ADDR_RANDOM
 			printf("\t AR RANDOM ADDRESS 		: ON \n");
 			#endif
-
 			#ifdef AW_ADDR_RANDOM
 			printf("\t AW RANDOM ADDRESS 		: ON \n");
 			#endif
-
 			#ifdef IDEAL_MEMORY
 			printf("\t IDEAL MEMORY 		: ON \n");
 			#endif
-
 			#ifdef MEMORY_CONTROLLER 
 			printf("\t MEMORY_CONTROLLER 		: ON \n");
 			#endif
-
 			// printf("---------------------------------------------\n");
-
-
 			//--------------------------------------------------------------
 			// FILE out
 			//--------------------------------------------------------------
 			//FILE *fp = NULL;
-
 			// DUONGTRAN comment
 			// Stat
 			// cpMST0->PrintStat(nCycle, fp);
 			// cpMST1->PrintStat(nCycle, fp);
 			// cpMST2->PrintStat(nCycle, fp);
- 			// cpMST3->PrintStat(nCycle, fp);
+			// cpMST3->PrintStat(nCycle, fp);
 			// cpMST4->PrintStat(nCycle, fp);
 			// cpMST5->PrintStat(nCycle, fp);
 			#ifdef MMU_ON
@@ -651,7 +619,6 @@ int main() {
 			// cpMMU2->PrintStat(nCycle, fp);
 			//cpMMU3->PrintStat(nCycle, fp);
 			#endif
-
 			// Get total avg TLB hit rate and PTW
 			#ifdef MMU_ON
 			//int Total_nAR_SI = cpMMU0->Get_nAR_SI() + cpMMU1->Get_nAR_SI() + cpMMU2->Get_nAR_SI() + cpMMU3->Get_nAR_SI();
@@ -662,37 +629,27 @@ int main() {
 			int Total_nHit_AR_TLB = cpMMU3->Get_nHit_AR_TLB();
 			//int Total_nHit_AW_TLB = cpMMU0->Get_nHit_AW_TLB() + cpMMU1->Get_nHit_AW_TLB() + cpMMU2->Get_nHit_AW_TLB() + cpMMU3->Get_nHit_AW_TLB();
 			int Total_nHit_AW_TLB = cpMMU3->Get_nHit_AW_TLB();
-
 			float Avg_TLB_hit_rate = (float) (Total_nHit_AR_TLB + Total_nHit_AW_TLB) / (Total_nAR_SI + Total_nAW_SI) ; 
-
 			// Get TLB reach
 			float Avg_TLB_reach = (float) (cpMMU3->GetTLB_reach(nCycle));
-
 			int total_nPTW = cpMMU3->nPTW_total + cpMMU3->nAPTW_total_AT;
-
 			printf("---------------------------------------------\n");
 			printf("\t Total Avg TLB hit rate = %1.5f\n", Avg_TLB_hit_rate);
 			printf("\t Total Avg TLB reach    = %1.5f\n", Avg_TLB_reach);
 			printf("\t Total PTW              = %d\n", total_nPTW);
 			printf("---------------------------------------------\n");
-
 			#endif  // MMU_ON
-
 			cpSLV->PrintStat(nCycle, nullptr);
-
 			// DUONGTRAN comment
 			//cpBUS ->PrintStat(nCycle, fp);
 			//cpSLV ->PrintStat(nCycle, fp);
-             #ifdef Cache_ON
-			 FILE *fp = NULL;
-             cpCacheL3->PrintStat(nCycle, fp);
-             #endif //Cache_ON
-
+			#ifdef Cache_ON
+			FILE *fp = NULL;
+			cpCacheL3->PrintStat(nCycle, fp);
+			#endif //Cache_ON
 			break;
 		};
-
 		nCycle++;
-
 		//--------------------------
 		// 7. Check termination
 		//--------------------------

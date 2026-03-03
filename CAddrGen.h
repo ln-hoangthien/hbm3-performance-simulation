@@ -29,11 +29,10 @@ using namespace std;
 //-------------------------------------------------------------------------------
 // Tile size 
 //-------------------------------------------------------------------------------
-#if BYTE_PER_PIXEL == 4 
-	//#define TILEH			16								// Pixels. Horizontal. Power-of-2
-	#define TILEH			MAX_TRANS_SIZE/BYTE_PER_PIXEL	// Because of Reducing Page size
-#elif BYTE_PER_PIXEL == 1 
-	#define TILEH			64
+#ifdef TILEH
+	#define TILEH			TILEH*(MAX_TRANS_SIZE/BYTE_PER_PIXEL)
+#else
+	#define TILEH			MAX_TRANS_SIZE/BYTE_PER_PIXEL
 #endif
 
 #define TILEV				16								// Vertical 
@@ -234,7 +233,12 @@ public:
 	int64_t		GetAddr_CIAM();
 	int64_t		GetAddr_BFAM();
 	int64_t		GetAddr_BGFAM();
-	int64_t		GetAddr_HBM_Interleaving();
+	int64_t		GetAddr_OIRAM();
+	int64_t		GetAddr_MIN_K_UNION();
+	int64_t		GetAddr_FlatFish();
+	int64_t		GetAddr_NEAR_OPTIMAL_ROW_WISE();
+	int64_t		GetAddr_NEAR_OPTIMAL_COL_WISE();
+	int64_t		GetAddr_NEAR_OPTIMAL_BOTH_WISE();
 
 	// BFAM
 	int		GetBank_BFAM_BF(int nBank);  						// Get flipped bank number. BANK_FLIP, BANK_FLIP_MINUS algorithm

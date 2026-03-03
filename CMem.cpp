@@ -191,11 +191,11 @@ EResultType CMem::SetMemCmdPkt(EMemCmdType eCmd, int nBank, int nRow) {
 		// Set cmd for target bank
 		for (int i=0; i<BANK_NUM; i++) {
 			if (i == nBank) {
-				this->cpBank[nBank]->SetMemCmd(eCmd);
-				this->cpBank[nBank]->SetMemAddr(nBank, nRow);
+				this->cpBank[i]->SetMemCmd(eCmd);
+				this->cpBank[i]->SetMemAddr(i, nRow);
 			}
 			else {
-				this->cpBank[nBank]->SetMemCmd(EMEM_CMD_TYPE_NOP);
+				this->cpBank[i]->SetMemCmd(EMEM_CMD_TYPE_NOP);
 			};
 		};
 	};
@@ -250,8 +250,9 @@ EResultType CMem::IsRD_global_ready(int bank) {
 	for (int nbank=0; nbank<BANK_NUM; nbank++) {
 		int check_bankgroup = std::floor(nbank/BanksPerBGroup);
 		if (this->nCnt_CCD[check_bankgroup] < Get_tCCD(bank, nbank) or 
-			this->nCnt_WTR[check_bankgroup] < Get_tWTR(bank, nbank))
+			this->nCnt_WTR[check_bankgroup] < Get_tWTR(bank, nbank)) {
 			return (ERESULT_TYPE_NO);
+		}
 	};
 	return (ERESULT_TYPE_YES);
 };

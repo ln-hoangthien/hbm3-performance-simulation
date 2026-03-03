@@ -380,20 +380,48 @@ int main() {
 	cAR_AddrMap = "LIAM";
 	#elif defined(AR_BFAM) 
 	cAR_AddrMap = "BFAM";
+	#elif defined(AR_BGFAM)
+	cAR_AddrMap = "BGFAM";
 	#elif defined(AR_TILE)
 	cAR_AddrMap = "TILE";
-	#elif defined(AR_HBM_INTERLEAVE)
-	cAR_AddrMap = "HBM_INTERLEAVE";
+	#elif defined(AR_OIRAM)
+	cAR_AddrMap = "OIRAM";
+	#elif defined(AR_MIN_K_UNION)
+	cAR_AddrMap = "MIN_K_UNION";
+	#elif defined(AR_FLATFISH)
+	cAR_AddrMap = "FLATFISH";
+	#elif defined(AR_NEAR_OPTIMAL)
+		#ifdef RASTER_SCAN
+			cAR_AddrMap = "NEAR_OPTIMAL_ROW_WISE";
+		#elif ROTATION
+			cAR_AddrMap = "NEAR_OPTIMAL_COL_WISE";
+		#else
+			assert(0);
+		#endif
 	#endif
 	
 	#if defined(AW_LIAM)
 	cAW_AddrMap = "LIAM";
 	#elif defined(AW_BFAM)
 	cAW_AddrMap = "BFAM";
+	#elif defined(AW_BGFAM)
+	cAW_AddrMap = "BGFAM";
 	#elif defined(AW_TILE)
 	cAW_AddrMap = "TILE";
-	#elif defined(AW_HBM_INTERLEAVE)
-	cAW_AddrMap = "HBM_INTERLEAVE";
+	#elif defined(AW_OIRAM)
+	cAW_AddrMap = "OIRAM";
+	#elif defined(AW_MIN_K_UNION)
+	cAW_AddrMap = "MIN_K_UNION";
+	#elif defined(AW_FLATFISH)
+	cAW_AddrMap = "FLATFISH";
+	#elif defined(AW_NEAR_OPTIMAL)
+		#ifdef RASTER_SCAN
+			cAW_AddrMap = "NEAR_OPTIMAL_ROW_WISE";
+		#elif ROTATION
+			cAW_AddrMap = "NEAR_OPTIMAL_COL_WISE";
+		#else
+			assert(0);
+		#endif
 	#endif
 
 
@@ -755,11 +783,13 @@ int main() {
 		// 6. Check simulation finish 
 		//---------------------------------
 		//if (cpMST0->IsAWTransFinished() == ERESULT_TYPE_YES and cpMST1->IsARTransFinished() == ERESULT_TYPE_YES and cpMST2->IsAWTransFinished() == ERESULT_TYPE_YES and cpMST3->IsARTransFinished() == ERESULT_TYPE_YES) {
-		if (cpMST0->IsAWTransFinished() == ERESULT_TYPE_YES and 
-			cpMST1->IsARTransFinished() == ERESULT_TYPE_YES and 
-			cpMST2->IsAWTransFinished() == ERESULT_TYPE_YES and 
-			cpMST3->IsARTransFinished() == ERESULT_TYPE_YES) {
-
+		if ((cpMST0->IsAWTransFinished() == ERESULT_TYPE_YES && 
+			cpMST1->IsARTransFinished() == ERESULT_TYPE_YES && 
+			cpMST2->IsAWTransFinished() == ERESULT_TYPE_YES && 
+			cpMST3->IsARTransFinished() == ERESULT_TYPE_YES) 
+			// || (cpSLV->nAR == (cpMST1->nARTrans + cpMST3->nARTrans) &&
+			// cpSLV->nAW == (cpMST0->nAWTrans + cpMST2->nAWTrans))
+		) {
 
 			//--------------------------------------------------------------
 			printf("[Cycle %3ld] Simulation is finished. \n", nCycle);
