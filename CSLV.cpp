@@ -34,14 +34,14 @@ CSLV::CSLV(string cName, int nMemCh) {
         this->cpTx_B  = new CTRx("SLV_Tx_B",  ETRX_TYPE_TX, EPKT_TYPE_B);
 
         // Generate FIFO
-        this->cpQ_AR	= new CQ("SLV_Q_AR",	   EUD_TYPE_AR, 16);
-        this->cpQ_AW	= new CQ("SLV_Q_AW",	   EUD_TYPE_AW, 16);
-        this->cpQ_W	= new CQ("SLV_Q_W",	   EUD_TYPE_W,  64);
+        this->cpQ_AR	= new CQ("SLV_Q_AR",	   EUD_TYPE_AR, MAX_MO_COUNT);
+        this->cpQ_AW	= new CQ("SLV_Q_AW",	   EUD_TYPE_AW, MAX_MO_COUNT);
+        this->cpQ_W		= new CQ("SLV_Q_W",	   	   EUD_TYPE_W,  MAX_MO_COUNT*4);
 
-        this->cpFIFO_AR	= new CFIFO("SLV_FIFO_AR", EUD_TYPE_AR, 16);
-        this->cpFIFO_AW	= new CFIFO("SLV_FIFO_AW", EUD_TYPE_AW, 16);
-        this->cpFIFO_R	= new CFIFO("SLV_FIFO_R",  EUD_TYPE_R,  64);
-        this->cpFIFO_B	= new CFIFO("SLV_FIFO_B",  EUD_TYPE_B,  16);
+        this->cpFIFO_AR	= new CFIFO("SLV_FIFO_AR", EUD_TYPE_AR, MAX_MO_COUNT);
+        this->cpFIFO_AW	= new CFIFO("SLV_FIFO_AW", EUD_TYPE_AW, MAX_MO_COUNT);
+        this->cpFIFO_R	= new CFIFO("SLV_FIFO_R",  EUD_TYPE_R,  MAX_MO_COUNT*4);
+        this->cpFIFO_B	= new CFIFO("SLV_FIFO_B",  EUD_TYPE_B,  MAX_MO_COUNT);
 	
 	// Generate scheduler 
 	this->cpScheduler = new CScheduler("Scheduler");
@@ -499,7 +499,7 @@ EResultType CSLV::Do_AR_fwd_MC_Frontend(int64_t nCycle) {
 	// Generate UD
 	UPUD upAR_new = new UUD;
 	upAR_new->cpAR = Copy_CAxPkt(cpAR); // FIXME FIXME Check. need copy? 
-	
+
 	// Push UD
 	this->cpQ_AR->Push(upAR_new);
 
@@ -1006,7 +1006,7 @@ EResultType CSLV::Do_AR_bwd(int64_t nCycle) {
 	// };
 	// cpAR->CheckPkt();
 
-	// Check Rx valid 
+	// Check Rx valid
 	if (this->cpRx_AR->IsBusy() == ERESULT_TYPE_YES) {
 		// Set ready
 		this->cpRx_AR->SetAcceptResult(ERESULT_TYPE_ACCEPT);
@@ -1434,7 +1434,6 @@ EResultType CSLV::UpdateState(int64_t nCycle) {
 	this->cpFIFO_AW->UpdateState();
 	this->cpFIFO_R ->UpdateState();
 	this->cpFIFO_B ->UpdateState();
-
 
 	#ifdef MEMORY_CONTROLLER
 

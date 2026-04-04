@@ -84,7 +84,9 @@
 //-------------------------------------------------------------
 // Max MO count
 //-------------------------------------------------------------
-#define MAX_MO_COUNT			16
+#ifndef MAX_MO_COUNT
+	#define MAX_MO_COUNT			16
+#endif
 
 
 //-------------------------------------------------------------
@@ -282,7 +284,7 @@
 //-------------------------------------------------------------
 // #define MAX_BUS_NUM_PORT		6
 
-#define BUS_LATENCY 6
+#define BUS_LATENCY 1
 
 //-------------------------------------------------------------
 // (Bus) Arbiter
@@ -399,8 +401,8 @@
 //-------------------------------------------------------------
 // (Master) Image static parameter 
 //-------------------------------------------------------------
-#define IMGHB				(IMG_HORIZONTAL_SIZE * BYTE_PER_PIXEL)	// bytes        
-
+#define IMGHB				(IMG_HORIZONTAL_SIZE * BYTE_PER_PIXEL)	// bytes    
+#define IMGVB				(IMG_VERTICAL_SIZE * BYTE_PER_PIXEL)	// bytes   
  
 // #ifdef RGB
 // #define PIXELS_PER_TRANS		(MAX_TRANS_SIZE / 4)			// 16 pixels	// FIXME
@@ -409,7 +411,7 @@
 // #define PIXELS_PER_TRANS		MAX_TRANS_SIZE				// 64 pixels
 // #endif
 
-#define PIXELS_PER_TRANS		MAX_TRANS_SIZE / BYTE_PER_PIXEL		// Check FIXME
+#define PIXELS_PER_TRANS		(MAX_TRANS_SIZE / BYTE_PER_PIXEL)		// Check FIXME
 
 //-------------------------------------------------------------
 // (Master) Linear mode 
@@ -474,12 +476,17 @@
 //-------------------------------------------------------------
 // (Memory) Number of banks
 //-------------------------------------------------------------
-//#define BANK_NUM		32 
+#ifndef BANK_NUM
+	#define BANK_NUM 16
+#endif
 #define BANK_NUM_PER_GROUP		4
 #define BANK_NUM_PER_STACK		16
+#define BANKGROUP_NUM			(int)round(BANK_NUM / BANK_NUM_PER_GROUP)
+#define STACK_NUM				(int)round(BANK_NUM / BANK_NUM_PER_STACK)
 
 
-//-------------------------------------------------------------
+
+//------------------		-------------------------------------------
 // (Memory) Number of channels 
 //-------------------------------------------------------------
  #define MEM_CHANNEL_NUM	1

@@ -203,11 +203,8 @@ int main() {
 	//------------------------------
 	// Set total Ax NUM 
 	//------------------------------
-	#ifdef TILE
-		int NUM = (IMG_HORIZONTAL_SIZE*IMG_VERTICAL_SIZE*BYTE_PER_PIXEL/MAX_TRANS_SIZE)*(TILE_SIZE*TILE_SIZE);
-	#else
-		int NUM = IMG_HORIZONTAL_SIZE*IMG_VERTICAL_SIZE*BYTE_PER_PIXEL/MAX_TRANS_SIZE;
-	#endif
+
+	int NUM = IMG_HORIZONTAL_SIZE*IMG_VERTICAL_SIZE*BYTE_PER_PIXEL/MAX_TRANS_SIZE;
 
 	// Number of transactions
 	cpMST3->Set_nAR_GEN_NUM(0);
@@ -260,20 +257,10 @@ int main() {
 		cpMST3->Set_AW_Operation("RASTER_SCAN");
 	#elif TILE
 		cpMST3->Set_AR_Operation("TILE");
-		cpMST3->Set_AW_Operation("TILE");
+		cpMST3->Set_AW_Operation("RASTER_SCAN");
 	#else
 		assert(0);
 	#endif
-
-	////------------------------------
-	//// Set Ax issue interval cycles 
-	////------------------------------
-	//cpMST0->Set_AR_ISSUE_MIN_INTERVAL(1);    // DUONGTRAN FIXME ??? Why? When reset then it become 4
-	//cpMST0->Set_AW_ISSUE_MIN_INTERVAL(1);
-
-	//cpMST3->Set_AR_ISSUE_MIN_INTERVAL(1);
-	//cpMST3->Set_AW_ISSUE_MIN_INTERVAL(1);
-
 
 	//------------------------------
 	// Set CACHE interleaving
@@ -298,23 +285,43 @@ int main() {
 	cAR_AddrMap = "TILE";
 	#elif defined(AR_OIRAM)
 	cAR_AddrMap = "OIRAM";
-	#elif defined(AR_MIN_K_UNION)
-	cAR_AddrMap = "MIN_K_UNION";
 	#elif defined(AR_FLATFISH)
 	cAR_AddrMap = "FLATFISH";
-	#elif defined(AR_NEAR_OPTIMAL)
-		#ifdef RASTER_SCAN
-			cAR_AddrMap = "NEAR_OPTIMAL_ROW_WISE";
-		#elif ROTATION
-			cAR_AddrMap = "NEAR_OPTIMAL_COL_WISE";
-		#else
-			assert(0);
-		#endif
+	
+	#elif defined(AR_MIN_K_UNION_ROW_WISE)
+	cAR_AddrMap = "MIN_K_UNION_ROW_WISE";
+	#elif defined(AR_MIN_K_UNION_COL_WISE)
+	cAR_AddrMap = "MIN_K_UNION_COL_WISE";
+	#elif defined(AR_MIN_K_UNION_BOTH_WISE)
+	cAR_AddrMap = "MIN_K_UNION_BOTH_WISE";
+	#elif defined(AR_MIN_K_UNION_TILE_ONLY)
+	cAR_AddrMap = "MIN_K_UNION_TILE_ONLY";
+	#elif defined(AR_MIN_K_UNION_TILE_ROW_WISE)
+	cAR_AddrMap = "MIN_K_UNION_TILE_ROW_WISE";
+	#elif defined(AR_MIN_K_UNION_TILE_COL_WISE)
+	cAR_AddrMap = "MIN_K_UNION_TILE_COL_WISE";
+	#elif defined(AR_MIN_K_UNION_TILE_ROW_COL_WISE)
+	cAR_AddrMap = "MIN_K_UNION_TILE_COL_WISE";
+
+	#elif defined(AR_NEAR_OPTIMAL_ROW_WISE)
+	cAR_AddrMap = "NEAR_OPTIMAL_ROW_WISE";
+	#elif defined(AR_NEAR_OPTIMAL_COL_WISE)
+	cAR_AddrMap = "NEAR_OPTIMAL_COL_WISE";
+	#elif defined(AR_NEAR_OPTIMAL_BOTH_WISE)
+	cAR_AddrMap = "NEAR_OPTIMAL_BOTH_WISE";
+	#elif defined(AR_NEAR_OPTIMAL_TILE_ONLY)
+	cAR_AddrMap = "NEAR_OPTIMAL_TILE_ONLY";
+	#elif defined(AR_NEAR_OPTIMAL_TILE_ROW_WISE)
+	cAR_AddrMap = "NEAR_OPTIMAL_TILE_ROW_WISE";
+	#elif defined(AR_NEAR_OPTIMAL_TILE_COL_WISE)
+	cAR_AddrMap = "NEAR_OPTIMAL_TILE_COL_WISE";
+	#elif defined(AR_NEAR_OPTIMAL_TILE_ROW_COL_WISE)
+	cAR_AddrMap = "NEAR_OPTIMAL_TILE_COL_WISE";
 	#endif
 	
 	#if defined(AW_LIAM)
 	cAW_AddrMap = "LIAM";
-	#elif defined(AW_BFAM)
+	#elif defined(AW_BFAM) 
 	cAW_AddrMap = "BFAM";
 	#elif defined(AW_BGFAM)
 	cAW_AddrMap = "BGFAM";
@@ -322,18 +329,38 @@ int main() {
 	cAW_AddrMap = "TILE";
 	#elif defined(AW_OIRAM)
 	cAW_AddrMap = "OIRAM";
-	#elif defined(AW_MIN_K_UNION)
-	cAW_AddrMap = "MIN_K_UNION";
 	#elif defined(AW_FLATFISH)
 	cAW_AddrMap = "FLATFISH";
-	#elif defined(AW_NEAR_OPTIMAL)
-		#ifdef RASTER_SCAN
-			cAW_AddrMap = "NEAR_OPTIMAL_ROW_WISE";
-		#elif ROTATION
-			cAW_AddrMap = "NEAR_OPTIMAL_COL_WISE";
-		#else
-			assert(0);
-		#endif
+	
+	#elif defined(AW_MIN_K_UNION_ROW_WISE)
+	cAW_AddrMap = "MIN_K_UNION_ROW_WISE";
+	#elif defined(AW_MIN_K_UNION_COL_WISE)
+	cAW_AddrMap = "MIN_K_UNION_COL_WISE";
+	#elif defined(AW_MIN_K_UNION_BOTH_WISE)
+	cAW_AddrMap = "MIN_K_UNION_BOTH_WISE";
+	#elif defined(AW_MIN_K_UNION_TILE_ONLY)
+	cAW_AddrMap = "MIN_K_UNION_TILE_ONLY";
+	#elif defined(AW_MIN_K_UNION_TILE_ROW_WISE)
+	cAW_AddrMap = "MIN_K_UNION_TILE_ROW_WISE";
+	#elif defined(AW_MIN_K_UNION_TILE_COL_WISE)
+	cAW_AddrMap = "MIN_K_UNION_TILE_COL_WISE";
+	#elif defined(AW_MIN_K_UNION_TILE_ROW_COL_WISE)
+	cAW_AddrMap = "MIN_K_UNION_TILE_COL_WISE";
+
+	#elif defined(AW_NEAR_OPTIMAL_ROW_WISE)
+	cAW_AddrMap = "NEAR_OPTIMAL_ROW_WISE";
+	#elif defined(AW_NEAR_OPTIMAL_COL_WISE)
+	cAW_AddrMap = "NEAR_OPTIMAL_COL_WISE";
+	#elif defined(AW_NEAR_OPTIMAL_BOTH_WISE)
+	cAW_AddrMap = "NEAR_OPTIMAL_BOTH_WISE";
+	#elif defined(AW_NEAR_OPTIMAL_TILE_ONLY)
+	cAW_AddrMap = "NEAR_OPTIMAL_TILE_ONLY";
+	#elif defined(AW_NEAR_OPTIMAL_TILE_ROW_WISE)
+	cAW_AddrMap = "NEAR_OPTIMAL_TILE_ROW_WISE";
+	#elif defined(AW_NEAR_OPTIMAL_TILE_COL_WISE)
+	cAW_AddrMap = "NEAR_OPTIMAL_TILE_COL_WISE";
+	#elif defined(AW_NEAR_OPTIMAL_TILE_ROW_COL_WISE)
+	cAW_AddrMap = "NEAR_OPTIMAL_TILE_COL_WISE";
 	#endif
 
 	// Simulate
@@ -349,6 +376,16 @@ int main() {
 			cpCacheL3->Reset();
 			cpSLV->Reset();
 		};
+
+		////------------------------------
+		//// Set Ax issue interval cycles - No Write to Interval
+		////------------------------------
+		cpMST0->Set_AR_ISSUE_MIN_INTERVAL(1);
+		cpMST0->Set_AW_ISSUE_MIN_INTERVAL(1);
+
+		cpMST3->Set_AR_ISSUE_MIN_INTERVAL(1);
+		cpMST3->Set_AW_ISSUE_MIN_INTERVAL(1);
+
 		//---------------------------------------------
 		// 4. Start simulation
 		//---------------------------------------------
@@ -357,6 +394,9 @@ int main() {
 			cpMST3->LoadTransfer_AR(nCycle, cAR_AddrMap, "RASTER_SCAN");
 			//cpMST3->LoadTransfer_AW(nCycle, cAW_AddrMap, "RASTER_SCAN");  // DUONGTRAN comment
 		#elif ROTATION
+			cpMST3->LoadTransfer_AR(nCycle, cAR_AddrMap, "ROTATION");
+			//cpMST3->LoadTransfer_AW(nCycle, cAW_AddrMap, "ROTATION");  // DUONGTRAN comment
+		#elif RASTER_SCAN_ROTATION
 			cpMST3->LoadTransfer_AR(nCycle, cAR_AddrMap, "ROTATION");
 			//cpMST3->LoadTransfer_AW(nCycle, cAW_AddrMap, "ROTATION");  // DUONGTRAN comment
 		#elif TILE

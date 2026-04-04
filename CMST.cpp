@@ -4411,7 +4411,6 @@ EResultType CMST::Do_AR_fwd(int64_t nCycle) {
 
 	// Check MO
 	if (this->GetMO_AR() >= MAX_MO_COUNT) {
-		//printf("Full MO_AR = %d / %d\n", this->GetMO_AR(), MAX_MO_COUNT);
 		return (ERESULT_TYPE_FAIL);
 	};
 
@@ -4743,8 +4742,8 @@ EResultType CMST::Do_R_bwd(int64_t nCycle) {
 		printf("[Cycle %3ld: %s.Do_R_bwd] (%s) RLAST handshake Rx_R.\n", nCycle, this->cName.c_str(), cRPktName.c_str());
 		#endif
 
-		// Stat  
-		this->Decrease_MO_AR();	
+		// Stat
+		this->Decrease_MO_AR();
 
 		this->nAllTransFinished++;
 		this->nARTransFinished++;
@@ -4796,7 +4795,7 @@ EResultType CMST::Do_R_bwd(int64_t nCycle) {
 		#endif
 	};
 	
-		return (ERESULT_TYPE_SUCCESS);
+	return (ERESULT_TYPE_SUCCESS);
 };
 
 
@@ -4920,7 +4919,7 @@ EResultType CMST::SetAllTransFinished(EResultType eResult) {
 
 
 // Set AR transactions finished
-EResultType CMST::SetARTransFinished(EResultType eResult) {  
+EResultType CMST::SetARTransFinished(EResultType eResult) {
 	this->eARTransFinished = eResult;
 		return (ERESULT_TYPE_SUCCESS);
 };
@@ -4985,7 +4984,7 @@ EResultType CMST::Set_nAR_GEN_NUM(int nNum) {
 
 	this->nAR_GEN_NUM = nNum;
 	this->cpAddrGen_AR->SetNumTotalTrans(nNum);
-	   	return (ERESULT_TYPE_YES);
+	return (ERESULT_TYPE_YES);
 };
 
 
@@ -5117,7 +5116,7 @@ EResultType CMST::Increase_MO_AR() {
 // Decrease AR MO count 
 EResultType CMST::Decrease_MO_AR() {  
 
-	this->nMO_AR--;
+		this->nMO_AR--;
 
 	#ifdef DEBUG
 	assert (this->nMO_AR >= 0);
