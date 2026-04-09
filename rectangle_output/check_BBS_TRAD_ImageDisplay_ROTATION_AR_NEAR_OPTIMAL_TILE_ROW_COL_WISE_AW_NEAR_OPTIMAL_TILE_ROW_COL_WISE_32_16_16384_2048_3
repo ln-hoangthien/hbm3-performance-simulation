@@ -1,0 +1,70 @@
+SEED: 493
+[Cycle 10214364] Simulation is finished. 
+---------------------------------------------
+MST3: 	 Display read (rotation) 
+---------------------------------------------
+	 Parameters 
+---------------------------------------------
+	 IMG_HORIZONTAL_SIZE		: 16384
+	 IMG_VERTICAL_SIZE		: 2048
+	 MAX_MO_COUNT			: 16
+	 Cache            : OFF 
+	 MMU				: OFF 
+	 PTW				: Single fetch
+	 AR RANDOM ADDRESS 		: ON 
+	 AW RANDOM ADDRESS 		: ON 
+	 MEMORY_CONTROLLER 		: ON 
+--------------------------------------------------------
+	 Name: SLV
+--------------------------------------------------------
+	 Number AR                                    : 2097152
+	 Number AW                                    : 0
+	 Number R                                     : 8388608
+	 Number B                                     : 0
+	 Number PTW                                   : 0
+
+	 Percentage PTW                               : 0.000
+	 Direction change cycle                       : 150
+	 Utilization R channel                        : 0.82
+	 Utilization W channel                        : 0.00
+
+	 Number ACT cmd                               : 524288
+	 Number PRE cmd                               : 524256
+	 Number RD  cmd                               : 2097152
+	 Number WR  cmd                               : 0
+	 Number of NOP cmd for AR                     : 0
+	 Bank hit rate                                : 0.80
+
+	 Empty req Q Ax cycles                        : 13
+
+	 Max req Q AR Occupancy                       : 16
+	 Avg req Q AR Occupancy                       : 13.32
+	 Max req Q AW Occupancy                       : 0
+	 Avg req Q AW Occupancy                       : 0.00
+
+	 Max req Q all AR waiting cycles              : 0
+	 Max req Q all AW waiting cycles              : 0
+	 Max req Q scheduled AR waiting cycles        : 73
+	 Max req Q scheduled AW waiting cycles        : 0
+	 Avg req Q scheduled AR waiting cycles        : 64.89
+	 Avg req Q scheduled AW waiting cycles        : -nan
+	 Avg req Q scheduled Ax waiting cycles        : 64.89
+---------------------------------------------
+	 Q display
+---------------------------------------------
+	 Name         : 	 SLV_Q_AR
+	 eUDType      : 	 EUD_TYPE_AR
+	 nCurNum      : 	 0
+	 nMaxNum      : 	 16
+	 nMaxCycleWait: 	 -1
+---------------------------------------------
+---------------------------------------------
+	 Q display
+---------------------------------------------
+	 Name         : 	 SLV_Q_AW
+	 eUDType      : 	 EUD_TYPE_AW
+	 nCurNum      : 	 0
+	 nMaxNum      : 	 16
+	 nMaxCycleWait: 	 -1
+---------------------------------------------
+--------------------------------------------------------

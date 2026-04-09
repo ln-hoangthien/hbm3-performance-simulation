@@ -1,0 +1,69 @@
+SEED: 493
+[Cycle 7823243] Simulation is finished. 
+---------------------------------------------
+---------------------------------------------
+	 Parameters 
+---------------------------------------------
+	 IMG_HORIZONTAL_SIZE		: 11264
+	 IMG_VERTICAL_SIZE		: 1408
+	 MAX_MO_COUNT			: 16
+	 Cache            : OFF 
+	 MMU				: OFF 
+	 PTW				: Single fetch
+	 AR RANDOM ADDRESS 		: ON 
+	 AW RANDOM ADDRESS 		: ON 
+	 MEMORY_CONTROLLER 		: ON 
+--------------------------------------------------------
+	 Name: SLV
+--------------------------------------------------------
+	 Number AR                                    : 991189
+	 Number AW                                    : 0
+	 Number R                                     : 3964756
+	 Number B                                     : 0
+	 Number PTW                                   : 0
+
+	 Percentage PTW                               : 0.000
+	 Direction change cycle                       : 150
+	 Utilization R channel                        : 0.51
+	 Utilization W channel                        : 0.00
+
+	 Number ACT cmd                               : 495616
+	 Number PRE cmd                               : 495584
+	 Number RD  cmd                               : 991189
+	 Number WR  cmd                               : 0
+	 Number of NOP cmd for AR                     : 0
+	 Bank hit rate                                : 0.67
+
+	 Empty req Q Ax cycles                        : 13
+
+	 Max req Q AR Occupancy                       : 16
+	 Avg req Q AR Occupancy                       : 14.15
+	 Max req Q AW Occupancy                       : 0
+	 Avg req Q AW Occupancy                       : 0.00
+
+	 Max req Q all AR waiting cycles              : 0
+	 Max req Q all AW waiting cycles              : 0
+	 Max req Q scheduled AR waiting cycles        : 165
+	 Max req Q scheduled AW waiting cycles        : 0
+	 Avg req Q scheduled AR waiting cycles        : 111.67
+	 Avg req Q scheduled AW waiting cycles        : -nan
+	 Avg req Q scheduled Ax waiting cycles        : 111.67
+---------------------------------------------
+	 Q display
+---------------------------------------------
+	 Name         : 	 SLV_Q_AR
+	 eUDType      : 	 EUD_TYPE_AR
+	 nCurNum      : 	 0
+	 nMaxNum      : 	 16
+	 nMaxCycleWait: 	 -1
+---------------------------------------------
+---------------------------------------------
+	 Q display
+---------------------------------------------
+	 Name         : 	 SLV_Q_AW
+	 eUDType      : 	 EUD_TYPE_AW
+	 nCurNum      : 	 0
+	 nMaxNum      : 	 16
+	 nMaxCycleWait: 	 -1
+---------------------------------------------
+--------------------------------------------------------

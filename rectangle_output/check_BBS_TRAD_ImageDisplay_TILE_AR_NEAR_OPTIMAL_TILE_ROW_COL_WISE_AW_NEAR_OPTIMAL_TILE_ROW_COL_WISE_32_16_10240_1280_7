@@ -1,0 +1,69 @@
+SEED: 493
+[Cycle 3282255] Simulation is finished. 
+---------------------------------------------
+---------------------------------------------
+	 Parameters 
+---------------------------------------------
+	 IMG_HORIZONTAL_SIZE		: 10240
+	 IMG_VERTICAL_SIZE		: 1280
+	 MAX_MO_COUNT			: 16
+	 Cache            : OFF 
+	 MMU				: OFF 
+	 PTW				: Single fetch
+	 AR RANDOM ADDRESS 		: ON 
+	 AW RANDOM ADDRESS 		: ON 
+	 MEMORY_CONTROLLER 		: ON 
+--------------------------------------------------------
+	 Name: SLV
+--------------------------------------------------------
+	 Number AR                                    : 819200
+	 Number AW                                    : 0
+	 Number R                                     : 3276800
+	 Number B                                     : 0
+	 Number PTW                                   : 0
+
+	 Percentage PTW                               : 0.000
+	 Direction change cycle                       : 150
+	 Utilization R channel                        : 1.00
+	 Utilization W channel                        : 0.00
+
+	 Number ACT cmd                               : 99270
+	 Number PRE cmd                               : 99238
+	 Number RD  cmd                               : 819200
+	 Number WR  cmd                               : 0
+	 Number of NOP cmd for AR                     : 0
+	 Bank hit rate                                : 0.89
+
+	 Empty req Q Ax cycles                        : 21
+
+	 Max req Q AR Occupancy                       : 16
+	 Avg req Q AR Occupancy                       : 11.48
+	 Max req Q AW Occupancy                       : 0
+	 Avg req Q AW Occupancy                       : 0.00
+
+	 Max req Q all AR waiting cycles              : 0
+	 Max req Q all AW waiting cycles              : 0
+	 Max req Q scheduled AR waiting cycles        : 79
+	 Max req Q scheduled AW waiting cycles        : 0
+	 Avg req Q scheduled AR waiting cycles        : 45.99
+	 Avg req Q scheduled AW waiting cycles        : -nan
+	 Avg req Q scheduled Ax waiting cycles        : 45.99
+---------------------------------------------
+	 Q display
+---------------------------------------------
+	 Name         : 	 SLV_Q_AR
+	 eUDType      : 	 EUD_TYPE_AR
+	 nCurNum      : 	 0
+	 nMaxNum      : 	 16
+	 nMaxCycleWait: 	 -1
+---------------------------------------------
+---------------------------------------------
+	 Q display
+---------------------------------------------
+	 Name         : 	 SLV_Q_AW
+	 eUDType      : 	 EUD_TYPE_AW
+	 nCurNum      : 	 0
+	 nMaxNum      : 	 16
+	 nMaxCycleWait: 	 -1
+---------------------------------------------
+--------------------------------------------------------

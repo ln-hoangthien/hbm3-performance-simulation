@@ -221,11 +221,11 @@ public:
 	ETransDirType	GetTransDirType();
 
 	EResultType	IsFinalTrans();								// Last trans of application
-	int		GetNumTotalTrans();							// Forced by user 
+	int			GetNumTotalTrans();							// Forced by user 
 	EResultType	SetNumPixelTrans();							// Number of pixels of transaction
-	int		GetNumPixelTrans();							// Number of pixels of transaction
-	EResultType     IsFinished_ThisBlock();							// Flag. Block addr gen finished
-	int		GetTileNum();								// Tile number of transaction 
+	int			GetNumPixelTrans();							// Number of pixels of transaction
+	EResultType IsFinished_ThisBlock();							// Flag. Block addr gen finished
+	int			GetTileNum();								// Tile number of transaction 
 
 	int64_t		GetAddr(string cAddrMap);
 	int64_t		GetAddr_TILE();								// Tile, hTile
@@ -234,11 +234,25 @@ public:
 	int64_t		GetAddr_BFAM();
 	int64_t		GetAddr_BGFAM();
 	int64_t		GetAddr_OIRAM();
-	int64_t		GetAddr_MIN_K_UNION();
 	int64_t		GetAddr_FlatFish();
+	
+	int64_t		GetAddr_MIN_K_UNION_ROW_WISE();
+	int64_t		GetAddr_MIN_K_UNION_COL_WISE();
+	int64_t		GetAddr_MIN_K_UNION_BOTH_WISE();
+	int64_t		GetAddr_MIN_K_UNION_TILE();
+	int64_t		GetAddr_MIN_K_UNION_TILE_ROW_WISE();
+	int64_t		GetAddr_MIN_K_UNION_TILE_COL_WISE();
+	int64_t		GetAddr_MIN_K_UNION_TILE_ROW_COL_WISE();
+	int64_t		GetAddr_MIN_K_UNION_STRIDE();
+
 	int64_t		GetAddr_NEAR_OPTIMAL_ROW_WISE();
 	int64_t		GetAddr_NEAR_OPTIMAL_COL_WISE();
 	int64_t		GetAddr_NEAR_OPTIMAL_BOTH_WISE();
+	int64_t		GetAddr_NEAR_OPTIMAL_TILE();
+	int64_t		GetAddr_NEAR_OPTIMAL_TILE_ROW_WISE();
+	int64_t		GetAddr_NEAR_OPTIMAL_TILE_COL_WISE();
+	int64_t		GetAddr_NEAR_OPTIMAL_TILE_ROW_COL_WISE();
+	int64_t		GetAddr_NEAR_OPTIMAL_STRIDE();
 
 	// BFAM
 	int		GetBank_BFAM_BF(int nBank);  						// Get flipped bank number. BANK_FLIP, BANK_FLIP_MINUS algorithm
