@@ -539,7 +539,7 @@
 //-------------------------------------------------------------
 #define COL_WIDTH		((int)(ceilf(log2f(PAGE_SIZE))))		// 11 bits for PAGE_SIZE 2kB 
 #define BANK_WIDTH		((int)(ceilf(log2f(BANK_NUM))))			// 2  bits for BANK_NUM 4
-#define MEM_CH_WIDTH		((int)(ceilf(log2f(MEM_CHANNEL_NUM))))		// 2  bits for MEM_CHANNEL_NUM 4
+#define MEM_CH_WIDTH	((int)(ceilf(log2f(MEM_CHANNEL_NUM))))		// 2  bits for MEM_CHANNEL_NUM 4
 // #define ROW_WIDTH		(32 - MEM_CH_WIDTH - BANK_WIDTH - COL_WIDTH)	// Arch32 
 #define ROW_WIDTH		(64 - MEM_CH_WIDTH - BANK_WIDTH - COL_WIDTH)	// Arch64
 

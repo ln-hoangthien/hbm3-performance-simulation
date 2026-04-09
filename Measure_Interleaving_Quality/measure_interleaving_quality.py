@@ -5,6 +5,8 @@ import argparse
 import numpy as np
 from numba import njit
 from typing import Tuple
+from numba import types
+from numba.typed import List
 
 import matplotlib
 matplotlib.use('Agg')
@@ -28,6 +30,31 @@ bytes_per_pixel = 4
 page_size = 2048
 pixels_per_col = 64 // bytes_per_pixel
 pixels_per_page = page_size // bytes_per_pixel
+
+def rotate_left(num, shift, bits=8):
+    """
+    Performs a left circular shift (rotated shift).
+    """
+    # Create a mask to ensure the result stays within the specified bit bounds
+    bit_mask = (1 << bits) - 1
+    
+    # Ensure the shift amount isn't larger than the bit size
+    shift %= bits 
+    
+    # Shift left, shift right (to wrap around), combine with OR, and apply mask
+    rotated = ((num << shift) | (num >> (bits - shift))) & bit_mask
+    return rotated
+
+def rotate_right(num, shift, bits=8):
+    """
+    Performs a right circular shift (rotated shift).
+    """
+    bit_mask = (1 << bits) - 1
+    shift %= bits
+    
+    # Shift right, shift left (to wrap around), combine with OR, and apply mask
+    rotated = ((num >> shift) | (num << (bits - shift))) & bit_mask
+    return rotated
 
 @njit
 def calculate_pixel_values(img_v: int, img_hb: int, num_banks: int) -> Tuple[np.ndarray, np.ndarray]:
@@ -60,12 +87,15 @@ def generate_bankgroup_interleaving_matrix_bfam(img_hb: int) -> Tuple[np.ndarray
     return row_ids, bank_ids, col_ids
 
 
-def generate_bankgroup_interleaving_matrix_bgfam(num_bankgroups: int, img_hb: int) -> Tuple[np.ndarray, np.ndarray]:
+def generate_bankgroup_interleaving_matrix_bgfam(img_hb: int) -> Tuple[np.ndarray, np.ndarray]:
     """Generate a bankgroup interleaving matrix for BGFAM."""
     row_ids, bank_ids, col_ids, _ = calculate_pixel_values(img_v, img_hb, num_banks)
+    total_bank_bits = math.ceil(math.log2(num_banks))
 
-    gspn = row_ids // k
-    bank_ids = (bank_ids + (gspn % num_bankgroups) * banks_per_group) % num_banks
+    gspn = (row_ids // k) % num_banks
+    
+    flip_binary = rotate_left(gspn, 2, bits=total_bank_bits) # Rotate left by 1 bit
+    bank_ids = (bank_ids ^ flip_binary) % num_banks
 
     return row_ids, bank_ids, col_ids
 
@@ -259,6 +289,7 @@ def qualifying_matrix_optimized(row_ids: np.ndarray, bank_ids: np.ndarray,
                                 num_banks: int, banks_per_group: int) -> float:
     """Optimized quality calculation using numba for speed."""
     total_quality = 0.0
+    max_row_conflict = 2
 
     row_ids = row_ids.reshape((img_v, img_hb))
     bank_ids = bank_ids.reshape((img_v, img_hb))
@@ -266,10 +297,10 @@ def qualifying_matrix_optimized(row_ids: np.ndarray, bank_ids: np.ndarray,
     # USE THE PASSED ARGUMENTS (img_v, img_hb) INSTEAD OF GLOBALS
     for row in range(img_v):
         for col in range(img_hb):
-        #for col in range(1):
             each_quality = 0
             
-            for per_bg in range(1, num_banks):
+            previous_bank_id = List.empty_list(np.int64)
+            for per_bg in range(1, 9):
                 # Right - Different Bank
                 if col + per_bg < img_hb and bank_ids[row, col] != bank_ids[row, col + per_bg]:
                     bg1 = bank_ids[row, col] // banks_per_group
@@ -281,7 +312,8 @@ def qualifying_matrix_optimized(row_ids: np.ndarray, bank_ids: np.ndarray,
                     if row_ids[row, col] != row_ids[row, col + per_bg]:
                         break
             
-            for per_bg in range(1, num_banks):
+            previous_bank_id = List.empty_list(np.int64)
+            for per_bg in range(1, 9):
                 # Left - Different Bank
                 if col - per_bg >= 0 and bank_ids[row, col] != bank_ids[row, col - per_bg]:
                     bg1 = bank_ids[row, col] // banks_per_group
@@ -292,10 +324,22 @@ def qualifying_matrix_optimized(row_ids: np.ndarray, bank_ids: np.ndarray,
                     each_quality += 2 if row_ids[row, col] == row_ids[row, col - per_bg] else -1
                     if row_ids[row, col] != row_ids[row, col - per_bg]:
                         break
-            
-            for per_bg in range(1, num_banks):
+
+            previous_bank_id = List.empty_list(np.int64)
+            row_conflict = 0
+            for per_bg in range(1, 9):
                 nr = row + (col + per_bg * img_hb) // img_hb
                 nc = (col + per_bg * img_hb) % img_hb
+                # Continue on next row
+                if bank_ids[nr, nc] not in previous_bank_id:
+                    previous_bank_id.append(bank_ids[nr, nc])
+                else:
+                    each_quality -= 1
+                    row_conflict += 1
+
+                if row_conflict >= max_row_conflict:
+                    break
+                
                 # Down - Different Bank
                 if nr < img_v and bank_ids[row, col] != bank_ids[nr, nc]:
                     bg1 = bank_ids[row, col] // banks_per_group
@@ -305,26 +349,45 @@ def qualifying_matrix_optimized(row_ids: np.ndarray, bank_ids: np.ndarray,
                 if nr < img_v and bank_ids[row, col] == bank_ids[nr, nc]:
                     each_quality += 2 if row_ids[row, col] == row_ids[nr, nc] else -1
                     if row_ids[row, col] != row_ids[nr, nc]:
-                        break
+                        row_conflict += 1
+
+                if row_conflict >= max_row_conflict:
+                    break
             
-            for per_bg in range(1, num_banks):
-                if col - per_bg * img_hb >= 0:
-                    nr = row - (col - per_bg * img_hb) // img_hb
-                    nc = (col - per_bg * img_hb) % img_hb
-                    # Up - Different Bank
-                    if nr >= 0 and bank_ids[row, col] != bank_ids[nr, nc]:
-                        bg1 = bank_ids[row, col] // banks_per_group
-                        bg2 = bank_ids[nr, nc] // banks_per_group
-                        each_quality += 2 if bg1 != bg2 else 1
-                    # Up - Same Bank
-                    if nr >= 0 and bank_ids[row, col] == bank_ids[nr, nc]:
-                        each_quality += 2 if row_ids[row, col] == row_ids[nr, nc] else -1
-                        if row_ids[row, col] != row_ids[nr, nc]:
-                            break
+            previous_bank_id = List.empty_list(np.int64)
+            row_conflict = 0
+            for per_bg in range(1, 9):
+                nr = row - (col - per_bg * img_hb) // img_hb
+                nc = (col - per_bg * img_hb) % img_hb
+
+                # Continue on next row
+                if bank_ids[nr, nc] not in previous_bank_id:
+                    previous_bank_id.append(bank_ids[nr, nc])
+                else:
+                    each_quality -= 1
+                    row_conflict += 1
+
+                if row_conflict >= max_row_conflict:
+                    break
+
+                # Up - Different Bank
+                if nr >= 0 and bank_ids[row, col] != bank_ids[nr, nc]:
+                    bg1 = bank_ids[row, col] // banks_per_group
+                    bg2 = bank_ids[nr, nc] // banks_per_group
+                    each_quality += 2 if bg1 != bg2 else 1
+                # Up - Same Bank
+                if nr >= 0 and bank_ids[row, col] == bank_ids[nr, nc]:
+                    each_quality += 2 if row_ids[row, col] == row_ids[nr, nc] else -1
+                    if row_ids[row, col] != row_ids[nr, nc]:
+                        row_conflict += 1
+                
+                if row_conflict >= max_row_conflict:
+                    break
 
             total_quality += each_quality
 
-    return total_quality / (img_v * img_hb) / num_banks
+    #return total_quality
+    return total_quality / (img_v * img_hb) / 9
 
 def check_and_print_overlaps(matrix_tuple: Tuple[np.ndarray, np.ndarray]) -> bool:
     """
@@ -682,7 +745,7 @@ def save_heatmap_2D(physical_map: np.ndarray, filename: str = "heatmap_legend.pn
 
 def qualifying_matrix(matrix_tuple: Tuple[np.ndarray, np.ndarray]) -> float:
     row_ids, bank_ids, _ = matrix_tuple
-    return qualifying_matrix_optimized(row_ids, bank_ids, img_v, math.ceil(img_hb / 16), num_banks, banks_per_group)
+    return qualifying_matrix_optimized(row_ids.astype(np.int64), bank_ids.astype(np.int64), img_v, math.ceil(img_hb / 16), num_banks, banks_per_group)
     #return qualifying_matrix_optimized(row_ids, bank_ids, img_v, math.ceil(img_hb / 16), 2, banks_per_group)
 
 def analyze_memory_fragmentation(matrix_tuple: Tuple[np.ndarray, np.ndarray], num_banks: int, num_cols: int) -> float:
@@ -769,13 +832,6 @@ def print_matrix_as_image_layout(matrix_tuple: Tuple[np.ndarray, np.ndarray], im
     rows, cols = reshaped_rows.shape
     print(f"\n[Visualizing Memory Layout as Image: {rows} rows x {cols} transaction-cols]")
 
-    ## 2. Print Bank IDs Grid
-    #print("\n--- Bank ID Layout (img_v x img_hb//16) ---")
-    #for r in range(rows):
-    #    # Now that reshaped_banks contains ints, :2d will work perfectly
-    #    line = " ".join(f"{val:2d}" for val in reshaped_banks[r])
-    #    print(f"Row {r:3d}: [ {line} ]")
-
     # 3. Print Combined Layout (Row, Bank, Col)
     print("\n--- Combined Layout (Row, Bank, Col) ---")
     for r in range(rows):
@@ -798,7 +854,7 @@ def final_result():
     phy_map         = generate_bankgroup_interleaving_matrix_proposal(num_bankgroups, img_hb, img_v)
     phy_map_liam    = generate_bankgroup_interleaving_matrix_liam(img_hb)
     phy_map_bfam    = generate_bankgroup_interleaving_matrix_bfam(img_hb)
-    phy_map_bgfam   = generate_bankgroup_interleaving_matrix_bgfam(num_bankgroups, img_hb)
+    phy_map_bgfam   = generate_bankgroup_interleaving_matrix_bgfam(img_hb)
 
     liam_rows, liam_banks, _ = generate_bankgroup_interleaving_matrix_liam(img_hb)
     
@@ -828,20 +884,17 @@ def final_result():
     print("Matrix Quality  | Proposal\t| LIAM\t| BFAM\t| BGFAM")
     print(f"Quality Results | {qualifying_matrix(phy_map):.2f}\t\t| {qualifying_matrix(phy_map_liam):.2f}\t| {qualifying_matrix(phy_map_bfam):.2f}\t| {qualifying_matrix(phy_map_bgfam):.2f}")
 
+    #print("\n--- Visualizing Physical Memory Maps - LIAM ---")
     #print_matrix_as_image_layout(phy_map_liam, img_hb, img_v)
-    #print_matrix(generate_bankgroup_interleaving_matrix_bfam(num_bankgroups, img_hb))
-    #print_matrix(generate_bankgroup_interleaving_matrix_bgfam(num_bankgroups, img_hb))
-    #print_matrix_as_image_layout(phy_map, img_hb, img_v)
+    #print("\n--- Visualizing Physical Memory Maps - BFAM ---")
+    #print_matrix_as_image_layout(phy_map_bfam, img_hb, img_v)
+    #print("\n--- Visualizing Physical Memory Maps - BGFAM ---")
+    #print_matrix_as_image_layout(phy_map_bgfam, img_hb, img_v)
 
     # Check for Overlaps
     check_and_print_overlaps(phy_map)
 
     analyze_memory_fragmentation(phy_map, num_banks, num_cols)
-
-    # Check for HeatMap
-    #phy_map = map_proposal_to_physical_memory(generate_bankgroup_interleaving_matrix_proposal(num_bankgroups, img_hb, img_v, tile_size), num_banks=num_banks, num_rows=img_v)
-    #save_heatmap_3D(phy_map, filename=f"./heatmap_3d/heatmap_{key}.png", img_hb=img_hb, img_v=img_v)
-    #save_heatmap_2D(phy_map, filename=f"./heatmap_2d/heatmap_{key}.png", img_hb=img_hb, img_v=img_v)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Script qualifying interleaving quality.")
@@ -851,9 +904,6 @@ if __name__ == "__main__":
     parser.add_argument("--tile_size", default=0,     type=int)
     args = parser.parse_args()
 
-    #if not (16 <= args.num_banks <= 64):
-    #    print("Error: The number of banks must be from 16 to 64.")
-    #    exit(1)
     if not ((args.num_banks /banks_per_group).is_integer()):
         print(f"Error: The number of banks ({args.num_banks}) must be a multiple of banks per group ({banks_per_group}).")
         exit(1) 
@@ -865,10 +915,9 @@ if __name__ == "__main__":
 
     quotient     = (img_hb * 4.0)    / (num_banks * page_size)
 
-    #num_bankgroups          = (num_banks // banks_per_group) if (num_banks != 48) else 8
     num_bankgroups          = (num_banks // banks_per_group)
     super_page_size         = page_size * num_banks
-    k                       = 1 if (round((img_hb * bytes_per_pixel) / super_page_size) == 0) else round((img_hb * bytes_per_pixel) / super_page_size)
+    k                       = 1 if (round((img_hb * bytes_per_pixel) / super_page_size) == 0) else math.ceil((img_hb * bytes_per_pixel) / super_page_size)
     print(f"num_banks: {num_banks}, img_hb: {img_hb}, img_v: {img_v}, num_bankgroups: {num_bankgroups}, super_page_size: {super_page_size}, k: {k}")
 
     final_result()

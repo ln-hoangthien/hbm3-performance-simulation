@@ -137,6 +137,7 @@ int GetColNum_AMap_Global(int64_t nAddr) {
 //-------------------------
 int GetChannelNum_AMap_Global(int64_t nAddr) {
 
+//#if defined(RBC) or defined(RCBC) or defined(pRBC) or defined(pRCBC)
 #ifdef RBC
 	return    (0);
 #endif

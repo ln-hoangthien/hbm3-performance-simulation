@@ -8,7 +8,7 @@ SCENARIO_NO_ := $(subst _,,$(SCENARIO))
 MAINFILE_NOCPP := $(subst .cpp,,$(MAINFILE))
 MAINFILE_NOCPP := $(subst main,,$(MAINFILE_NOCPP))
 
-MY_RUN = $(COALESCING)_$(MAINFILE_NOCPP)_$(SCENARIO_NO_)_$(AR)_$(AW)_$(BANK_NUM)_$(BLOCKSIZE_INIT)_$(IMG_HORIZONTAL_SIZE)_$(IMG_VERTICAL_SIZE)_$(TILE_SIZE)
+MY_RUN = $(COALESCING)_$(MAINFILE_NOCPP)_$(SCENARIO_NO_)_$(MEM_MAP)_$(AR)_$(AW)_$(BANK_NUM)_$(BLOCKSIZE_INIT)_$(IMG_HORIZONTAL_SIZE)_$(IMG_VERTICAL_SIZE)_$(TILE_SIZE)
 
 # compile BSS BCT
 BBS_BCT:
@@ -24,11 +24,11 @@ BBS_PCAD:
 
 # compile BSS Tradition
 BBS_TRAD:
-	g++ -O3 -Wall -march=native -fno-stack-protector -DDEBUG -D"$(AR)" -D"$(AW)" -D"BANK_NUM=$(BANK_NUM)" -D"SEED_INIT=$(SEED_INIT)" -D"TILE_SIZE=$(TILE_SIZE)" -D"$(SCENARIO)" -D"NUM_TOTAL_PAGES=$(NUM_TOTAL_PAGES)" -D"BLOCKSIZE_INIT = $(BLOCKSIZE_INIT)" -D"BANK_FLIP_PLUS" -D"SINGLE_FETCH" -D"BBS" -D"MAX_ORDER=10" -D"Cache_OFF" -D"IMG_HORIZONTAL_SIZE = $(IMG_HORIZONTAL_SIZE)" -D"IMG_VERTICAL_SIZE = $(IMG_VERTICAL_SIZE)"  -D"BYTE_PER_PIXEL = 4" -o $(MY_RUN) ./Top.cpp ./Memory.cpp ./CAxPkt.cpp ./CRPkt.cpp ./CWPkt.cpp ./CBPkt.cpp ./UD_Bus.cpp ./CFIFO.cpp ./CTRx.cpp ./CQ.cpp ./CBank.cpp ./CMem.cpp ./CAddrGen.cpp ./CMST.cpp ./CTracker.cpp ./CROB.cpp ./CMIU.cpp ./CMMU.cpp ./CCache.cpp ./CBUS.cpp ./CArb.cpp ./CScheduler.cpp ./CSLV.cpp ./$(MAINFILE) ./Buddy/BuddyTop.cpp ./Buddy/CQueue.cpp ./Buddy/CFreeList.cpp ./Buddy/CBlockList.cpp ./Buddy/CBlockArray.cpp ./Buddy/CPageArray.cpp ./Buddy/CBuddy.cpp
+	g++ -O3 -Wall -march=native -fno-stack-protector -DDEBUG -D"$(MEM_MAP)" -D"$(AR)" -D"$(AW)" -D"BANK_NUM=$(BANK_NUM)" -D"SEED_INIT=$(SEED_INIT)" -D"TILE_SIZE=$(TILE_SIZE)" -D"$(SCENARIO)" -D"NUM_TOTAL_PAGES=$(NUM_TOTAL_PAGES)" -D"BLOCKSIZE_INIT = $(BLOCKSIZE_INIT)" -D"BANK_FLIP_PLUS" -D"SINGLE_FETCH" -D"BBS" -D"MAX_ORDER=10" -D"Cache_OFF" -D"IMG_HORIZONTAL_SIZE = $(IMG_HORIZONTAL_SIZE)" -D"IMG_VERTICAL_SIZE = $(IMG_VERTICAL_SIZE)"  -D"BYTE_PER_PIXEL = 4" -o $(MY_RUN) ./Top.cpp ./Memory.cpp ./CAxPkt.cpp ./CRPkt.cpp ./CWPkt.cpp ./CBPkt.cpp ./UD_Bus.cpp ./CFIFO.cpp ./CTRx.cpp ./CQ.cpp ./CBank.cpp ./CMem.cpp ./CAddrGen.cpp ./CMST.cpp ./CTracker.cpp ./CROB.cpp ./CMIU.cpp ./CMMU.cpp ./CCache.cpp ./CBUS.cpp ./CArb.cpp ./CScheduler.cpp ./CSLV.cpp ./$(MAINFILE) ./Buddy/BuddyTop.cpp ./Buddy/CQueue.cpp ./Buddy/CFreeList.cpp ./Buddy/CBlockList.cpp ./Buddy/CBlockArray.cpp ./Buddy/CPageArray.cpp ./Buddy/CBuddy.cpp
 
 # compile BSS Tradition
 BBS_TRAD_DEBUG:
-	g++ -g -Wall -march=native -fno-stack-protector -DDEBUG -DDEBUG_SLV -D"$(AR)" -D"$(AW)" -D"BANK_NUM=$(BANK_NUM)" -D"SEED_INIT=$(SEED_INIT)" -D"TILE_SIZE=$(TILE_SIZE)" -D"$(SCENARIO)" -D"NUM_TOTAL_PAGES=$(NUM_TOTAL_PAGES)" -D"BLOCKSIZE_INIT = $(BLOCKSIZE_INIT)" -D"BANK_FLIP_PLUS" -D"SINGLE_FETCH" -D"BBS" -D"MAX_ORDER=10" -D"Cache_OFF" -D"IMG_HORIZONTAL_SIZE = $(IMG_HORIZONTAL_SIZE)" -D"IMG_VERTICAL_SIZE = $(IMG_VERTICAL_SIZE)"  -D"BYTE_PER_PIXEL = 4" -o $(MY_RUN) ./Top.cpp ./Memory.cpp ./CAxPkt.cpp ./CRPkt.cpp ./CWPkt.cpp ./CBPkt.cpp ./UD_Bus.cpp ./CFIFO.cpp ./CTRx.cpp ./CQ.cpp ./CBank.cpp ./CMem.cpp ./CAddrGen.cpp ./CMST.cpp ./CTracker.cpp ./CROB.cpp ./CMIU.cpp ./CMMU.cpp ./CCache.cpp ./CBUS.cpp ./CArb.cpp ./CScheduler.cpp ./CSLV.cpp ./$(MAINFILE) ./Buddy/BuddyTop.cpp ./Buddy/CQueue.cpp ./Buddy/CFreeList.cpp ./Buddy/CBlockList.cpp ./Buddy/CBlockArray.cpp ./Buddy/CPageArray.cpp ./Buddy/CBuddy.cpp
+	g++ -g -Wall -march=native -fno-stack-protector -DDEBUG -DDEBUG_SLV -D"$(MEM_MAP)" -D"$(AR)" -D"$(AW)" -D"BANK_NUM=$(BANK_NUM)" -D"SEED_INIT=$(SEED_INIT)" -D"TILE_SIZE=$(TILE_SIZE)" -D"$(SCENARIO)" -D"NUM_TOTAL_PAGES=$(NUM_TOTAL_PAGES)" -D"BLOCKSIZE_INIT = $(BLOCKSIZE_INIT)" -D"BANK_FLIP_PLUS" -D"SINGLE_FETCH" -D"BBS" -D"MAX_ORDER=10" -D"Cache_OFF" -D"IMG_HORIZONTAL_SIZE = $(IMG_HORIZONTAL_SIZE)" -D"IMG_VERTICAL_SIZE = $(IMG_VERTICAL_SIZE)"  -D"BYTE_PER_PIXEL = 4" -o $(MY_RUN) ./Top.cpp ./Memory.cpp ./CAxPkt.cpp ./CRPkt.cpp ./CWPkt.cpp ./CBPkt.cpp ./UD_Bus.cpp ./CFIFO.cpp ./CTRx.cpp ./CQ.cpp ./CBank.cpp ./CMem.cpp ./CAddrGen.cpp ./CMST.cpp ./CTracker.cpp ./CROB.cpp ./CMIU.cpp ./CMMU.cpp ./CCache.cpp ./CBUS.cpp ./CArb.cpp ./CScheduler.cpp ./CSLV.cpp ./$(MAINFILE) ./Buddy/BuddyTop.cpp ./Buddy/CQueue.cpp ./Buddy/CFreeList.cpp ./Buddy/CBlockList.cpp ./Buddy/CBlockArray.cpp ./Buddy/CPageArray.cpp ./Buddy/CBuddy.cpp
 
 # compile BSS Tradition
 BBS_TRAD_SELECTED:
