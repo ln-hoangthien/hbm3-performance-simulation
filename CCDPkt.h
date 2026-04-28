@@ -1,15 +1,15 @@
 //------------------------------------------------------------
-// FileName	: CBPkt.h
-// Version	: 0.80
-// DATE 	: 15 Nov 2022
+// FileName	: CCDPkt.h
+// Version	: 0.1
+// DATE 	: 1 April 2026
 // Contact	: JaeYoung.Hur@gmail.com
-// Description	: B packet class header 
+// DesCDiption	: CD packet class header 
 //------------------------------------------------------------
 // Note
-// 1. When member added, modify "Copy_BPkt" function in "UD_Bus.cpp"
+// 1. When member added, modify "Copy_CDPkt" function in "UD_Bus.cpp"
 //------------------------------------------------------------
-#ifndef CBPKT_H
-#define CBPKT_H
+#ifndef CCDPKT_H
+#define CCDPKT_H
 
 #include <stdio.h>
 #include <string>
@@ -17,39 +17,38 @@
 
 using namespace std;
 
-// B pkt
-typedef struct tagSBPkt* SPBPkt;
-typedef struct tagSBPkt{
-	int nID;
-}SBPkt;
+// CD pkt
+typedef struct tagSCDPkt* SPCDPkt;
+typedef struct tagSCDPkt{
+	int nData;
+	int nLast;
+}SCDPkt;
 
-// B pkt class
-typedef class CBPkt* CPBPkt;
-class CBPkt{
+// CD pkt class
+typedef class CCDPkt* CPCDPkt;
+class CCDPkt{
 
 public:
 	// 1. Contructor and Destructor
-	CBPkt(string cName);
-	CBPkt();
-	~CBPkt();
+	CCDPkt(string cName);
+	CCDPkt();
+	~CCDPkt();
 
 	// 2. Control
 	// Set value
-	// EResultType	SetPkt(SPBPkt spPkt_new);
-	EResultType	SetPkt(int nID);
+	// EResultType	SetPkt(SPCDPkt spPkt_new);
 	EResultType	SetName(string cName);
-	EResultType	SetID(int nID);
+	EResultType	SetPkt(int nData, int nLast);
+	EResultType	SetData(int nData);
+	EResultType	SetLast(EResultType eResult);
 	EResultType	SetFinalTrans(EResultType eResult);
-	EResultType	SetMemCh(int nMemCh);
-	EResultType	SetCacheCh(int nCacheCh);
 
 	// Get value
-	SPBPkt		GetPkt();
+	SPCDPkt		GetPkt();
 	string		GetName();
-	int			GetID();
+	int			GetData();
+	EResultType	IsLast();
 	EResultType	IsFinalTrans();
-	int			GetMemCh();
-	int			GetCacheCh();
 
 	// Debug
 	EResultType	Display();
@@ -57,13 +56,11 @@ public:
 
 private:
 	// Original pkt info
-	SPBPkt		spPkt;
+	SPCDPkt		spPkt;
 
 	// Control info
 	string		cName;
 	EResultType	eFinalTrans;
-	int		nMemCh;
-	int		nCacheCh;
 };
 
 #endif

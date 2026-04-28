@@ -1,15 +1,15 @@
 //------------------------------------------------------------
-// FileName	: CBPkt.h
-// Version	: 0.80
-// DATE 	: 15 Nov 2022
+// FileName	: CACPkt.h
+// Version	: 0.1
+// DATE 	: 1 April 2026
 // Contact	: JaeYoung.Hur@gmail.com
-// Description	: B packet class header 
+// DesACiption	: AC packet class header 
 //------------------------------------------------------------
 // Note
-// 1. When member added, modify "Copy_BPkt" function in "UD_Bus.cpp"
+// 1. When member added, modify "Copy_ACPkt" function in "UD_Bus.cpp"
 //------------------------------------------------------------
-#ifndef CBPKT_H
-#define CBPKT_H
+#ifndef CACPKT_H
+#define CACPKT_H
 
 #include <stdio.h>
 #include <string>
@@ -17,39 +17,37 @@
 
 using namespace std;
 
-// B pkt
-typedef struct tagSBPkt* SPBPkt;
-typedef struct tagSBPkt{
-	int nID;
-}SBPkt;
+// AC pkt
+typedef struct tagSACPkt* SPACPkt;
+typedef struct tagSACPkt{
+	int64_t nAddr;
+	int 	nSnoop;
+}SACPkt;
 
-// B pkt class
-typedef class CBPkt* CPBPkt;
-class CBPkt{
+// AC pkt class
+typedef class CACPkt* CPACPkt;
+class CACPkt{
 
 public:
 	// 1. Contructor and Destructor
-	CBPkt(string cName);
-	CBPkt();
-	~CBPkt();
+	CACPkt(string cName);
+	CACPkt();
+	~CACPkt();
 
 	// 2. Control
 	// Set value
-	// EResultType	SetPkt(SPBPkt spPkt_new);
-	EResultType	SetPkt(int nID);
+	// EResultType	SetPkt(SPACPkt spPkt_new);
 	EResultType	SetName(string cName);
-	EResultType	SetID(int nID);
+	EResultType	SetSnoop(int nSnoop);
+	EResultType	SetAddr(int64_t nAddr);
 	EResultType	SetFinalTrans(EResultType eResult);
-	EResultType	SetMemCh(int nMemCh);
-	EResultType	SetCacheCh(int nCacheCh);
 
 	// Get value
-	SPBPkt		GetPkt();
+	SPACPkt		GetPkt();
 	string		GetName();
-	int			GetID();
+	int			GetSnoop();
+	int64_t		GetAddr();
 	EResultType	IsFinalTrans();
-	int			GetMemCh();
-	int			GetCacheCh();
 
 	// Debug
 	EResultType	Display();
@@ -57,13 +55,11 @@ public:
 
 private:
 	// Original pkt info
-	SPBPkt		spPkt;
+	SPACPkt		spPkt;
 
 	// Control info
 	string		cName;
 	EResultType	eFinalTrans;
-	int		nMemCh;
-	int		nCacheCh;
 };
 
 #endif

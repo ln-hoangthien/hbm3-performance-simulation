@@ -141,7 +141,7 @@ EResultType CFIFO::Push(UPUD upThis) {
 	#endif
 
 	// Push
-	this->Push(upThis, 0);;
+	this->Push(upThis, 0);
 
 	// Debug
 	// this->CheckFIFO();

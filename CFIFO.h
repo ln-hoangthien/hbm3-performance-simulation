@@ -38,8 +38,8 @@ public:
 	
 	// Get value
 	EUDType		GetUDType();
-	int		GetCurNum();
-	int		GetMaxNum();
+	int			GetCurNum();
+	int			GetMaxNum();
 	UPUD		GetTop();
 	EResultType	IsEmpty();
 	EResultType	IsFull();
@@ -52,8 +52,8 @@ private:
 	// Original info
 	string		cName;
 	EUDType		eUDType;
-	int		nCurNum;
-	int		nMaxNum;
+	int			nCurNum;
+	int			nMaxNum;
 
 	// Node 
 	SPLinkedUD	spUDList_head;

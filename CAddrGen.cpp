@@ -1195,7 +1195,6 @@ int64_t CAddrGen::GetAddr_LIAM() {
 
 	// 6. Get LIAM address 
 	int64_t nAddr  = (this->nApos * BYTE_PER_PIXEL) + (this->nBpos * ImgHB);
-	//printf("LIAM Addr Calc: Apos=%d, Bpos=%d, ImgHB=%d => Pre-Addr=0x%llx\n", this->nApos, this->nBpos, ImgHB, nAddr);
 	uint16_t nRowBank = (uint64_t)(nAddr >> (COL_WIDTH));
 	uint16_t nRow     = floor(nRowBank/BANK_NUM);
 	uint16_t nBank    = nRowBank%BANK_NUM;
@@ -2866,7 +2865,6 @@ EResultType CAddrGen::UpdateState() {
 	int ImgH  = (this->ScalingFactor) * IMG_HORIZONTAL_SIZE;
 
 	if (this->cOperation == "RASTER_SCAN") {
-		printf("Accessing (H = %d, V = %d)\n", this->nApos, this->nBpos);
 		// Set block size fixed
 		this->nAsizeT = TILEH;
 		this->nBsizeT = 1;
@@ -2887,7 +2885,7 @@ EResultType CAddrGen::UpdateState() {
 			this->nBpos ++;
 		}
 		else {
-			this->nApos = this->nApos + TILEH * TILE_SIZE;
+			this->nApos = this->nApos + TILEH;
 		};
 		#endif
 
