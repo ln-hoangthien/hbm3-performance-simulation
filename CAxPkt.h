@@ -32,6 +32,9 @@ typedef struct tagSAxPkt{
 	int     nID;
 	int64_t nAddr;
 	int     nLen;
+	#ifdef CCI_ON
+		int nSnoop;
+	#endif
 }SAxPkt;
 
 
@@ -53,6 +56,11 @@ public:
 	EResultType	SetPkt(int nID, int64_t nAddr, int nLen);
 	EResultType	SetName(string cName);
 
+	#ifdef CCI_ON
+		EResultType	SetPkt(int nID, int64_t nAddr, int nLen, int nSnoop);
+		EResultType	SetSnoop(int nSnoop);
+	#endif
+
 	EResultType	SetTransDirType(ETransDirType eDir);
 	EResultType	SetTransType(ETransType eType);
 	EResultType	SetTransNum(int nNum);				// nTransNum
@@ -68,32 +76,36 @@ public:
 	EResultType	SetLen(int nLen);
 
 	// Get value
-	string		GetName();
-	SPAxPkt		GetPkt();
+	string			GetName();
+	SPAxPkt			GetPkt();
 	ETransDirType	GetDir();
-	ETransType	GetTransType();
-	int		GetTransNum();					// nTransNum
-	int64_t		GetVA();					// nVA 
-	int		GetTileNum();					// nTileNum
-	string		GetSrcName();					// cSrcName
-	EResultType	IsFinalTrans();
+	ETransType		GetTransType();
+	int				GetTransNum();					// nTransNum
+	int64_t			GetVA();					// nVA 
+	int				GetTileNum();					// nTileNum
+	string			GetSrcName();					// cSrcName
+	EResultType		IsFinalTrans();
 
-	int		GetID();
-	int64_t		GetAddr();
-	int		GetLen();
+	#ifdef CCI_ON
+		int			GetSnoop();
+	#endif
+
+	int				GetID();
+	int64_t			GetAddr();
+	int				GetLen();
 
 	// Get memory value
-	int		GetBankNum_AMap();				// Address map
-	int64_t		GetRowNum_AMap();
-	int		GetColNum_AMap();
-	int		GetChannelNum_AMap();
+	int				GetBankNum_AMap();				// Address map
+	int64_t			GetRowNum_AMap();
+	int				GetColNum_AMap();
+	int				GetChannelNum_AMap();
 
-	int		GetBankNum_MMap();				// Memory map
-	int64_t		GetRowNum_MMap();
-	int		GetColNum_MMap();
-	int		GetChannelNum_MMap();
+	int				GetBankNum_MMap();				// Memory map
+	int64_t			GetRowNum_MMap();
+	int				GetColNum_MMap();
+	int				GetChannelNum_MMap();
 
-	int		GetCacheCh();
+	int				GetCacheCh();
 	
 	// Debug
 	EResultType	CheckPkt();
@@ -101,21 +113,21 @@ public:
 
 private:
 	// Original pkt info
-	SPAxPkt 	spPkt;
+	SPAxPkt 		spPkt;
 
 	// Control info
-	string		cName;						// Pkt name
+	string			cName;						// Pkt name
 	ETransDirType	eDir;						// Read, write direction
-	ETransType	eTransType;					// Normal, PTW, evict, line fill 
+	ETransType		eTransType;					// Normal, PTW, evict, line fill 
 
-	string		cSrcName;					// Who generates pkt. Master, cache, MMU, Bus
-	EResultType	eFinalTrans;					// Last trans application. Yes, No 
+	string			cSrcName;					// Who generates pkt. Master, cache, MMU, Bus
+	EResultType		eFinalTrans;				// Last trans application. Yes, No 
 
-	int64_t		nVA;						// Virtual addr
-	int		nTransNum;					// Transaction number generate order
-	int		nTileNum;					// Tile number VA map (Debug) 
-	// int		nMemCh;						// Memory channel FIXME 
-	// int		nCacheCh;					// Cache channel FIXME 
+	int64_t			nVA;						// Virtual addr
+	int				nTransNum;					// Transaction number generate order
+	int				nTileNum;					// Tile number VA map (Debug) 
+	// int				nMemCh;					// Memory channel FIXME 
+	// int				nCacheCh;				// Cache channel FIXME 
 };
 
 #endif

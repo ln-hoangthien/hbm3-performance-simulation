@@ -290,6 +290,13 @@
 #define BUS_ROUND_ROBIN
 // #define BUS_FIXED_PRIORITY
 
+//-------------------------------------------------------------
+// (BUS) Cache Coherent Interconnect (CCI)
+//-------------------------------------------------------------
+#define CCI_ON
+#define CCI_TESTING
+#define SNOOP_MASK 0
+
 
 //-------------------------------------------------------------
 // (Master) Ax Address gen
@@ -473,8 +480,11 @@
 
 //-------------------------------------------------------------
 // (Memory) Number of banks
-//-------------------------------------------------------------
-//#define BANK_NUM		32 
+//-------------------------------------------------------------	
+#ifndef BANK_NUM
+	#define BANK_NUM		16 // Default number of banks.
+#endif
+
 #define BANK_NUM_PER_GROUP		4
 #define BANK_NUM_PER_STACK		16
 
@@ -587,6 +597,11 @@ using namespace std;
 typedef enum{
 	EPKT_TYPE_AR,
 	EPKT_TYPE_AW,
+	#ifdef CCI_ON
+		EPKT_TYPE_AC,
+		EPKT_TYPE_CR,
+		EPKT_TYPE_CD,
+	#endif
 	EPKT_TYPE_W,
 	EPKT_TYPE_R,
 	EPKT_TYPE_B,
@@ -600,6 +615,11 @@ typedef enum{
 typedef enum{
 	EUD_TYPE_AR,
 	EUD_TYPE_AW,
+	#ifdef CCI_ON
+		EUD_TYPE_AC,
+		EUD_TYPE_CR,
+		EUD_TYPE_CD,
+	#endif
 	EUD_TYPE_W,
 	EUD_TYPE_R,
 	EUD_TYPE_B,
@@ -707,6 +727,52 @@ typedef enum{
 	EARB_TYPE_UNDEFINED
 }EArbType;
 
+//-------------------------------------------------------------
+// SnoopType 
+//-------------------------------------------------------------
+typedef enum{
+	EARSNOOP_TYPE_READONCE 				= 0b0000,
+	EARSNOOP_TYPE_READSHARED 			= 0b0001,
+	EARSNOOP_TYPE_READCLEAN 			= 0b0010,
+	EARSNOOP_TYPE_READNOTSHAREDDIRTY	= 0b0011,
+	// 4, 5, 6
+	EARSNOOP_TYPE_READUNIQUE			= 0b0111,
+	EARSNOOP_TYPE_CLEANSHARED			= 0b1000,
+	EARSNOOP_TYPE_CLEANINVALID			= 0b1001,
+	// 10
+	EARSNOOP_TYPE_CLEANUNIQUE			= 0b1011,
+	EARSNOOP_TYPE_MAKEUNIQUE			= 0b1100,
+	EARSNOOP_TYPE_MAKEINVALID			= 0b1101,
+	// 14. 15
+	EARSNOOP_TYPE_UNDEFINED
+}EARSnoop;
+
+typedef enum{
+	EAWSNOOP_TYPE_WRITEUNIQUE		= 0b000,
+	EAWSNOOP_TYPE_WRITELINEUNIQUE	= 0b001,
+	EAWSNOOP_TYPE_WRITECLEAN		= 0b010,
+	EAWSNOOP_TYPE_WRITEBACK			= 0b011,
+	EAWSNOOP_TYPE_EVICT				= 0b100,
+	EAWSNOOP_TYPE_WRITEVICT			= 0b101,
+	EAWSNOOP_TYPE_UNDEFINED
+}EAWSnoop;
+
+typedef enum{
+	EACSNOOP_TYPE_READONCE 				= 0b0000,
+	EACSNOOP_TYPE_READSHARED 			= 0b0001,
+	EACSNOOP_TYPE_READCLEAN 			= 0b0010,
+	EACSNOOP_TYPE_READNOTSHAREDDIRTY	= 0b0011,
+	// 4, 5, 6
+	EACSNOOP_TYPE_READUNIQUE			= 0b0111,
+	EACSNOOP_TYPE_CLEANSHARED			= 0b1000,
+	EACSNOOP_TYPE_CLEANINVALID			= 0b1001,
+	// 10, 11, 12
+	//EACSNOOP_TYPE_CLEANUNIQUE			= 0b1011,
+	//EACSNOOP_TYPE_MAKEUNIQUE			= 0b1100,
+	EACSNOOP_TYPE_MAKEINVALID			= 0b1101,
+	// 14. 15
+	EACSNOOP_TYPE_UNDEFINED
+}EACSnoop;
 
 //-------------------------------------------------------------
 // Address map 

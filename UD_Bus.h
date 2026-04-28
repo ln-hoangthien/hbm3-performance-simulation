@@ -15,7 +15,9 @@
 #include "CRPkt.h"
 #include "CWPkt.h"
 #include "CBPkt.h"
-
+#include "CCRPkt.h"
+#include "CACPkt.h"
+#include "CCDPkt.h"
 
 //-------------------------------
 // Transaction. Unified union data
@@ -27,6 +29,12 @@ typedef union tagUUD{
 	CPAxPkt cpAW;
 	CPWPkt	cpW;
 	CPBPkt	cpB;
+
+	#ifdef CCI_ON
+		CPACPkt		cpAC;
+		CPCRPkt 	cpCR;
+		CPCDPkt  	cpCD; // Reuse the R packet for snoop data
+	#endif
 }UUD;
 
 
@@ -36,17 +44,15 @@ typedef union tagUUD{
 typedef struct tagSLinkedUD* SPLinkedUD;
 typedef struct tagSLinkedUD{
 	UPUD		upData;
-	int		nLatency;
+	int			nLatency;
 	// SPLinkedUD	spPrev;					// FIXME Careful
 	SPLinkedUD	spNext;
 }SLinkedUD;
-
 
 //-------------------------------
 // Get value
 //-------------------------------
 int		GetID(UPUD upThis, EUDType eType);
-
 
 //-------------------------------
 // Control (pointer copy)
@@ -56,6 +62,11 @@ CPAxPkt		Copy_CAxPkt(CPAxPkt cpPkt);
 CPRPkt		Copy_CRPkt(CPRPkt cpPkt);
 CPWPkt		Copy_CWPkt(CPWPkt cpPkt);
 CPBPkt		Copy_CBPkt(CPBPkt cpPkt);
+#ifdef CCI_ON
+	CPACPkt	Copy_CACPkt(CPACPkt cpPkt);
+	CPCDPkt	Copy_CCDPkt(CPCDPkt cpPkt);
+	CPCRPkt	Copy_CCRPkt(CPCRPkt cpPkt);
+#endif
 
 EResultType	Delete_UD(UPUD upThis, EUDType eType);		// FIXME Check upThis deleted
 

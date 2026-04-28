@@ -21,6 +21,12 @@ CTRx::CTRx(string cName, ETRxType eTRxType, EPktType ePktType) {
 	this->cpW	= NULL;
 	this->cpB	= NULL;
 
+	#ifdef CCI_ON
+		this->cpAC = NULL;
+		this->cpCR = NULL;
+		this->cpCD = NULL;
+	#endif
+
 	// Initialize
 	this->cName 	= cName;
 	this->eTRxType	= eTRxType;
@@ -35,6 +41,12 @@ CTRx::CTRx(string cName, ETRxType eTRxType, EPktType ePktType) {
 
 // Destruct
 CTRx::~CTRx() {
+	
+	#ifdef CCI_ON
+		delete (this->cpAC);
+		delete (this->cpCR);
+		delete (this->cpCD);
+	#endif
 
 	delete (this->cpAx); // Do we need
 	delete (this->cpR);
@@ -55,15 +67,15 @@ EResultType CTRx::PutAx(CPAxPkt cpPkt) {
 	// Debug
 	// cpPkt->CheckPkt();
 
-	// Debug. Check state 
+	// Debug. Check state
 	if (this->eState == ESTATE_TYPE_BUSY) { 
 		assert (0);
 		return (ERESULT_TYPE_FAIL);
 	};
 
 	// Get and generate
-	CPAxPkt cpAx_new = Copy_CAxPkt(cpPkt); 
-
+	CPAxPkt cpAx_new = Copy_CAxPkt(cpPkt);
+	
 	// Put
 	this->cpAx = cpAx_new;
 	this->eState = ESTATE_TYPE_BUSY;
@@ -84,11 +96,11 @@ EResultType CTRx::PutR(CPRPkt cpPkt) {
 	// Debug
 	// cpPkt->CheckPkt();
 
-	// Debug. Check state 
-        if (this->eState == ESTATE_TYPE_BUSY) {
+	// Debug. Check state
+    if (this->eState == ESTATE_TYPE_BUSY) {
 		assert (0);
-                return (ERESULT_TYPE_FAIL);
-        };
+        return (ERESULT_TYPE_FAIL);
+    };
 
 	// Get and generate
 	CPRPkt cpR_new = Copy_CRPkt(cpPkt); 
@@ -115,8 +127,8 @@ EResultType CTRx::PutW(CPWPkt cpPkt) {
 
 	// Debug. Check state 
         if (this->eState == ESTATE_TYPE_BUSY) {
-		assert (0);
-                return (ERESULT_TYPE_FAIL);
+			assert (0);
+            return (ERESULT_TYPE_FAIL);
         };
 
 	// Get and generate 
@@ -145,8 +157,8 @@ EResultType CTRx::PutB(CPBPkt cpPkt) {
 
 	// Debug. Check state 
         if (this->eState == ESTATE_TYPE_BUSY) {
-		assert (0);
-                return (ERESULT_TYPE_FAIL);
+			assert (0);
+            return (ERESULT_TYPE_FAIL);
         };
 
 	// Get and generate 
@@ -164,6 +176,77 @@ EResultType CTRx::PutB(CPBPkt cpPkt) {
 
         return (ERESULT_TYPE_SUCCESS);
 };
+
+#ifdef CCI_ON
+EResultType CTRx::PutAC(CPACPkt cpPkt) {
+	// Debug. Check state 
+    if (this->eState == ESTATE_TYPE_BUSY) {
+		assert (0);
+        return (ERESULT_TYPE_FAIL);
+    };
+
+	// Get and generate 
+	CPACPkt cpAC_new;
+	cpAC_new = Copy_CACPkt(cpPkt); 
+        
+	// Put 
+    this->cpAC = cpAC_new;
+    eState = ESTATE_TYPE_BUSY;
+    eAcceptResult = ERESULT_TYPE_UNDEFINED;
+
+	// Debug 
+	// cpAC_new->CheckPkt();
+	// this->cpAC->CheckPkt();
+
+    return (ERESULT_TYPE_SUCCESS);
+}
+
+EResultType CTRx::PutCD(CPCDPkt cpPkt) {
+	// Debug. Check state 
+    if (this->eState == ESTATE_TYPE_BUSY) {
+		assert (0);
+        return (ERESULT_TYPE_FAIL);
+    };
+
+	// Get and generate 
+	CPCDPkt cpCD_new;
+	cpCD_new = Copy_CCDPkt(cpPkt); 
+        
+	// Put 
+    this->cpCD = cpCD_new;
+    eState = ESTATE_TYPE_BUSY;
+    eAcceptResult = ERESULT_TYPE_UNDEFINED;
+
+	// Debug 
+	// cpCD_new->CheckPkt();
+	// this->cpCD->CheckPkt();
+
+    return (ERESULT_TYPE_SUCCESS);
+}
+
+EResultType CTRx::PutCR(CPCRPkt cpPkt) {
+	// Debug. Check state 
+    if (this->eState == ESTATE_TYPE_BUSY) {
+		assert (0);
+        return (ERESULT_TYPE_FAIL);
+    };
+
+	// Get and generate 
+	CPCRPkt cpCR_new;
+	cpCR_new = Copy_CCRPkt(cpPkt); 
+        
+	// Put 
+    this->cpCR = cpCR_new;
+    eState = ESTATE_TYPE_BUSY;
+    eAcceptResult = ERESULT_TYPE_UNDEFINED;
+
+	// Debug 
+	// cpCR_new->CheckPkt();
+	// this->cpCR->CheckPkt();
+
+    return (ERESULT_TYPE_SUCCESS);
+}
+#endif
 
 
 // Set ready. Propagate
@@ -204,6 +287,12 @@ EResultType CTRx::SetPair(CPTRx cpTRx) {
 	return (ERESULT_TYPE_SUCCESS);
 };
 
+// Get name
+string CTRx::GetName() {
+
+	// this->CheckPkt();
+	return (this->cName);
+};
 
 // Get ready
 EResultType CTRx::GetAcceptResult() {
@@ -264,13 +353,29 @@ CPBPkt CTRx::GetB() {
 	return (this->cpB);
 };
 
+#ifdef CCI_ON
+// Get AC pkt
+CPACPkt CTRx::GetAC() {
+	return (this->cpAC);
+}
+
+// Get CD pkt
+CPCDPkt CTRx::GetCD() {
+	return (this->cpCD);
+}
+
+// Get CR pkt
+CPCRPkt CTRx::GetCR() {
+	return (this->cpCR);
+}
+#endif
 
 // Check valid/ready handshaked
-EResultType CTRx::IsPass() { 
+EResultType CTRx::IsPass() {
 
-        if (this->eState == ESTATE_TYPE_BUSY) {
-        	if (this->eAcceptResult == ERESULT_TYPE_ACCEPT) {
-        		return (ERESULT_TYPE_YES);
+    if (this->eState == ESTATE_TYPE_BUSY) {
+        if (this->eAcceptResult == ERESULT_TYPE_ACCEPT) {
+        	return (ERESULT_TYPE_YES);
 		};
 	};
         return (ERESULT_TYPE_NO);
@@ -352,7 +457,7 @@ EResultType CTRx::UpdateState() {
 	// assert (this->eState		!= ESTATE_TYPE_UNDEFINED);
 	// assert (this->eState_D	!= ESTATE_TYPE_UNDEFINED);
 	
-	// Update handshaked state 
+	// Update handshaked state
 	if (this->IsPass() == ERESULT_TYPE_YES) {
 		this->eState = ESTATE_TYPE_IDLE;
 		this->FlushPkt();
@@ -378,6 +483,16 @@ EResultType CTRx::FlushPkt() {
 	this->cpR  = NULL;
 	this->cpW  = NULL;
 	this->cpB  = NULL;
+
+	#ifdef CCI_ON
+		delete (this->cpAC);
+		delete (this->cpCR);
+		delete (this->cpCD);
+		
+		this->cpAC = NULL;
+		this->cpCR = NULL;
+		this->cpCD = NULL;
+	#endif
 	
 	return (ERESULT_TYPE_SUCCESS);
 };

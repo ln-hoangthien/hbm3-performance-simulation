@@ -31,23 +31,34 @@ public:
 	EResultType 	PutR(CPRPkt cpPkt);
 	EResultType 	PutW(CPWPkt cpPkt);
 	EResultType 	PutB(CPBPkt cpPkt);
+	#ifdef CCI_ON
+		EResultType 	PutAC(CPACPkt cpPkt);
+		EResultType 	PutCD(CPCDPkt cpPkt);
+		EResultType 	PutCR(CPCRPkt cpPkt);
+	#endif
 	EResultType 	SetAcceptResult(EResultType eResult);
 	EResultType 	SetPair(CPTRx cpTRx);
 
 	// Get value
+	string			GetName();
 	EResultType 	GetAcceptResult();
-	EPktType 	GetPktType();
-	ETRxType 	GetTRxType();
-	CPTRx		GetPair();
-	CPAxPkt		GetAx();
-	CPRPkt		GetR();
-	CPWPkt		GetW();
-	CPBPkt		GetB();
+	EPktType 		GetPktType();
+	ETRxType 		GetTRxType();
+	CPTRx			GetPair();
+	CPAxPkt			GetAx();
+	CPRPkt			GetR();
+	CPWPkt			GetW();
+	CPBPkt			GetB();
+	#ifdef CCI_ON
+		CPACPkt		GetAC();
+		CPCDPkt		GetCD();
+		CPCRPkt		GetCR();
+	#endif
 
 	EResultType	IsPass();
 	EResultType	IsIdle();
 	EResultType	IsBusy();
-	EResultType 	IsFirstValid();
+	EResultType IsFirstValid();
 
 	// Control
 	EResultType 	Reset();
@@ -63,6 +74,11 @@ private:
 	CPRPkt 		cpR;
 	CPWPkt 		cpW;
 	CPBPkt 		cpB;
+	#ifdef CCI_ON
+		CPACPkt		cpAC;
+		CPCDPkt		cpCD;
+		CPCRPkt		cpCR;
+	#endif
 
 	// Control info
 	string		cName;

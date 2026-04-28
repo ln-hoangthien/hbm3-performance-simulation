@@ -819,25 +819,37 @@ string Convert_eDir2string(ETransDirType eType) {
 string Convert_eUDType2string(EUDType eType) {
 
         switch(eType) {
-                case EUD_TYPE_AR:  
-			return("EUD_TYPE_AR");  
-			break;
-                case EUD_TYPE_AW:  
-			return("EUD_TYPE_AW");  
-			break;
-                case EUD_TYPE_R:   
-			return("EUD_TYPE_R");   
-			break;
-                case EUD_TYPE_W:   
-			return("EUD_TYPE_W");   
-			break;
-                case EUD_TYPE_B:   
-			return("EUD_TYPE_B");   
-			break;
-                case EUD_TYPE_UNDEFINED:    
-			return("EUD_TYPE_UNDEFINED");    
-                default: 
-			break;
+            case EUD_TYPE_AR:  
+				return("EUD_TYPE_AR");  
+				break;
+            case EUD_TYPE_AW:  
+				return("EUD_TYPE_AW");  
+				break;
+            case EUD_TYPE_R:   
+				return("EUD_TYPE_R");   
+				break;
+            case EUD_TYPE_W:   
+				return("EUD_TYPE_W");   
+				break;
+            case EUD_TYPE_B:   
+				return("EUD_TYPE_B");   
+				break;
+            case EUD_TYPE_UNDEFINED:    
+				return("EUD_TYPE_UNDEFINED");
+				break;
+			#ifdef CCI_ON // Adding channel for coherence
+				case EUD_TYPE_AC:    
+					return("EUD_TYPE_AC");
+					break;
+				case EUD_TYPE_CR:    
+					return("EUD_TYPE_CR");
+					break;
+				case EUD_TYPE_CD:    
+					return("EUD_TYPE_CD");
+					break;
+			#endif  
+            default: 
+				break;
         };
 	return (NULL);
 };

@@ -119,6 +119,17 @@ UPUD Copy_UD(UPUD upThis, EUDType eType) {
 		case EUD_TYPE_UNDEFINED:
 			assert(0);
 			return (NULL);
+		#ifdef CCI_ON  // Adding channel for coherence
+			case EUD_TYPE_AC:    
+				upNew->cpAC  = Copy_CACPkt(upThis->cpAC);
+				break;
+			case EUD_TYPE_CR:    
+				upNew->cpCR  = Copy_CCRPkt(upThis->cpCR);
+				break;
+			case EUD_TYPE_CD:    
+				upNew->cpCD  = Copy_CCDPkt(upThis->cpCD);
+				break;
+		#endif
 		default:
 			break;
 	};
@@ -147,9 +158,9 @@ CPAxPkt Copy_CAxPkt(CPAxPkt cpThis) {
 	ETransType  eTransType  = cpThis->GetTransType();
 	string	    cSrcName    = cpThis->GetSrcName();
 	EResultType eFinalTrans = cpThis->IsFinalTrans();
-	int	    nTransNum   = cpThis->GetTransNum();
+	int	    	nTransNum   = cpThis->GetTransNum();
 	int64_t	    nVA         = cpThis->GetVA();
-	int	    nTileNum    = cpThis->GetTileNum();
+	int	    	nTileNum    = cpThis->GetTileNum();
 	// int	    nMemCh      = cpThis->GetMemCh();
 	// int	    nCacheCh    = cpThis->GetCacheCh();
 
@@ -169,7 +180,12 @@ CPAxPkt Copy_CAxPkt(CPAxPkt cpThis) {
 	// cpAx_new->SetMemCh(nMemCh);
 	// cpAx_new->SetCacheCh(nCacheCh);
 
+	#ifdef CCI_ON
+	int nSnoop = cpThis->GetSnoop();
+	cpAx_new->SetPkt(nID, nAddr, nLen, nSnoop);
+	#else
 	cpAx_new->SetPkt(nID, nAddr, nLen);
+	#endif
 	return (cpAx_new);
 };
 
@@ -338,6 +354,66 @@ EResultType Display_UD(UPUD upThis, EUDType eType) {
 	return (ERESULT_TYPE_SUCCESS);
 };
 
+#ifdef CCI_ON
+// Generate new pointer
+// Copy all member values one-by-one
+CPACPkt Copy_CACPkt(CPACPkt cpThis) {
+
+
+	CPACPkt cpCR_new = new CACPkt();	// New instance. Note: spPkt generated when CCRPkt generated
+
+	// Get all member values 
+	string	    cName       = cpThis->GetName();
+	EResultType eFinalTrans = cpThis->IsFinalTrans();
+	int 		Snoop		= cpThis->GetSnoop();
+
+	// Set all member values
+	cpCR_new->SetName(cName);
+	cpCR_new->SetFinalTrans(eFinalTrans);
+	cpCR_new->SetSnoop(Snoop);
+
+	return (cpCR_new);
+};
+
+// Generate new pointer
+// Copy all member values one-by-one
+CPCDPkt Copy_CCDPkt(CPCDPkt cpThis) {
+
+
+	CPCDPkt cpCR_new = new CCDPkt();	// New instance. Note: spPkt generated when CCRPkt generated
+
+	// Get all member values 
+	string	    cName       = cpThis->GetName();
+	EResultType eFinalTrans = cpThis->IsFinalTrans();
+
+	// Set all member values
+	cpCR_new->SetName(cName);
+	cpCR_new->SetFinalTrans(eFinalTrans);
+
+	return (cpCR_new);
+};
+
+
+// Generate new pointer
+// Copy all member values one-by-one
+CPCRPkt Copy_CCRPkt(CPCRPkt cpThis) {
+
+
+	CPCRPkt cpCR_new = new CCRPkt();	// New instance. Note: spPkt generated when CCRPkt generated
+	
+	// Get all member values 
+	string	    cName       = cpThis->GetName();
+	EResultType eFinalTrans = cpThis->IsFinalTrans();
+	int     	nResp   	= cpThis->GetResp();
+
+	// Set all member values
+	cpCR_new->SetName(cName);
+	cpCR_new->SetFinalTrans(eFinalTrans);
+	cpCR_new->SetResp(nResp);
+
+	return (cpCR_new);
+};
+#endif
 
 // Debug
 // EResultType CheckUD(UPUD upThis, EUDType eType) {

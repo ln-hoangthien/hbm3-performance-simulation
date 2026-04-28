@@ -21,6 +21,9 @@ CRPkt::CRPkt(string cName) {
         this->spPkt->nID   = -1;
         this->spPkt->nData = -1;
         this->spPkt->nLast = -1;
+		#ifdef CCI_ON
+			this->spPkt->nResp = 0;
+		#endif
 
 	this->cName = cName;
 	this->eFinalTrans = ERESULT_TYPE_NO;
@@ -37,6 +40,9 @@ CRPkt::CRPkt() {
         this->spPkt->nID   = -1;
         this->spPkt->nData = -1;
         this->spPkt->nLast = -1;
+		#ifdef CCI_ON
+			this->spPkt->nResp = 0;
+		#endif
 
 	this->cName = "R_pkt";
 	this->eFinalTrans = ERESULT_TYPE_NO;
@@ -65,8 +71,6 @@ CRPkt::~CRPkt() {
 //	return (ERESULT_TYPE_SUCCESS);
 //};
 
-
-// Set R pkt 
 EResultType CRPkt::SetPkt(int nID, int nData, int nLast) {
 
 	#ifdef DEBUG
@@ -79,6 +83,22 @@ EResultType CRPkt::SetPkt(int nID, int nData, int nLast) {
 	return (ERESULT_TYPE_SUCCESS);
 };
 
+#ifdef CCI_ON
+// Set R pkt
+EResultType CRPkt::SetPkt(int nID, int nData, int nLast, int nResp) {
+
+	#ifdef DEBUG
+	assert (this->spPkt != NULL);
+	#endif
+
+	this->spPkt->nID   = nID;
+	this->spPkt->nData = nData;
+	this->spPkt->nLast = nLast;
+	this->spPkt->nResp = nResp;
+
+	return (ERESULT_TYPE_SUCCESS);
+};
+#endif
 
 // Set name
 EResultType CRPkt::SetName(string cName) {
@@ -131,6 +151,18 @@ EResultType CRPkt::SetLast(EResultType eLast) {
 	return (ERESULT_TYPE_SUCCESS);
 };
 
+#ifdef CCI_ON
+// Set R response
+EResultType CRPkt::SetResp(int nResp) { 
+
+	#ifdef DEBUG
+	assert (this->spPkt != NULL);
+	#endif
+
+	this->spPkt->nResp = nResp;
+	return (ERESULT_TYPE_SUCCESS);
+};
+#endif
 
 // Set final trans 
 EResultType CRPkt::SetFinalTrans(EResultType eResult) {
@@ -241,6 +273,15 @@ int CRPkt::GetCacheCh() {
 	// this->CheckPkt();
 	return (this->nCacheCh);
 };
+
+#ifdef CCI_ON
+// Get cache Response 
+int CRPkt::GetResp() {
+
+	// this->CheckPkt();
+	return (this->spPkt->nResp);
+};
+#endif
 
 
 EResultType CRPkt::CheckPkt() {

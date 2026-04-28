@@ -25,6 +25,9 @@ typedef struct tagSRPkt{
 	int nID;
 	int nData;
 	int nLast;
+	#ifdef CCI_ON
+	int nResp;
+	#endif
 }SRPkt;
 
 
@@ -48,6 +51,10 @@ public:
 	EResultType	SetID(int nID);
 	EResultType	SetData(int nData);
 	EResultType	SetLast(EResultType eResult);
+	#ifdef CCI_ON
+		EResultType	SetPkt(int nID, int nData, int nLast, int nResp);
+		EResultType	SetResp(int nResp);
+	#endif
 	EResultType	SetFinalTrans(EResultType eResult);
 	EResultType	SetMemCh(int nMemCh);
 	EResultType	SetCacheCh(int nCacheCh);
@@ -55,12 +62,15 @@ public:
 	// Get value
 	string		GetName();
 	SPRPkt		GetPkt();
-	int		GetID();
-	int		GetData();
+	int			GetID();
+	int			GetData();
 	EResultType	IsLast();
 	EResultType	IsFinalTrans();
-	int		GetMemCh();
-	int		GetCacheCh();
+	int			GetMemCh();
+	int			GetCacheCh();
+	#ifdef CCI_ON
+		int	GetResp();
+	#endif
 
 	// Debug
 	EResultType	CheckPkt();
@@ -73,8 +83,8 @@ private:
 	// Control info
 	string		cName;
 	EResultType	eFinalTrans;
-	int		nMemCh;
-	int		nCacheCh;
+	int			nMemCh;
+	int			nCacheCh;
 };
 
 #endif

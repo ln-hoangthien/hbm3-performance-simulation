@@ -22,6 +22,7 @@ CAxPkt::CAxPkt(string cName, ETransDirType eDir) {
 	this->spPkt->nID   = -1;
 	this->spPkt->nAddr = -1;
 	this->spPkt->nLen  = -1;
+	this->spPkt->nSnoop = -1;
 
 	this->cName        = cName;
 	this->eDir         = eDir;
@@ -45,6 +46,7 @@ CAxPkt::CAxPkt(ETransDirType eDir) {
 	this->spPkt->nID   = -1;
 	this->spPkt->nAddr = -1;
 	this->spPkt->nLen  = -1;
+	this->spPkt->nSnoop = -1;
 
 	this->cName        = "Ax_Pkt";
 	this->eDir         = eDir;
@@ -126,6 +128,31 @@ EResultType CAxPkt::SetPkt(int nID, int64_t nAddr, int nLen) {
 	return (ERESULT_TYPE_SUCCESS);
 };
 
+#ifdef CCI_ON
+// Set Ax pkt
+EResultType CAxPkt::SetPkt(int nID, int64_t nAddr, int nLen, int nSnoop) {
+
+	#ifdef DEBUG
+	assert (this->spPkt != NULL);
+	#endif
+
+	this->spPkt->nID   = nID;
+	this->spPkt->nAddr = nAddr;
+	this->spPkt->nLen  = nLen;
+	this->spPkt->nSnoop  = nSnoop;
+	return (ERESULT_TYPE_SUCCESS);
+};
+
+EResultType CAxPkt::SetSnoop(int nSnoop) {
+
+	#ifdef DEBUG
+	assert (this->spPkt != NULL);
+	#endif
+
+	this->spPkt->nSnoop  = nSnoop;
+	return (ERESULT_TYPE_SUCCESS);
+};
+#endif
 
 // Set Ax ID 
 EResultType CAxPkt::SetID(int nID) {
@@ -299,6 +326,7 @@ int CAxPkt::GetID() {
 int64_t CAxPkt::GetAddr() {
 
 	// this->CheckPkt();
+
 	return (this->spPkt->nAddr);
 };
 
@@ -353,6 +381,14 @@ EResultType CAxPkt::IsFinalTrans() {
 	// this->CheckPkt();
 	return (this->eFinalTrans);
 };
+
+#ifdef CCI_ON
+// Get snoop
+int CAxPkt::GetSnoop() {
+	// this->CheckPkt();
+	return (this->spPkt->nSnoop);
+};
+#endif
 
 
 //----------------------------
