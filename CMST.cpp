@@ -20,23 +20,29 @@
 CMST::CMST(string cName) {
 
 	// Generate ports 
-	this->cpTx_AR = new CTRx("MST_Tx_AR", ETRX_TYPE_TX, EPKT_TYPE_AR);
-	this->cpTx_AW = new CTRx("MST_Tx_AW", ETRX_TYPE_TX, EPKT_TYPE_AW);
-	this->cpRx_R  = new CTRx("MST_Rx_R",  ETRX_TYPE_RX, EPKT_TYPE_R);
-	this->cpTx_W  = new CTRx("MST_Tx_W",  ETRX_TYPE_TX, EPKT_TYPE_W);
-	this->cpRx_B  = new CTRx("MST_Rx_B",  ETRX_TYPE_RX, EPKT_TYPE_B);
+	this->cpTx_AR = new CTRx(cName + "_Tx_AR", ETRX_TYPE_TX, EPKT_TYPE_AR);
+	this->cpTx_AW = new CTRx(cName + "_Tx_AW", ETRX_TYPE_TX, EPKT_TYPE_AW);
+	this->cpRx_R  = new CTRx(cName + "_Rx_R",  ETRX_TYPE_RX, EPKT_TYPE_R);
+	this->cpTx_W  = new CTRx(cName + "_Tx_W",  ETRX_TYPE_TX, EPKT_TYPE_W);
+	this->cpRx_B  = new CTRx(cName + "_Rx_B",  ETRX_TYPE_RX, EPKT_TYPE_B);
+
+	#ifdef CCI_ON
+		this->cpRx_AC = new CTRx(cName + "_Rx_AC", ETRX_TYPE_RX, EPKT_TYPE_AC);
+		this->cpTx_CR = new CTRx(cName + "_Tx_CR", ETRX_TYPE_TX, EPKT_TYPE_CR);
+		this->cpTx_CD = new CTRx(cName + "_Tx_CD", ETRX_TYPE_TX, EPKT_TYPE_CD);
+	#endif
 
 	// Generate FIFO
-	this->cpFIFO_AR = new CFIFO("MST_FIFO_AR", EUD_TYPE_AR, MAX_MO_COUNT);
-	this->cpFIFO_AW = new CFIFO("MST_FIFO_AW", EUD_TYPE_AW, MAX_MO_COUNT);
-	this->cpFIFO_W  = new CFIFO("MST_FIFO_W",  EUD_TYPE_W,  MAX_MO_COUNT*4);
+	this->cpFIFO_AR = new CFIFO(cName + "_FIFO_AR", EUD_TYPE_AR, MAX_MO_COUNT);
+	this->cpFIFO_AW = new CFIFO(cName + "_FIFO_AW", EUD_TYPE_AW, MAX_MO_COUNT);
+	this->cpFIFO_W  = new CFIFO(cName + "_FIFO_W",  EUD_TYPE_W,  MAX_MO_COUNT*4);
 
 	// this->cpFIFO_AR = new CFIFO("MST_FIFO_AR", EUD_TYPE_AR, 10000000);		// Debug. AR_ADDR_GEN_TEST
 	// this->cpFIFO_AW = new CFIFO("MST_FIFO_AW", EUD_TYPE_AW, 10000000);
 
 	// Addr generator
-	this->cpAddrGen_AR = new CAddrGen("AddrGen_AR", ETRANS_DIR_TYPE_READ);
-	this->cpAddrGen_AW = new CAddrGen("AddrGen_AW", ETRANS_DIR_TYPE_WRITE);
+	this->cpAddrGen_AR = new CAddrGen(cName + "_AddrGen_AR", ETRANS_DIR_TYPE_READ);
+	this->cpAddrGen_AW = new CAddrGen(cName + "_AddrGen_AW", ETRANS_DIR_TYPE_WRITE);
 
 	// Initialize
 		this->cName = cName;
@@ -105,6 +111,12 @@ CMST::~CMST() {
 	assert (this->cpRx_R  != NULL);
 	assert (this->cpRx_B  != NULL);
 
+	#ifdef CCI_ON
+		assert (this->cpRx_AC != NULL);
+		assert (this->cpTx_CR != NULL);
+		assert (this->cpTx_CD != NULL);
+	#endif
+
 	assert (this->cpFIFO_AR != NULL);
 	assert (this->cpFIFO_AW != NULL);
 	assert (this->cpFIFO_W  != NULL);
@@ -148,6 +160,12 @@ EResultType CMST::Reset() {
 	this->cpTx_W ->Reset();
 	this->cpRx_R ->Reset();
 	this->cpRx_B ->Reset();
+
+	#ifdef CCI_ON
+		this->cpRx_AC->Reset();
+		this->cpTx_CR->Reset();
+		this->cpTx_CD->Reset();
+	#endif
 
 	this->cpFIFO_AR->Reset();	
 	this->cpFIFO_AW->Reset();	
@@ -334,10 +352,10 @@ EResultType CMST::LoadTransfer_MatrixSobelTransaction(int64_t nCycle){
 							this->cpFIFO_AW->Push(upAx_new, MST_FIFO_LATENCY);
 							//printf("Waddress C: 0x%lx\n", nAddrStart);
 							#ifdef DEBUG_MST
-								printf("[Cycle %3ld: %s.LoadTransfer_AW] %s generated.\n", nCycle, this->cName.c_str(), cAxPktName);
+								// printf("[Cycle %3ld: %s.LoadTransfer_AW] %s generated.\n", nCycle, this->cName.c_str(), cAxPktName);
 								//cpAx_new->Display();
 								//this->cpFIFO_AW->Display();
-								printf("[Cycle %3ld] store address: 0x%lx\n", nCycle, nAddr);
+								// printf("[Cycle %3ld] store address: 0x%lx\n", nCycle, nAddr);
 							#endif
 							Delete_UD(upAx_new, EUD_TYPE_AW);
 							this->nAWTrans++;
@@ -4155,6 +4173,7 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
 	
 	// Check FIFO full 
 	if (this->cpFIFO_AR->IsFull() == ERESULT_TYPE_YES) {
+		printf("[Cycle %3ld: %s.LoadTransfer_AR] cpFIFO_AR full.\n", nCycle, this->cName.c_str());
 		return (ERESULT_TYPE_SUCCESS);
 	};
 	
@@ -4209,7 +4228,7 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
 	cpAR_new->SetTileNum(nTileNum);
 	cpAR_new->SetTransType(ETRANS_TYPE_NORMAL);
 	#ifdef DEBUG_MST
-	 printf("[Cycle %3ld: %s.LoadTransfer_AR] %s generated.\n", nCycle, this->cName.c_str(), cARPktName);
+	printf("[Cycle %3ld: %s.LoadTransfer_AR] %s generated.\n", nCycle, this->cName.c_str(), cARPktName);
 	// cpAR_new->Display();
 	#endif
 	
@@ -4225,7 +4244,7 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
 	this->cpFIFO_AR->Push(upAR_new, MST_FIFO_LATENCY);
 
 	#ifdef DEBUG_MST
-	// printf("[Cycle %3ld: %s.LoadTransfer_AR] (%s) push FIFO_AR.\n", nCycle, this->cName.c_str(), cARPktName);
+	printf("[Cycle %3ld: %s.LoadTransfer_AR] (%s) push FIFO_AR.\n", nCycle, this->cName.c_str(), cARPktName);
 	// this->cpFIFO_AR->Display();
 	// this->cpFIFO_AR->CheckFIFO();
 	#endif
@@ -4257,12 +4276,9 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 	
 	// Check FIFO full 
 	if (this->cpFIFO_AW->IsFull() == ERESULT_TYPE_YES) {
+		printf("[Cycle %3ld: %s.LoadTransfer_AW] cpFIFO_AW full.\n", nCycle, this->cName.c_str());
 		return (ERESULT_TYPE_SUCCESS);
 	};
-	
-	// if (this->cpFIFO_W->IsFull() == ERESULT_TYPE_YES) {
-	// 	return (ERESULT_TYPE_SUCCESS);
-	// };
 	
 	CPAxPkt cpAW_new = NULL;
 	
@@ -4313,7 +4329,7 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 	cpAW_new->SetTransType(ETRANS_TYPE_NORMAL);
 
 	#ifdef DEBUG_MST
-	// printf("[Cycle %3ld: %s.LoadTransfer_AW] %s generated.\n", nCycle, this->cName.c_str(), cAWPktName);
+	// printf("[Cycle %3ld: %s.LoadTransfer_AW] %s generated - IsFinalTrans = %s.\n", nCycle, this->cName.c_str(), cAWPktName, Convert_eResult2string(cpAW_new->IsFinalTrans()).c_str());
 	// cpAW_new->Display();
 	#endif
 	
@@ -4330,7 +4346,7 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 	this->cpFIFO_AW->Push(upAW_new, MST_FIFO_LATENCY);
 
 	#ifdef DEBUG_MST
-	// printf("[Cycle %3ld: %s.LoadTransfer_AW] (%s) push FIFO_AW.\n", nCycle, this->cName.c_str(), cAWPktName);
+	printf("[Cycle %3ld: %s.LoadTransfer_AW] (%s) push FIFO_AW - IsFinalTrans = %s.\n", nCycle, this->cName.c_str(), cAWPktName, Convert_eResult2string(cpAW_new->IsFinalTrans()).c_str());
 	// this->cpFIFO_AW->Display();
 	// this->cpFIFO_AW->CheckFIFO();
 	#endif
@@ -4411,7 +4427,6 @@ EResultType CMST::Do_AR_fwd(int64_t nCycle) {
 
 	// Check MO
 	if (this->GetMO_AR() >= MAX_MO_COUNT) {
-		//printf("Full MO_AR = %d / %d\n", this->GetMO_AR(), MAX_MO_COUNT);
 		return (ERESULT_TYPE_FAIL);
 	};
 
@@ -4428,19 +4443,33 @@ EResultType CMST::Do_AR_fwd(int64_t nCycle) {
 	#ifdef DEBUG_MST
 	assert (upAR_new != NULL);
 	// this->cpFIFO_AR->CheckFIFO();
-	// printf("[Cycle %3ld: %s.Do_AR_fwd] (%s) popped FIFO_AR.\n", nCycle, this->cName.c_str(), upAR_new->cpAR->GetName().c_str());
+	printf("[Cycle %3ld: %s.Do_AR_fwd] (%s) popped FIFO_AR.\n", nCycle, this->cName.c_str(), upAR_new->cpAR->GetName().c_str());
 	// this->cpFIFO_AR->Display();
 	#endif
 
 	// Put Tx
 	CPAxPkt cpAR_new = upAR_new->cpAR;
+
+	#if defined(CCI_ON) && defined(CCI_TESTING) // Setting the snoop value.
+	// The testing commands skip these number 4, 5, 6, 10, 14, 15
+	int SnoopType = nCycle & 0xF;; // Take 4 LSB.
+	
+	if ((SnoopType == 4) ||
+	    (SnoopType == 5) ||	
+	    (SnoopType == 6) ||	
+	    (SnoopType == 10) ||
+		(SnoopType == 14) ||
+		(SnoopType == 15)
+	) {
+		SnoopType = 0;
+	}
+	cpAR_new->SetSnoop(SnoopType);
+	#endif
+
 	this->cpTx_AR->PutAx(cpAR_new);
 
 	#ifdef DEBUG_MST
 	printf("[Cycle %3ld: %s.Do_AR_fwd] (%s) put Tx_AR.\n", nCycle, this->cName.c_str(), upAR_new->cpAR->GetName().c_str());
-	// upAR_new->cpAR->Display();
-	// Debug
-	// cpAR_new->CheckPkt();
 	#endif
 
 	// Maintain
@@ -4479,6 +4508,7 @@ EResultType CMST::Do_AW_fwd(int64_t nCycle) {
 
 	// Pop
 	UPUD upAW_new = this->cpFIFO_AW->Pop();
+
 	if (upAW_new == NULL) {
 		return (ERESULT_TYPE_SUCCESS);
 	};
@@ -4493,10 +4523,22 @@ EResultType CMST::Do_AW_fwd(int64_t nCycle) {
 
 	// Put Tx
 	CPAxPkt cpAW_new = upAW_new->cpAW;
+
+	#if defined(CCI_ON) && defined(CCI_TESTING) // Setting the snoop value.
+	// The testing commands skip these number 4, 5, 6, 10, 14, 15
+	int SnoopType = nCycle & 0x7;; // Take 3 LSB.
+	
+	if (SnoopType > 5) {
+		SnoopType = 0;
+	}
+
+	cpAW_new->SetSnoop(SnoopType);
+	#endif
+
 	this->cpTx_AW->PutAx(cpAW_new);
 
 	#ifdef DEBUG_MST
-	printf("[Cycle %3ld: %s.Do_AW_fwd] (%s) put Tx_AW.\n", nCycle, this->cName.c_str(), upAW_new->cpAW->GetName().c_str());  // DUONGTRAN uncomment
+	printf("[Cycle %3ld: %s.Do_AW_fwd] (%s) put Tx_AW.\n", nCycle, this->cName.c_str(), upAW_new->cpAW->GetName().c_str());
 	// upAW_new->cpAW->Display();
 	// cpAW_new->CheckPkt();
 	#endif
@@ -4577,7 +4619,7 @@ EResultType CMST::Do_AR_bwd(int64_t nCycle) {
 		#endif
 
 		// Stat 
-		this->Increase_MO_AR();
+		// this->Increase_MO_AR(); // FIXME: AR transaction accepted but not issued yet. Increase MO_AR when AR issued (Do_AR_fwd)
 
 	};
 	return (ERESULT_TYPE_SUCCESS);
@@ -4591,6 +4633,7 @@ EResultType CMST::Do_AW_bwd(int64_t nCycle) {
 
 	// Check Tx valid 
 	CPAxPkt cpAW = this->cpTx_AW->GetAx();
+
 	if (cpAW == NULL) {
 		return (ERESULT_TYPE_SUCCESS);
 	};
@@ -4607,7 +4650,7 @@ EResultType CMST::Do_AW_bwd(int64_t nCycle) {
 		#endif
 
 		// Stat 
-		this->Increase_MO_AW();
+		// this->Increase_MO_AW();
 	};
 	return (ERESULT_TYPE_SUCCESS);
 };
@@ -4640,6 +4683,7 @@ EResultType CMST::Do_W_bwd(int64_t nCycle) {
 		// cpW->Display();
 		#endif
 	};
+
 	return (ERESULT_TYPE_SUCCESS);
 };
 
@@ -4648,17 +4692,17 @@ EResultType CMST::Do_W_bwd(int64_t nCycle) {
 // R Valid
 //------------------------------------------
 EResultType CMST::Do_R_fwd(int64_t nCycle) {
-
-		// Check Rx valid 
-		// if (this->cpRx_R->IsBusy() == ERESULT_TYPE_YES) {
+	// Check Rx valid 
+	// if (this->cpRx_R->IsBusy() == ERESULT_TYPE_YES) {
 	//	return (ERESULT_TYPE_SUCCESS);
-		// };
+	// };
 
-		// Check remote-Tx valid
-		CPRPkt cpR = this->cpRx_R->GetPair()->GetR();
-		if (cpR == NULL) {
-				return (ERESULT_TYPE_SUCCESS);
-		};
+	// Check remote-Tx valid
+	CPRPkt cpR = this->cpRx_R->GetPair()->GetR();
+
+	if (cpR == NULL) {
+			return (ERESULT_TYPE_SUCCESS);
+	};
 
 	// Debug
 	// cpR->CheckPkt();
@@ -4672,7 +4716,7 @@ EResultType CMST::Do_R_fwd(int64_t nCycle) {
 	// cpR->Display();
 	#endif
 	
-		return (ERESULT_TYPE_SUCCESS);
+	return (ERESULT_TYPE_SUCCESS);
 };
 
 
@@ -4713,17 +4757,17 @@ EResultType CMST::Do_B_fwd(int64_t nCycle) {
 //------------------------------------------
 EResultType CMST::Do_R_bwd(int64_t nCycle) {
 
-		// Check remote-Tx valid
-		// CPRPkt cpR = this->cpRx_R->GetPair()->GetR();
-		// if (cpR == NULL) {
+	// Check remote-Tx valid
+	// CPRPkt cpR = this->cpRx_R->GetPair()->GetR();
+	// if (cpR == NULL) {
 	//	return (ERESULT_TYPE_SUCCESS);
-		//};
+	//};
 
 	// Check Rx valid
 	CPRPkt cpR = this->cpRx_R->GetR();
 	if (cpR == NULL) {
-			//printf("cpR is NULL\n");
-			return (ERESULT_TYPE_SUCCESS);
+		//printf("cpR is NULL\n");
+		return (ERESULT_TYPE_SUCCESS);
 	};
 
 		// Set ready
@@ -4744,7 +4788,7 @@ EResultType CMST::Do_R_bwd(int64_t nCycle) {
 		#endif
 
 		// Stat  
-		this->Decrease_MO_AR();	
+		// this->Decrease_MO_AR();	
 
 		this->nAllTransFinished++;
 		this->nARTransFinished++;
@@ -4823,13 +4867,13 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	string cBPktName = cpB->GetName();
 
 	#ifdef DEBUG_MST
-		 printf("[Cycle %3ld: %s.Do_B_bwd] (%s) handshake Rx_B.\n", nCycle, this->cName.c_str(), cBPktName.c_str());
+		printf("[Cycle %3ld: %s.Do_B_bwd] (%s) handshake Rx_B.\n", nCycle, this->cName.c_str(), cBPktName.c_str());
 	// cpB->CheckPkt();
 	// cpB->Display();
 	#endif
 	
 	// Stat 
-	this->Decrease_MO_AW();	
+	//this->Decrease_MO_AW();	
 	this->nB++;
 	
 	// Count finished transactions	
@@ -4878,6 +4922,233 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	return (ERESULT_TYPE_SUCCESS);
 };
 
+#ifdef CCI_ON
+	// Purpose: Getting the transaction from remote ports and put it into local ports.
+	EResultType	CMST::Do_AC_fwd(int64_t nCycle) {
+
+		if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES) {
+			printf("[Cycle %3ld: %s.Do_AC_fwd] cpTx_CR is busy.\n", nCycle, this->cName.c_str());
+			return (ERESULT_TYPE_SUCCESS); // Cannot response through CR channel.
+		}
+
+		if (simDataTransfer && (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES)) {
+			printf("[Cycle %3ld: %s.Do_AC_fwd] cpTx_CD is busy.\n", nCycle, this->cName.c_str());
+			return (ERESULT_TYPE_SUCCESS); // Cannot response through CD channel.
+		}
+
+		if (simDataTransfer && ((simCDlen != MAX_BURST_LENGTH) && (simCDlen > 0))) {
+			printf("[Cycle %3ld: %s.Do_AC_fwd] CDLen = %d.\n", nCycle, this->cName.c_str(), simCDlen);
+			simCDlen++;
+			return (ERESULT_TYPE_SUCCESS); // Do not issuing enough data.
+		}
+
+		simCDlen = 0; // restarting counting.
+
+		// 1. Get the snoop transactions from AC port.
+		// Check remote-Tx valid
+		CPACPkt cpAC = this->cpRx_AC->GetPair()->GetAC();
+
+		if (cpAC == NULL) {
+			return (ERESULT_TYPE_SUCCESS);
+		};
+
+		// Put Rx
+		this->cpRx_AC->PutAC(cpAC);
+	
+		#ifdef DEBUG_MST
+		string cPktName = cpAC->GetName();
+		printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) put Rx_AC.\n", nCycle, this->cName.c_str(), cPktName.c_str());
+		// cpR->Display();
+		#endif
+	
+		return (ERESULT_TYPE_SUCCESS);
+	};
+
+	// Purpose: Set the acceptance results of the local port.
+	EResultType	CMST::Do_AC_bwd(int64_t nCycle) {
+		
+		if (this->cpRx_AC->IsBusy() == ERESULT_TYPE_NO) {
+			return (ERESULT_TYPE_SUCCESS); // Cannot response through CR channel.
+		}
+
+		CPACPkt cpAC = this->cpRx_AC->GetAC();
+
+		if (cpAC == NULL) {
+			//printf("[Cycle %3ld: %s.Do_AC_bwd] cpAC is NULL.\n", nCycle, this->cName.c_str());
+			return (ERESULT_TYPE_SUCCESS);
+		};
+
+		string cACPktName = cpAC->GetName();
+		
+		// Set ready
+		this->cpRx_AC->FlushPkt();
+		this->cpRx_AC->SetAcceptResult(ERESULT_TYPE_ACCEPT);
+
+		#ifdef DEBUG_MST
+		printf("[Cycle %3ld: %s.Do_AC_bwd] %s handshake Rx_AC.\n", nCycle, this->cName.c_str(), cACPktName.c_str());
+		#endif
+
+		return (ERESULT_TYPE_SUCCESS);
+	}
+
+	// Purpose: Decode and issue the CR transactions to TX_CR port.
+	EResultType	CMST::Do_CR_fwd(int64_t nCycle){
+		bool passDirty = false;
+		// Check Rx valid
+		CPACPkt cpAC = this->cpRx_AC->GetAC();
+
+		if (cpAC == NULL) {
+			return (ERESULT_TYPE_SUCCESS);
+		};
+
+		#ifdef CCI_TESTING
+			if ((nCycle % 500) == 0) { // For testing only
+				simDataTransfer = !simDataTransfer; // Flip the data transfer.
+			}
+
+			if ((cpAC->GetSnoop() == 0b1001) ||
+				(cpAC->GetSnoop() == 0b1000)
+			) {
+				if (simDataTransfer) passDirty = true;
+			}
+
+			if ((cpAC->GetSnoop() == 0b0010) ||
+				(cpAC->GetSnoop() == 0b0011)
+			) {
+				simDataTransfer = false;
+			}
+
+		#endif
+
+		int rresponse = 0 + (passDirty << 2) + simDataTransfer; // FIXME: Response decode shoulds be determine by the MASTER not a fixed value.
+
+		if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES) {
+			return (ERESULT_TYPE_SUCCESS);
+		}
+
+		// Debug
+		// cpR->CheckPkt();
+		string cPktName = cpAC->GetName();
+		char cCRPktName[50];
+
+		// Put Rx
+		// 2. Handle the Snoop (Snoop should not be blocked by any transactions).
+		CPCRPkt cpCR_new = new CCRPkt();
+
+		sprintf(cCRPktName, "CR_%s", cPktName.c_str());
+		cpCR_new->SetName(cCRPktName);
+		cpCR_new->SetResp(rresponse);
+
+		this->cpTx_CR->PutCR(cpCR_new);
+
+		#ifdef DEBUG_MST
+		printf("[Cycle %3ld: %s.Do_CR_fwd] %s/%s handshake Tx_CR: Snoop = %x, DataTransfer = %x, passDirty = %x.\n", nCycle, this->cName.c_str(), cCRPktName, cpAC->GetName().c_str(), cpAC->GetSnoop(), simDataTransfer, passDirty);
+		#endif
+
+		return (ERESULT_TYPE_SUCCESS);
+	};
+
+	// Purpose: Print the handsake
+	EResultType	CMST::Do_CR_bwd(int64_t nCycle){
+		// Check Tx valid 
+		CPCRPkt cpCR = this->cpTx_CR->GetCR();
+
+		if (cpCR == NULL) {
+			return (ERESULT_TYPE_SUCCESS);
+		};
+
+		printf("[Cycle %3ld: %s.Do_CR_bwd] (%s) 1. handshake cpTx_CR.\n", nCycle, this->cName.c_str(), cpCR->GetName().c_str());
+
+		// Check Tx ready
+		EResultType eAcceptResult = this->cpTx_CR->GetAcceptResult();
+
+		if (eAcceptResult == ERESULT_TYPE_ACCEPT) {
+			string cCRPktName = cpCR->GetName();
+
+			#ifdef DEBUG_MST
+			printf("[Cycle %3ld: %s.Do_CR_bwd] (%s) 2. handshake cpTx_CR.\n", nCycle, this->cName.c_str(), cCRPktName.c_str());
+			#endif
+		};
+
+		return (ERESULT_TYPE_SUCCESS);
+	};
+
+	// Purpose: Decode and issue the CR transactions to TX_CD port.
+	EResultType	CMST::Do_CD_fwd(int64_t nCycle){
+
+		// Check Rx valid
+		CPACPkt cpAC = this->cpRx_AC->GetAC();
+
+		if (cpAC == NULL) {
+			return (ERESULT_TYPE_SUCCESS);
+		};
+
+		if (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES) {
+			return (ERESULT_TYPE_SUCCESS);
+		}
+
+		if (!simDataTransfer) {
+			return (ERESULT_TYPE_SUCCESS);
+		}
+
+		// Debug
+		// cpR->CheckPkt();
+		string cPktName = cpAC->GetName();
+		char cCDPktName[50];
+
+		// Put Rx
+		// 2. Handle the Snoop (Snoop should not be blocked by any transactions).
+		CPCDPkt cpCD_new = new CCDPkt();
+
+		sprintf(cCDPktName, "CD_%s", cPktName.c_str());
+		cpCD_new->SetName(cCDPktName);
+		cpCD_new->SetData(0);
+
+		if (simCDlen == MAX_BURST_LENGTH) {
+			cpCD_new->SetLast(ERESULT_TYPE_YES);
+		} else {
+			cpCD_new->SetLast(ERESULT_TYPE_NO);
+		}
+
+		this->cpTx_CD->PutCD(cpCD_new);
+
+		#ifdef DEBUG_MST
+		printf("[Cycle %3ld: %s.Do_CD_fwd] %s handshake Tx_CD - IsLast  = %d.\n", nCycle, this->cName.c_str(), cCDPktName, (cpCD_new->IsLast() == ERESULT_TYPE_YES));
+		#endif
+
+		return (ERESULT_TYPE_SUCCESS);
+	};
+
+	// Purpose: Print the handsake
+	EResultType	CMST::Do_CD_bwd(int64_t nCycle){
+		// Check Tx valid 
+		CPCDPkt cpCD = this->cpTx_CD->GetCD();
+		
+		if (cpCD == NULL) {
+			return (ERESULT_TYPE_SUCCESS);
+		};
+
+		// Check Tx ready
+		EResultType eAcceptResult = this->cpTx_CD->GetAcceptResult();
+
+		if (eAcceptResult == ERESULT_TYPE_ACCEPT) {
+			string cCDPktName = cpCD->GetName();
+
+			#ifdef DEBUG_MST
+			if (cpCD->IsLast() == ERESULT_TYPE_YES) {
+				printf("[Cycle %3ld: %s.Do_CD_bwd] (%s) WLAST handshake cpTx_CD.\n", nCycle, this->cName.c_str(), cCDPktName.c_str());
+			} 
+			else {
+				printf("[Cycle %3ld: %s.Do_CD_bwd] (%s) handshake cpTx_CD.\n", nCycle, this->cName.c_str(), cCDPktName.c_str());
+			};
+			// cpW->Display();
+			#endif
+		};
+
+		return (ERESULT_TYPE_SUCCESS);
+	};
+#endif
+
 
 // Debug
 EResultType CMST::CheckLink() {
@@ -4887,6 +5158,11 @@ EResultType CMST::CheckLink() {
 	assert (this->cpTx_W  != NULL);
 	assert (this->cpRx_R  != NULL);
 	assert (this->cpRx_B  != NULL);
+	#ifdef CCI_ON
+		assert (this->cpRx_AC  != NULL);
+		assert (this->cpTx_CR  != NULL);
+		assert (this->cpTx_CD  != NULL);
+	#endif
 	assert (this->cpTx_AR->GetPair() != NULL);
 	assert (this->cpTx_AW->GetPair() != NULL);
 	assert (this->cpTx_W->GetPair()  != NULL);
@@ -4946,9 +5222,8 @@ EResultType CMST::IsAllTransFinished() {
 
 // Check AR transactions finished
 EResultType CMST::IsARTransFinished() {  
-
 	if (this->eARTransFinished == ERESULT_TYPE_YES) {
-			return (ERESULT_TYPE_YES);
+		return (ERESULT_TYPE_YES);
 	};
 		return (ERESULT_TYPE_NO);
 };
@@ -4956,9 +5231,8 @@ EResultType CMST::IsARTransFinished() {
 
 // Check AW transactions finished
 EResultType CMST::IsAWTransFinished() {  
-
 	if (this->eAWTransFinished == ERESULT_TYPE_YES) {
-			return (ERESULT_TYPE_YES);
+		return (ERESULT_TYPE_YES);
 	};
 		return (ERESULT_TYPE_NO);
 };
@@ -5110,7 +5384,8 @@ int64_t CMST::Get_nCycle_AW_Finished() {
 EResultType CMST::Increase_MO_AR() {  
 
 	this->nMO_AR++;
-		return (ERESULT_TYPE_SUCCESS);
+	printf("Increase_MO_AR: nMO_AR = %d.\n", nMO_AR);
+	return (ERESULT_TYPE_SUCCESS);
 };
 
 
@@ -5118,6 +5393,7 @@ EResultType CMST::Increase_MO_AR() {
 EResultType CMST::Decrease_MO_AR() {  
 
 	this->nMO_AR--;
+	printf("Decrease_MO_AR: nMO_AR = %d.\n", nMO_AR);
 
 	#ifdef DEBUG
 	assert (this->nMO_AR >= 0);
@@ -5131,7 +5407,8 @@ EResultType CMST::Decrease_MO_AR() {
 EResultType CMST::Increase_MO_AW() {  
 
 	this->nMO_AW++;
-		return (ERESULT_TYPE_SUCCESS);
+	printf("Increase_MO_AW: nMO_AW = %d.\n", nMO_AW);
+	return (ERESULT_TYPE_SUCCESS);
 };
 
 
@@ -5139,12 +5416,12 @@ EResultType CMST::Increase_MO_AW() {
 EResultType CMST::Decrease_MO_AW() {  
 
 	this->nMO_AW--;
-
+	printf("Decrease_MO_AW: nMO_AW = %d.\n", nMO_AW);
 	#ifdef DEBUG
 	assert (this->nMO_AW >= 0);
 	#endif
 
-		return (ERESULT_TYPE_SUCCESS);
+	return (ERESULT_TYPE_SUCCESS);
 };
 
 
@@ -5172,12 +5449,18 @@ int CMST::GetMO_AW() {
 
 // Update state
 EResultType CMST::UpdateState(int64_t nCycle) {  
-
+	
 	this->cpTx_AR   ->UpdateState();
 	this->cpTx_AW   ->UpdateState();
 	// this->cpTx_W ->UpdateState();
 	this->cpRx_R	->UpdateState();
 	this->cpRx_B	->UpdateState();
+
+	#ifdef CCI_ON
+		this->cpRx_AC	->UpdateState();
+		this->cpTx_CR	->UpdateState();
+		this->cpTx_CD	->UpdateState();
+	#endif
 
 	#if !defined MATRIX_MULTIPLICATION && !defined MATRIX_MULTIPLICATIONKIJ && !defined MATRIX_TRANSPOSE && !defined MATRIX_CONVOLUTION && !defined MATRIX_SOBEL
 		this->cpAddrGen_AR->UpdateState();

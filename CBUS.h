@@ -34,6 +34,14 @@ public:
 	EResultType	Do_AR_bwd(int64_t nCycle);
 	EResultType	Do_AW_fwd(int64_t nCycle);
 	EResultType	Do_AW_bwd(int64_t nCycle);
+	#ifdef CCI_ON
+		EResultType	Do_AC_fwd(int64_t nCycle);
+		EResultType	Do_AC_bwd(int64_t nCycle);
+		EResultType	Do_CR_fwd(int64_t nCycle);
+		EResultType	Do_CR_bwd(int64_t nCycle);
+		EResultType	Do_CD_fwd(int64_t nCycle);
+		EResultType	Do_CD_bwd(int64_t nCycle);
+	#endif
 	EResultType	Do_R_fwd(int64_t nCycle);
 	EResultType	Do_R_bwd(int64_t nCycle);
 	EResultType	Do_W_fwd(int64_t nCycle);
@@ -75,7 +83,18 @@ public:
 	CPTRx		cpTx_W;
 	CPTRx		cpRx_B;
 
+	#ifdef CCI_ON
+		// CCI specific interface
+		CPTRx* 		cpTx_AC; // [NUM_PORT]
+
+		CPTRx*		cpRx_CD; // [NUM_PORT]
+		CPTRx*		cpRx_CR; // [NUM_PORT]
+	#endif
+
 private:
+	#ifdef CCI_ON
+		int	Find_the_snoopMaster(int64_t nCycle);
+	#endif
         // Original
 	string		cName;
 
@@ -102,6 +121,18 @@ private:
 	CPFIFO		cpFIFO_AW;
 	// CPFIFO	cpFIFO_W;
 	// CPFIFO	cpFIFO_B;
+
+	#ifdef CCI_ON
+		CPFIFO*		cpFIFO_CCI_AW; // [NUM_PORT]
+		CPFIFO*		cpFIFO_CCI_AR;
+		CPFIFO*		cpFIFO_CCI_CD;
+		CPFIFO*		cpFIFO_CCI_CR;
+		CPFIFO*		cpSnoopID;
+		CPFIFO*		cpSnoopAC;
+		int*		nSnoopedMaster;
+		UPUD* 		initTrans;
+		bool* 		bArb; // Round-robin for CCI snoop
+	#endif
 };
 
 #endif

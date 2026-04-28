@@ -69,6 +69,15 @@ public:
 	EResultType	Do_B_fwd(int64_t nCycle);
 	EResultType	Do_B_bwd(int64_t nCycle);
 
+	#ifdef CCI_ON
+		EResultType	Do_AC_fwd(int64_t nCycle);
+		EResultType	Do_AC_bwd(int64_t nCycle);
+		EResultType	Do_CR_fwd(int64_t nCycle);
+		EResultType	Do_CR_bwd(int64_t nCycle);
+		EResultType	Do_CD_fwd(int64_t nCycle);
+		EResultType	Do_CD_bwd(int64_t nCycle);
+	#endif
+
 	EResultType	LoadTransfer_MatrixConvolution(int64_t nCycle);  			// DUONGTRAN add
 	EResultType	LoadTransfer_MatrixConvolutionLocalCache(int64_t nCycle);
 	EResultType	LoadTransfer_MatrixConvolutionTransaction(int64_t nCycle);
@@ -88,11 +97,11 @@ public:
 	EResultType	LoadTransfer_AR_Test(int64_t nCycle);					// Debug
 	EResultType	LoadTransfer_AW_Test(int64_t nCycle);
 
-	EResultType     LoadTransfer_AR_AXI_Trace(int64_t nCycle);				// Trace AXI FIXME
-	EResultType     LoadTransfer_AW_AXI_Trace(int64_t nCycle);
+	EResultType LoadTransfer_AR_AXI_Trace(int64_t nCycle);				// Trace AXI FIXME
+	EResultType LoadTransfer_AW_AXI_Trace(int64_t nCycle);
 
-	EResultType     LoadTransfer_Ax_PIN_Trace(int64_t nCycle, FILE *fp);			// Trace PIN
-	EResultType     LoadTransfer_Ax_Custom(int64_t nCycle, FILE *fp, int nLen);			// Trace Custom
+	EResultType LoadTransfer_Ax_PIN_Trace(int64_t nCycle, FILE *fp);			// Trace PIN
+	EResultType LoadTransfer_Ax_Custom(int64_t nCycle, FILE *fp, int nLen);			// Trace Custom
 
 	EResultType	LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOperation);	// cAddrMap (LIAM, BFAM, TILE). cOperation (Rotation, Raster_scan, CNN)
 	EResultType	LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOperation);
@@ -138,8 +147,8 @@ public:
 	EResultType	IsAWTransFinished();
 
 	int64_t		GetLinearAddr(); 
-	int		GetMO_AR(); 	
-	int		GetMO_AW(); 
+	int			GetMO_AR(); 	
+	int			GetMO_AW(); 
 
 	// Stat
 	EResultType	PrintStat(int64_t nCycle, FILE *fp);
@@ -157,48 +166,53 @@ public:
 	CPTRx		cpTx_AW;
 	CPTRx		cpTx_W;
 	CPTRx		cpRx_B;
+	#ifdef CCI_ON
+		CPTRx	cpRx_AC;
+		CPTRx	cpTx_CR;
+		CPTRx	cpTx_CD;
+	#endif
 
 	// DUONGTRAN add for Matrix operation
-	int rowAIndex;
-	int colAIndex;
-	int rowBIndex;
-	int colBIndex;
-	int rowCIndex;
-	int colCIndex;
-	int rowDIndex;
-	int colDIndex;
-	int rowEIndex;
-	int colEIndex;
-	int64_t nStartAddrA;
-	int64_t nStartAddrB;
-	int64_t nStartAddrC;
-	int64_t nStartAddrD;
-	int64_t nStartAddrE;
-	EStateGenAddr nStateAddr;
-	EStateGenAddr nStateAddr_next;
+	int				rowAIndex;
+	int				colAIndex;
+	int				rowBIndex;
+	int				colBIndex;
+	int				rowCIndex;
+	int				colCIndex;
+	int				rowDIndex;
+	int				colDIndex;
+	int				rowEIndex;
+	int				colEIndex;
+	int64_t			nStartAddrA;
+	int64_t			nStartAddrB;
+	int64_t			nStartAddrC;
+	int64_t			nStartAddrD;
+	int64_t			nStartAddrE;
+	EStateGenAddr	nStateAddr;
+	EStateGenAddr 	nStateAddr_next;
 
 private:
         // Original
 	string		cName;
 
 	// Control
-	int		nAllTransFinished;
+	int			nAllTransFinished;
 	EResultType	eAllTransFinished;
-	int		nARTransFinished;
+	int			nARTransFinished;
 	EResultType	eARTransFinished;
-	int		nAWTransFinished;
+	int			nAWTransFinished;
 	EResultType	eAWTransFinished;
 	
-	int		nARTrans;								// Number of AR
-	int		nAWTrans; 
-	int		nR; 
-	int		nB; 
+	int			nARTrans;								// Number of AR
+	int			nAWTrans; 
+	int			nR; 
+	int			nB; 
 
 	int64_t		nCycle_AR_Finished;							// When all trans finish
 	int64_t		nCycle_AW_Finished;
 
-	int		nMO_AR;									// MO count AR
-	int		nMO_AW;
+	int			nMO_AR;									// MO count AR
+	int			nMO_AW;
 
 	// FIFO
 	CPFIFO		cpFIFO_AR;
@@ -212,19 +226,21 @@ private:
 	CPAddrGen	cpAddrGen_AW;
 
 	// Config traffic
-	int		nAR_GEN_NUM;								// Total number AR
-	int		nAW_GEN_NUM;
+	int			nAR_GEN_NUM;								// Total number AR
+	int			nAW_GEN_NUM;
 
 	int64_t		nAR_START_ADDR;								// Start addr AR
 	int64_t		nAW_START_ADDR;
 
 	float		ScalingFactor;								// Image size scale
 
-	int		AR_ISSUE_MIN_INTERVAL;							// Issue interval cycles
-	int		AW_ISSUE_MIN_INTERVAL;
+	int			AR_ISSUE_MIN_INTERVAL;						// Issue interval cycles
+	int			AW_ISSUE_MIN_INTERVAL;
 
 	// Trace
-	int		Trace_rewind;								// Back to previous line
+	int			Trace_rewind;								// Back to previous line
+	int			simCDlen = 0;								// FIXME: just a temopary variable. should remove and update the real behavior.
+	bool 		simDataTransfer = false;					// FIXME: just a temopary variable. should remove and update the real behavior.
 };
 
 #endif
