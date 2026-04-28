@@ -664,10 +664,10 @@ typedef enum{
 	ERESULT_TYPE_YES,					// Function result YES
 	ERESULT_TYPE_NO,					// Function result NO
 
-	ERESULT_TYPE_ACCEPT,					// Ready high (handshaked) 
-	ERESULT_TYPE_REJECT,					// Ready low
+	ERESULT_TYPE_ACCEPT,				// Ready high (handshaked) 
+	ERESULT_TYPE_REJECT,				// Ready low
 
-	ERESULT_TYPE_SUCCESS,					// Function success
+	ERESULT_TYPE_SUCCESS,				// Function success
 	ERESULT_TYPE_FAIL,					// Function fails
 
 	ERESULT_TYPE_ON,					// Master generates transactions

@@ -4173,7 +4173,6 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
 	
 	// Check FIFO full 
 	if (this->cpFIFO_AR->IsFull() == ERESULT_TYPE_YES) {
-		printf("[Cycle %3ld: %s.LoadTransfer_AR] cpFIFO_AR full.\n", nCycle, this->cName.c_str());
 		return (ERESULT_TYPE_SUCCESS);
 	};
 	
@@ -4276,7 +4275,6 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 	
 	// Check FIFO full 
 	if (this->cpFIFO_AW->IsFull() == ERESULT_TYPE_YES) {
-		printf("[Cycle %3ld: %s.LoadTransfer_AW] cpFIFO_AW full.\n", nCycle, this->cName.c_str());
 		return (ERESULT_TYPE_SUCCESS);
 	};
 	
@@ -4327,11 +4325,6 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 	cpAW_new->SetVA(nAddr);
 	cpAW_new->SetTileNum(nTileNum);
 	cpAW_new->SetTransType(ETRANS_TYPE_NORMAL);
-
-	#ifdef DEBUG_MST
-	// printf("[Cycle %3ld: %s.LoadTransfer_AW] %s generated - IsFinalTrans = %s.\n", nCycle, this->cName.c_str(), cAWPktName, Convert_eResult2string(cpAW_new->IsFinalTrans()).c_str());
-	// cpAW_new->Display();
-	#endif
 	
 	// Check final trans application
 	EResultType eFinalTrans = this->cpAddrGen_AW->IsFinalTrans();
@@ -4346,7 +4339,7 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 	this->cpFIFO_AW->Push(upAW_new, MST_FIFO_LATENCY);
 
 	#ifdef DEBUG_MST
-	printf("[Cycle %3ld: %s.LoadTransfer_AW] (%s) push FIFO_AW - IsFinalTrans = %s.\n", nCycle, this->cName.c_str(), cAWPktName, Convert_eResult2string(cpAW_new->IsFinalTrans()).c_str());
+	printf("[Cycle %3ld: %s.LoadTransfer_AW] (%s) push FIFO_AW.\n", nCycle, this->cName.c_str(), cAWPktName);
 	// this->cpFIFO_AW->Display();
 	// this->cpFIFO_AW->CheckFIFO();
 	#endif
@@ -4451,7 +4444,7 @@ EResultType CMST::Do_AR_fwd(int64_t nCycle) {
 	CPAxPkt cpAR_new = upAR_new->cpAR;
 
 	#if defined(CCI_ON) && defined(CCI_TESTING) // Setting the snoop value.
-	// The testing commands skip these number 4, 5, 6, 10, 14, 15
+	// The testing commands skip these number 4, 5, 6, 10, 14, 15 because there is no ARSNOOP matches with these number.
 	int SnoopType = nCycle & 0xF;; // Take 4 LSB.
 	
 	if ((SnoopType == 4) ||
@@ -4525,7 +4518,7 @@ EResultType CMST::Do_AW_fwd(int64_t nCycle) {
 	CPAxPkt cpAW_new = upAW_new->cpAW;
 
 	#if defined(CCI_ON) && defined(CCI_TESTING) // Setting the snoop value.
-	// The testing commands skip these number 4, 5, 6, 10, 14, 15
+	// The testing commands skip these number 6, 7, 8, 9, 10, 11, ,12, 13, 14, 15  because there is no AWSNOOP matches with these number.
 	int SnoopType = nCycle & 0x7;; // Take 3 LSB.
 	
 	if (SnoopType > 5) {
@@ -4923,28 +4916,35 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 };
 
 #ifdef CCI_ON
-	// Purpose: Getting the transaction from remote ports and put it into local ports.
+	//---------------------------------------------------------------------------------------
+	// AC Valid: Getting the transaction from remote ports and put it into local ports.
+	//	1. If DataTransfer is asserted, MASTERs only ready for the new when all BURSTs are tranfered.
+	//	2. If DataTransfer is deasserted, MASTERs receive data whenever CR is ready.
+	//	3. Put the remote AC transactions to local port.
+	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_AC_fwd(int64_t nCycle) {
 
+		// ------ 1. Checking for receiving AC ------
+		// a. Check the CR channel is ready.
 		if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES) {
-			printf("[Cycle %3ld: %s.Do_AC_fwd] cpTx_CR is busy.\n", nCycle, this->cName.c_str());
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CR channel.
 		}
 
+		// b. Check the CD channel is ready.
 		if (simDataTransfer && (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES)) {
-			printf("[Cycle %3ld: %s.Do_AC_fwd] cpTx_CD is busy.\n", nCycle, this->cName.c_str());
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CD channel.
 		}
 
+		// c. Check if all BURSTs is transfered.
 		if (simDataTransfer && ((simCDlen != MAX_BURST_LENGTH) && (simCDlen > 0))) {
-			printf("[Cycle %3ld: %s.Do_AC_fwd] CDLen = %d.\n", nCycle, this->cName.c_str(), simCDlen);
 			simCDlen++;
 			return (ERESULT_TYPE_SUCCESS); // Do not issuing enough data.
 		}
 
 		simCDlen = 0; // restarting counting.
 
-		// 1. Get the snoop transactions from AC port.
+		// ------ 2. Receive AC transactions ------
+		// a. Get the snoop transactions from AC port.
 		// Check remote-Tx valid
 		CPACPkt cpAC = this->cpRx_AC->GetPair()->GetAC();
 
@@ -4952,7 +4952,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 			return (ERESULT_TYPE_SUCCESS);
 		};
 
-		// Put Rx
+		// b. Put Rx to the local port.
 		this->cpRx_AC->PutAC(cpAC);
 	
 		#ifdef DEBUG_MST
@@ -4964,7 +4964,9 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		return (ERESULT_TYPE_SUCCESS);
 	};
 
-	// Purpose: Set the acceptance results of the local port.
+	//---------------------------------------------------------------------------------------
+	// AC Ready: Set the acceptance results of the local port.
+	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_AC_bwd(int64_t nCycle) {
 		
 		if (this->cpRx_AC->IsBusy() == ERESULT_TYPE_NO) {
@@ -4974,7 +4976,6 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		CPACPkt cpAC = this->cpRx_AC->GetAC();
 
 		if (cpAC == NULL) {
-			//printf("[Cycle %3ld: %s.Do_AC_bwd] cpAC is NULL.\n", nCycle, this->cName.c_str());
 			return (ERESULT_TYPE_SUCCESS);
 		};
 
@@ -4991,7 +4992,11 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		return (ERESULT_TYPE_SUCCESS);
 	}
 
-	// Purpose: Decode and issue the CR transactions to TX_CR port.
+	//---------------------------------------------------------------------------------------
+	// CR Valid: Decode and issue the CR transactions to TX_CR port. (Simulation only - NOT function)
+	//	1. Get the AC resuts and decode the responding signals.
+	//	2. Simulating the responding signals: DataTransfer and PassDirty.
+	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CR_fwd(int64_t nCycle){
 		bool passDirty = false;
 		// Check Rx valid
@@ -5006,16 +5011,14 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 				simDataTransfer = !simDataTransfer; // Flip the data transfer.
 			}
 
-			if ((cpAC->GetSnoop() == 0b1001) ||
-				(cpAC->GetSnoop() == 0b1000)
-			) {
-				if (simDataTransfer) passDirty = true;
+			if (cpAC->GetSnoop() == 0b1101) {	// MakeInvalid. Do not need return data.
+				simDataTransfer = false;
 			}
 
-			if ((cpAC->GetSnoop() == 0b0010) ||
-				(cpAC->GetSnoop() == 0b0011)
+			if ((cpAC->GetSnoop() == 0b1001) || // CleanInvalid
+				(cpAC->GetSnoop() == 0b1000)	// CleanShared
 			) {
-				simDataTransfer = false;
+				if (simDataTransfer) passDirty = true;
 			}
 
 		#endif
@@ -5042,13 +5045,15 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		this->cpTx_CR->PutCR(cpCR_new);
 
 		#ifdef DEBUG_MST
-		printf("[Cycle %3ld: %s.Do_CR_fwd] %s/%s handshake Tx_CR: Snoop = %x, DataTransfer = %x, passDirty = %x.\n", nCycle, this->cName.c_str(), cCRPktName, cpAC->GetName().c_str(), cpAC->GetSnoop(), simDataTransfer, passDirty);
+		printf("[Cycle %3ld: %s.Do_CR_fwd] %s/%s handshake Tx_CR.\n", nCycle, this->cName.c_str(), cCRPktName, cpAC->GetName().c_str());
 		#endif
 
 		return (ERESULT_TYPE_SUCCESS);
 	};
 
-	// Purpose: Print the handsake
+	//---------------------------------------------------------------------------------------
+	// CR Ready: Print the handsake
+	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CR_bwd(int64_t nCycle){
 		// Check Tx valid 
 		CPCRPkt cpCR = this->cpTx_CR->GetCR();
@@ -5073,23 +5078,32 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		return (ERESULT_TYPE_SUCCESS);
 	};
 
-	// Purpose: Decode and issue the CR transactions to TX_CD port.
+	//---------------------------------------------------------------------------------------
+	// CD Ready: Decode and issue the CR transactions to TX_CD port.
+	//	1. If DataTransfer is asserted, MASTERs only ready for the new when all BURSTs are tranfered.
+	//	2. If DataTransfer is deasserted, MASTERs receive data whenever CR is ready.
+	//	3. Put the remote AC transactions to local port.
+	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CD_fwd(int64_t nCycle){
 
-		// Check Rx valid
+		// ------ 1. Checking if CD is necessary ------
+		// If the CD is busy, do not need to do anythings with CD ports.
+		if (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES) {
+			return (ERESULT_TYPE_SUCCESS);
+		}
+
+		// No data transfer, do not need to do anythings with CD ports.
+		if (!simDataTransfer) {
+			return (ERESULT_TYPE_SUCCESS);
+		}
+
+		// ------ 2. Receive AC transactions ------
+		// a. Get the snoop transactions from AC port.
 		CPACPkt cpAC = this->cpRx_AC->GetAC();
 
 		if (cpAC == NULL) {
 			return (ERESULT_TYPE_SUCCESS);
 		};
-
-		if (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES) {
-			return (ERESULT_TYPE_SUCCESS);
-		}
-
-		if (!simDataTransfer) {
-			return (ERESULT_TYPE_SUCCESS);
-		}
 
 		// Debug
 		// cpR->CheckPkt();
@@ -5097,7 +5111,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		char cCDPktName[50];
 
 		// Put Rx
-		// 2. Handle the Snoop (Snoop should not be blocked by any transactions).
+		// b. Handle the Snoop (Snoop should not be blocked by any transactions).
 		CPCDPkt cpCD_new = new CCDPkt();
 
 		sprintf(cCDPktName, "CD_%s", cPktName.c_str());
@@ -5119,7 +5133,9 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		return (ERESULT_TYPE_SUCCESS);
 	};
 
-	// Purpose: Print the handsake
+	//---------------------------------------------------------------------------------------
+	// CD Ready: Print the handsake
+	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CD_bwd(int64_t nCycle){
 		// Check Tx valid 
 		CPCDPkt cpCD = this->cpTx_CD->GetCD();
