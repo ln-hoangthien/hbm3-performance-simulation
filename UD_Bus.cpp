@@ -385,9 +385,11 @@ CPCDPkt Copy_CCDPkt(CPCDPkt cpThis) {
 	// Get all member values 
 	string	    cName       = cpThis->GetName();
 	EResultType eFinalTrans = cpThis->IsFinalTrans();
+	EResultType	nLast		= cpThis->IsLast();
 
 	// Set all member values
 	cpCR_new->SetName(cName);
+	cpCR_new->SetLast(nLast);
 	cpCR_new->SetFinalTrans(eFinalTrans);
 
 	return (cpCR_new);

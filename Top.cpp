@@ -920,3 +920,101 @@ break;
 	return (NULL);
 };
 
+string Convert_eARSnoopType2string(int eType) {
+    switch(eType) {
+    	case 0b0000:  
+			return("EARSNOOP_TYPE_READONCE");  
+			break;
+    	case 0b0001: 
+			return("EARSNOOP_TYPE_READSHARED"); 
+			break;
+    	case 0b0010:    
+			return("EARSNOOP_TYPE_READCLEAN");
+			break;
+    	case 0b0011:  
+			return("EARSNOOP_TYPE_READNOTSHAREDDIRTY");  
+			break;
+    	case 0b0111: 
+			return("EARSNOOP_TYPE_READUNIQUE"); 
+			break;
+    	case 0b1000:    
+			return("EARSNOOP_TYPE_CLEANSHARED");
+			break;
+    	case 0b1001:  
+			return("EARSNOOP_TYPE_CLEANINVALID");  
+			break;
+    	case 0b1011: 
+			return("EARSNOOP_TYPE_CLEANUNIQUE"); 
+			break;
+    	case 0b1100:    
+			return("EARSNOOP_TYPE_MAKEUNIQUE");
+			break;
+    	case 0b1101:  
+			return("EARSNOOP_TYPE_MAKEINVALID");  
+			break;
+    	default:
+			return("EARSNOOP_TYPE_UNDEFINED"); 
+			break;
+    };
+	return (NULL);
+};
+
+string Convert_eAWSnoopType2string(int eType) {
+    switch(eType) {
+    	case 0b000:  
+			return("EAWSNOOP_TYPE_WRITEUNIQUE");
+			break;
+    	case 0b001: 
+			return("EAWSNOOP_TYPE_WRITELINEUNIQUE");
+			break;
+    	case 0b010:    
+			return("EAWSNOOP_TYPE_WRITECLEAN");
+			break;
+    	case 0b011:  
+			return("EAWSNOOP_TYPE_WRITEBACK");
+			break;
+    	case 0b100: 
+			return("EAWSNOOP_TYPE_EVICT");
+			break;
+    	case 0b101:    
+			return("EAWSNOOP_TYPE_WRITEVICT");
+			break;
+    	default:
+			return("EAWSNOOP_TYPE_UNDEFINED");
+			break;
+    };
+	return (NULL);
+};
+
+string Convert_eACSnoopType2string(int eType) {
+    switch(eType) {
+    	case 0b0000:  
+			return("EACSNOOP_TYPE_READONCE");  
+			break;
+    	case 0b0001: 
+			return("EACSNOOP_TYPE_READSHARED"); 
+			break;
+    	case 0b0010:    
+			return("EACSNOOP_TYPE_READCLEAN");
+			break;
+    	case 0b0011:  
+			return("EACSNOOP_TYPE_READNOTSHAREDDIRTY");  
+			break;
+    	case 0b0111: 
+			return("EACSNOOP_TYPE_READUNIQUE"); 
+			break;
+    	case 0b1000:    
+			return("EACSNOOP_TYPE_CLEANSHARED");
+			break;
+    	case 0b1001:  
+			return("EACSNOOP_TYPE_CLEANINVALID");  
+			break;
+    	case 0b1101: 
+			return("EACSNOOP_TYPE_MAKEINVALID"); 
+			break;
+    	default:
+			return("EACSNOOP_TYPE_UNDEFINED"); 
+			break;
+    };
+	return (NULL);
+};

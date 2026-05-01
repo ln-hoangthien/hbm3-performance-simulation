@@ -83,13 +83,13 @@ EResultType CCDPkt::SetLast(EResultType eLast) {
 	#endif
 	
 	if (eLast == ERESULT_TYPE_YES) {
-	        this->spPkt->nLast = 1;
+	    this->spPkt->nLast = 1;
 	} 
 	else if (eLast == ERESULT_TYPE_NO) {
-	        this->spPkt->nLast = 0;
+	    this->spPkt->nLast = 0;
 	} 
 	else {
-	        assert (0);
+	    assert (0);
 	};
 	return (ERESULT_TYPE_SUCCESS);
 };
@@ -174,6 +174,7 @@ EResultType CCDPkt::Display() {
 	// printf("\t B pkt display\n");
 	printf("---------------------------------------------\n");
 	printf("\t Name		: \t %s\n",   this->cName.c_str());
+	printf("\t IsLast	: \t\t %s\n",   Convert_eResult2string(this->IsLast()).c_str());
 	printf("\t FinalTrans	: \t %s\n",   cFinalTrans.c_str());
 	printf("---------------------------------------------\n");
 

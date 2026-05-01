@@ -707,7 +707,7 @@ EResultType CSLV::Do_W_fwd_MC_Frontend(int64_t nCycle) {
 	// Check remote-Tx valid 
 	CPWPkt cpW = this->cpRx_W->GetPair()->GetW();
 	if (cpW == NULL) {
-	        return (ERESULT_TYPE_SUCCESS);
+	    return (ERESULT_TYPE_SUCCESS);
 	};
 	
 	// Debug
@@ -721,6 +721,10 @@ EResultType CSLV::Do_W_fwd_MC_Frontend(int64_t nCycle) {
 
 	// Put W
 	this->cpRx_W->PutW(cpW);
+
+	#ifdef DEBUG_SLV
+	printf("[Cycle %3ld: SLV.Do_W_fwd_MC_Frontend] (%s) push FIFO_B.\n", nCycle, cpW->GetName().c_str());
+	#endif
 	
 	return (ERESULT_TYPE_SUCCESS);
 };
@@ -1069,7 +1073,7 @@ EResultType CSLV::Do_W_bwd(int64_t nCycle) {
 		#ifdef DEBUG_SLV	
 		CPWPkt cpW = this->cpRx_W->GetW();
 		string cWPktName = cpW->GetName();
-		//printf("[Cycle %3ld: SLV.Do_W_bwd] (%s) handshake Rx_W.\n", nCycle, cWPktName.c_str());
+		printf("[Cycle %3ld: SLV.Do_W_bwd] (%s) handshake Rx_W.\n", nCycle, cWPktName.c_str());
 		// cpW->Display();
 		#endif
 		
@@ -1425,7 +1429,7 @@ EResultType CSLV::UpdateState(int64_t nCycle) {
 	// Update TRx
 	this->cpRx_AR->UpdateState();
 	this->cpRx_AW->UpdateState();
-	// this->cpRx_W ->UpdateState();
+	this->cpRx_W ->UpdateState();
 	this->cpTx_R ->UpdateState();
 	this->cpTx_B ->UpdateState();
 

@@ -875,8 +875,10 @@ int64_t GetAddr_AMap_Global(int64_t nRow, int nMemCh, int nBank, int nCol);	// R
 string Convert_eDir2string(ETransDirType eType);
 string Convert_eUDType2string(EUDType eType);
 string Convert_eTransType2string(ETransType eType);
-string Convert_eResult2string(EResultType eType); 
-
+string Convert_eResult2string(EResultType eType);
+string Convert_eARSnoopType2string(int eType);
+string Convert_eAWSnoopType2string(int eType);
+string Convert_eACSnoopType2string(int eType);
 #endif
 
 int random(int min, int max);
