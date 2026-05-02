@@ -4088,7 +4088,7 @@ EResultType CMST::LoadTransfer_AW_Test(int64_t nCycle) {
 		cpAW_new->SetTransNum(nIndex+1);
 		cpAW_new->SetVA(nAddr);
 		cpAW_new->SetTransType(ETRANS_TYPE_NORMAL);
-		// cpAW_new->Display();		
+		// cpAW_new->Display();
 		
 		// Push
 		UPUD upAW_new = new UUD;
@@ -4230,6 +4230,22 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
 	printf("[Cycle %3ld: %s.LoadTransfer_AR] %s generated.\n", nCycle, this->cName.c_str(), cARPktName);
 	// cpAR_new->Display();
 	#endif
+
+	#if defined(CCI_ON) && defined(CCI_TESTING) // Setting the snoop value.
+	// The testing commands skip these number 4, 5, 6, 10, 14, 15 because there is no ARSNOOP matches with these number.
+	int SnoopType = nARTrans & 0xF;; // Take 4 LSB.
+	
+	if ((SnoopType == 4) ||
+	    (SnoopType == 5) ||	
+	    (SnoopType == 6) ||	
+	    (SnoopType == 10) ||
+		(SnoopType == 14) ||
+		(SnoopType == 15)
+	) {
+		SnoopType = 0;
+	}
+	cpAR_new->SetSnoop(SnoopType);
+	#endif
 	
 	// Check final trans application
 	EResultType eFinalTrans = this->cpAddrGen_AR->IsFinalTrans();
@@ -4325,6 +4341,17 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 	cpAW_new->SetVA(nAddr);
 	cpAW_new->SetTileNum(nTileNum);
 	cpAW_new->SetTransType(ETRANS_TYPE_NORMAL);
+
+	#if defined(CCI_ON) && defined(CCI_TESTING) // Setting the snoop value.
+		// The testing commands skip these number 6, 7, 8, 9, 10, 11, ,12, 13, 14, 15  because there is no AWSNOOP matches with these number.
+		int SnoopType = nAWTrans & 0x7;; // Take 3 LSB.
+		
+		if (SnoopType > 5) {
+			SnoopType = 0;
+		}
+
+		cpAW_new->SetSnoop(SnoopType);
+	#endif
 	
 	// Check final trans application
 	EResultType eFinalTrans = this->cpAddrGen_AW->IsFinalTrans();
@@ -4443,26 +4470,10 @@ EResultType CMST::Do_AR_fwd(int64_t nCycle) {
 	// Put Tx
 	CPAxPkt cpAR_new = upAR_new->cpAR;
 
-	#if defined(CCI_ON) && defined(CCI_TESTING) // Setting the snoop value.
-	// The testing commands skip these number 4, 5, 6, 10, 14, 15 because there is no ARSNOOP matches with these number.
-	int SnoopType = nCycle & 0xF;; // Take 4 LSB.
-	
-	if ((SnoopType == 4) ||
-	    (SnoopType == 5) ||	
-	    (SnoopType == 6) ||	
-	    (SnoopType == 10) ||
-		(SnoopType == 14) ||
-		(SnoopType == 15)
-	) {
-		SnoopType = 0;
-	}
-	cpAR_new->SetSnoop(SnoopType);
-	#endif
-
 	this->cpTx_AR->PutAx(cpAR_new);
 
 	#ifdef DEBUG_MST
-	printf("[Cycle %3ld: %s.Do_AR_fwd] (%s) put Tx_AR.\n", nCycle, this->cName.c_str(), upAR_new->cpAR->GetName().c_str());
+	printf("[Cycle %3ld: %s.Do_AR_fwd] (%s) put Tx_AR - %s.\n", nCycle, this->cName.c_str(), upAR_new->cpAR->GetName().c_str(), Convert_eARSnoopType2string(cpAR_new->GetSnoop()).c_str());
 	#endif
 
 	// Maintain
@@ -4517,22 +4528,10 @@ EResultType CMST::Do_AW_fwd(int64_t nCycle) {
 	// Put Tx
 	CPAxPkt cpAW_new = upAW_new->cpAW;
 
-	#if defined(CCI_ON) && defined(CCI_TESTING) // Setting the snoop value.
-	// The testing commands skip these number 6, 7, 8, 9, 10, 11, ,12, 13, 14, 15  because there is no AWSNOOP matches with these number.
-	int SnoopType = nCycle & 0x7;; // Take 3 LSB.
-	
-	if (SnoopType > 5) {
-		SnoopType = 0;
-	}
-
-	cpAW_new->SetSnoop(SnoopType);
-	#endif
-
 	this->cpTx_AW->PutAx(cpAW_new);
 
 	#ifdef DEBUG_MST
-	printf("[Cycle %3ld: %s.Do_AW_fwd] (%s) put Tx_AW.\n", nCycle, this->cName.c_str(), upAW_new->cpAW->GetName().c_str());
-	// upAW_new->cpAW->Display();
+	printf("[Cycle %3ld: %s.Do_AW_fwd] (%s) put Tx_AW - %s.\n", nCycle, this->cName.c_str(), upAW_new->cpAW->GetName().c_str(), Convert_eAWSnoopType2string(cpAW_new->GetSnoop()).c_str());
 	// cpAW_new->CheckPkt();
 	#endif
 
@@ -4927,21 +4926,21 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		// ------ 1. Checking for receiving AC ------
 		// a. Check the CR channel is ready.
 		if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES) {
+			printf("[Cycle %3ld: %s.Do_AC_fwd] cpTx_CR is busy.\n", nCycle, this->cName.c_str());
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CR channel.
 		}
 
 		// b. Check the CD channel is ready.
-		if (simDataTransfer && (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES)) {
+		if (this->simDataTransfer && (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES)) {
+			printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) Check the CD channel is ready.\n", nCycle, this->cName.c_str(), this->cpTx_CD->GetCD()->GetName().c_str());
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CD channel.
 		}
 
 		// c. Check if all BURSTs is transfered.
-		if (simDataTransfer && ((simCDlen != MAX_BURST_LENGTH) && (simCDlen > 0))) {
-			simCDlen++;
+		if (this->simDataTransfer && (this->simCDlen > 0)) {
+			printf("[Cycle %3ld: %s.Do_AC_fwd] Check if all BURSTs is transfered.\n", nCycle, this->cName.c_str());
 			return (ERESULT_TYPE_SUCCESS); // Do not issuing enough data.
 		}
-
-		simCDlen = 0; // restarting counting.
 
 		// ------ 2. Receive AC transactions ------
 		// a. Get the snoop transactions from AC port.
@@ -4957,7 +4956,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	
 		#ifdef DEBUG_MST
 		string cPktName = cpAC->GetName();
-		printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) put Rx_AC.\n", nCycle, this->cName.c_str(), cPktName.c_str());
+		printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) put Rx_AC - simCDlen = %d; simDataTransfer=%d.\n", nCycle, this->cName.c_str(), cPktName.c_str(), this->simCDlen, this->simDataTransfer);
 		// cpR->Display();
 		#endif
 	
@@ -4971,6 +4970,11 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		
 		if (this->cpRx_AC->IsBusy() == ERESULT_TYPE_NO) {
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CR channel.
+		}
+
+		// c. Check if all BURSTs is transfered.
+		if (this->simDataTransfer && (this->simCDlen > 0)) {
+			return (ERESULT_TYPE_SUCCESS); // Do not issuing enough data.
 		}
 
 		CPACPkt cpAC = this->cpRx_AC->GetAC();
@@ -4998,7 +5002,16 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	//	2. Simulating the responding signals: DataTransfer and PassDirty.
 	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CR_fwd(int64_t nCycle){
-		bool passDirty = false;
+		// b. Check the CD channel is ready.
+		if (this->simDataTransfer && (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES)) {
+			return (ERESULT_TYPE_SUCCESS); // Cannot response through CD channel.
+		}
+
+		// c. Check if all BURSTs is transfered.
+		if (this->simDataTransfer && (this->simCDlen > 0)) {
+			return (ERESULT_TYPE_SUCCESS); // Do not issuing enough data.
+		}
+
 		// Check Rx valid
 		CPACPkt cpAC = this->cpRx_AC->GetAC();
 
@@ -5007,23 +5020,20 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		};
 
 		#ifdef CCI_TESTING
-			if ((nCycle % 500) == 0) { // For testing only
-				simDataTransfer = !simDataTransfer; // Flip the data transfer.
+			if (cpAC->GetSnoop() == 0b1101) {	// MakeInvalid. Do not need return data.
+				this->simDataTransfer = false;
 			}
 
-			if (cpAC->GetSnoop() == 0b1101) {	// MakeInvalid. Do not need return data.
-				simDataTransfer = false;
-			}
+			if (!this->simDataTransfer) this->passDirty = false;
 
 			if ((cpAC->GetSnoop() == 0b1001) || // CleanInvalid
 				(cpAC->GetSnoop() == 0b1000)	// CleanShared
 			) {
-				if (simDataTransfer) passDirty = true;
+				if (this->simDataTransfer) this->passDirty = true;
 			}
-
 		#endif
 
-		int rresponse = 0 + (passDirty << 2) + simDataTransfer; // FIXME: Response decode shoulds be determine by the MASTER not a fixed value.
+		int rresponse = 0 + (this->passDirty << 2) + this->simDataTransfer; // FIXME: Response decode shoulds be determine by the MASTER not a fixed value.
 
 		if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES) {
 			return (ERESULT_TYPE_SUCCESS);
@@ -5045,7 +5055,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		this->cpTx_CR->PutCR(cpCR_new);
 
 		#ifdef DEBUG_MST
-		printf("[Cycle %3ld: %s.Do_CR_fwd] %s/%s handshake Tx_CR.\n", nCycle, this->cName.c_str(), cCRPktName, cpAC->GetName().c_str());
+		printf("[Cycle %3ld: %s.Do_CR_fwd] %s/%s handshake Tx_CR - Response = %x.\n", nCycle, this->cName.c_str(), cCRPktName, cpAC->GetName().c_str(), cpCR_new->GetResp());
 		#endif
 
 		return (ERESULT_TYPE_SUCCESS);
@@ -5062,8 +5072,6 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 			return (ERESULT_TYPE_SUCCESS);
 		};
 
-		printf("[Cycle %3ld: %s.Do_CR_bwd] (%s) 1. handshake cpTx_CR.\n", nCycle, this->cName.c_str(), cpCR->GetName().c_str());
-
 		// Check Tx ready
 		EResultType eAcceptResult = this->cpTx_CR->GetAcceptResult();
 
@@ -5071,7 +5079,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 			string cCRPktName = cpCR->GetName();
 
 			#ifdef DEBUG_MST
-			printf("[Cycle %3ld: %s.Do_CR_bwd] (%s) 2. handshake cpTx_CR.\n", nCycle, this->cName.c_str(), cCRPktName.c_str());
+			printf("[Cycle %3ld: %s.Do_CR_bwd] (%s) handshake cpTx_CR.\n", nCycle, this->cName.c_str(), cCRPktName.c_str());
 			#endif
 		};
 
@@ -5093,7 +5101,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		}
 
 		// No data transfer, do not need to do anythings with CD ports.
-		if (!simDataTransfer) {
+		if (!this->simDataTransfer) {
 			return (ERESULT_TYPE_SUCCESS);
 		}
 
@@ -5104,6 +5112,8 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		if (cpAC == NULL) {
 			return (ERESULT_TYPE_SUCCESS);
 		};
+
+		this->simCDlen++;
 
 		// Debug
 		// cpR->CheckPkt();
@@ -5117,18 +5127,21 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		sprintf(cCDPktName, "CD_%s", cPktName.c_str());
 		cpCD_new->SetName(cCDPktName);
 		cpCD_new->SetData(0);
+		int nLen = 4;
 
-		if (simCDlen == MAX_BURST_LENGTH) {
+		if (this->simCDlen == nLen) {
 			cpCD_new->SetLast(ERESULT_TYPE_YES);
 		} else {
 			cpCD_new->SetLast(ERESULT_TYPE_NO);
 		}
 
 		this->cpTx_CD->PutCD(cpCD_new);
-
+		
 		#ifdef DEBUG_MST
-		printf("[Cycle %3ld: %s.Do_CD_fwd] %s handshake Tx_CD - IsLast  = %d.\n", nCycle, this->cName.c_str(), cCDPktName, (cpCD_new->IsLast() == ERESULT_TYPE_YES));
+		printf("[Cycle %3ld: %s.Do_CD_fwd] %s handshake Tx_CD - simDataTransfer = %d; simCDlen = %d; IsLast  = %d.\n", nCycle, this->cName.c_str(), cCDPktName, this->simDataTransfer, this->simCDlen, (cpCD_new->IsLast() == ERESULT_TYPE_YES));
 		#endif
+
+		if (this->simCDlen == nLen) { this->simCDlen = 0; } // restarting counting.
 
 		return (ERESULT_TYPE_SUCCESS);
 	};
@@ -5152,7 +5165,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 
 			#ifdef DEBUG_MST
 			if (cpCD->IsLast() == ERESULT_TYPE_YES) {
-				printf("[Cycle %3ld: %s.Do_CD_bwd] (%s) WLAST handshake cpTx_CD.\n", nCycle, this->cName.c_str(), cCDPktName.c_str());
+				printf("[Cycle %3ld: %s.Do_CD_bwd] (%s) CDLAST handshake cpTx_CD.\n", nCycle, this->cName.c_str(), cCDPktName.c_str());
 			} 
 			else {
 				printf("[Cycle %3ld: %s.Do_CD_bwd] (%s) handshake cpTx_CD.\n", nCycle, this->cName.c_str(), cCDPktName.c_str());
@@ -5464,7 +5477,11 @@ int CMST::GetMO_AW() {
 
 
 // Update state
-EResultType CMST::UpdateState(int64_t nCycle) {  
+EResultType CMST::UpdateState(int64_t nCycle) {
+
+	if ((nCycle % 2000) == 0) { // For testing only
+		this->simDataTransfer = !this->simDataTransfer; // Flip the data transfer.
+	}
 	
 	this->cpTx_AR   ->UpdateState();
 	this->cpTx_AW   ->UpdateState();

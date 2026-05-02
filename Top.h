@@ -296,7 +296,7 @@
 #define CCI_ON
 #define CCI_TESTING
 #define SNOOP_MASK 0
-
+#define MASTER_ACE 3
 
 //-------------------------------------------------------------
 // (Master) Ax Address gen

@@ -365,11 +365,13 @@ CPACPkt Copy_CACPkt(CPACPkt cpThis) {
 	// Get all member values 
 	string	    cName       = cpThis->GetName();
 	EResultType eFinalTrans = cpThis->IsFinalTrans();
+	ETransDirType eDir 		= cpThis->GetDir();
 	int 		Snoop		= cpThis->GetSnoop();
 
 	// Set all member values
 	cpCR_new->SetName(cName);
 	cpCR_new->SetFinalTrans(eFinalTrans);
+	cpCR_new->SetTransDirType(eDir);
 	cpCR_new->SetSnoop(Snoop);
 
 	return (cpCR_new);

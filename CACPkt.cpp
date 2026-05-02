@@ -14,12 +14,13 @@
 #include "CACPkt.h"
 
 // Construct
-CACPkt::CACPkt(string cName) {
+CACPkt::CACPkt(string cName, ETransDirType eDir) {
 
 	// Generate and initialize 
 	this->spPkt = new SACPkt;
 	this->spPkt->nAddr = -1;
 	this->spPkt->nSnoop = -1;
+	this->eDir = eDir;
 	this->cName = cName;
 };
 
@@ -31,6 +32,7 @@ CACPkt::CACPkt() {
 	this->spPkt = new SACPkt;
 	this->spPkt->nAddr = -1;
 	this->spPkt->nSnoop = -1;
+	this->spPkt->nSnoop = ETRANS_DIR_TYPE_UNDEFINED;
 	this->cName = "AC_pkt";
 };
 
@@ -80,6 +82,17 @@ EResultType CACPkt::SetAddr(int64_t nAddr) {
 	return (ERESULT_TYPE_SUCCESS);
 };
 
+// Set transaction (read or write) direction
+EResultType CACPkt::SetTransDirType(ETransDirType eDir) {
+
+	#ifdef DEBUG
+	assert (this->spPkt != NULL);
+	#endif
+
+	this->eDir = eDir;
+	return (ERESULT_TYPE_SUCCESS);
+};
+
 // Set final trans
 EResultType CACPkt::SetFinalTrans(EResultType eResult) {
 
@@ -104,6 +117,13 @@ string CACPkt::GetName() {
 
 	// this->CheckPkt();
 	return (this->cName);
+};
+
+// Get direction
+ETransDirType CACPkt::GetDir() {
+
+	// this->CheckPkt();
+	return (this->eDir);
 };
 
 // Get snoop

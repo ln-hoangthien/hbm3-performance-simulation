@@ -125,9 +125,19 @@ private:
 	#ifdef CCI_ON
 		CPFIFO*		cpFIFO_CCI_AW; // [NUM_PORT]
 		CPFIFO*		cpFIFO_CCI_AR;
-		CPFIFO*		cpFIFO_CCI_CD;
+
+		//=======================================================
+		// Purpose:
+		// 		cpFIFO_CCI_W: Storing the returned data from snooped master. The data can be issue to the main memory for WR operation or send-back to the initiating Master.
+		// 		cpFIFO_CCI_CR: Storing the returned response from snooped master.
+		// 		cpSnoop_CRID: Storing the ID of returned response from snooped master.
+		// 		cpSnoop_CDID: Storing the ID of returned data from snooped master.
+		// 		cpSnoopAC: Storing the ACSnoop types of returned data. This is used to determine the destination of the returned response and data.
+		//=======================================================
+		CPFIFO*		cpFIFO_CCI_W;
 		CPFIFO*		cpFIFO_CCI_CR;
-		CPFIFO*		cpSnoopID;
+		CPFIFO*		cpSnoop_CRID;
+		CPFIFO*		cpSnoop_CDID;
 		CPFIFO*		cpSnoopAC;
 		int*		nSnoopedMaster;
 		UPUD* 		initTrans;

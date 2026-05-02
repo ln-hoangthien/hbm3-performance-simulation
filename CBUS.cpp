@@ -126,18 +126,25 @@ CBUS::CBUS(string cName, int NUM_PORT) {
 			this->cpFIFO_CCI_CR[i] = new CFIFO(cName, EUD_TYPE_CR, 20);
 		};
 
-		this->cpFIFO_CCI_CD = new CPFIFO [NUM_PORT];
+		this->cpFIFO_CCI_W = new CPFIFO [NUM_PORT];
 		for (int i=0; i<NUM_PORT; i++) {
 			char cName[50];
-			sprintf(cName, "BUS_Rx%d_CCI_CD",i);
-			this->cpFIFO_CCI_CD[i] = new CFIFO(cName, EUD_TYPE_CD, 20);
+			sprintf(cName, "BUS_Rx%d_CCI_W",i);
+			this->cpFIFO_CCI_W[i] = new CFIFO(cName, EUD_TYPE_W, 20);
 		};
 
-		this->cpSnoopID = new CPFIFO [NUM_PORT];
+		this->cpSnoop_CRID = new CPFIFO [NUM_PORT];
 		for (int i=0; i<NUM_PORT; i++) {
 			char cName[50];
-			sprintf(cName, "BUS_Rx%d_SnoopID",i);
-			this->cpSnoopID[i] = new CFIFO(cName, EUD_TYPE_AR, 20); // EUD_TYPE_AX
+			sprintf(cName, "BUS_Rx%d_SnoopCRID",i);
+			this->cpSnoop_CRID[i] = new CFIFO(cName, EUD_TYPE_AR, 20); // Only Used for the ID, Any types that can store ID
+		};
+
+		this->cpSnoop_CDID = new CPFIFO [NUM_PORT];
+		for (int i=0; i<NUM_PORT; i++) {
+			char cName[50];
+			sprintf(cName, "BUS_Rx%d_SnoopCDID",i);
+			this->cpSnoop_CDID[i] = new CFIFO(cName, EUD_TYPE_AR, 20); // Only Used for the ID, Any types that can store ID
 		};
 
 		this->cpSnoopAC = new CPFIFO [NUM_PORT];
@@ -198,9 +205,10 @@ CBUS::~CBUS() {
 	#ifdef CCI_ON
 		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpFIFO_CCI_AW[i]); };
 		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpFIFO_CCI_AR[i]); };
-		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpFIFO_CCI_CD[i]); };
+		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpFIFO_CCI_W[i]); };
 		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpFIFO_CCI_CR[i]); };
-		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpSnoopID[i]); };
+		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpSnoop_CRID[i]); };
+		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpSnoop_CDID[i]); };
 		for (int i=0; i<this->NUM_PORT; i++) { delete (this->cpSnoopAC[i]); };
 	#endif
 	// delete (this->cpFIFO_AR);
@@ -233,9 +241,10 @@ CBUS::~CBUS() {
 
 		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_AW[i] = NULL; };
 		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_AR[i] = NULL; };
-		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_CD[i] = NULL; };
+		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_W[i] = NULL; };
 		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_CR[i] = NULL; };
-		for (int i=0; i<this->NUM_PORT; i++) { this->cpSnoopID[i] = NULL; };
+		for (int i=0; i<this->NUM_PORT; i++) { this->cpSnoop_CRID[i] = NULL; };
+		for (int i=0; i<this->NUM_PORT; i++) { this->cpSnoop_CDID[i] = NULL; };
 		for (int i=0; i<this->NUM_PORT; i++) { this->cpSnoopAC[i] = NULL; };
 
 		delete[] this->nSnoopedMaster;
@@ -281,9 +290,10 @@ EResultType CBUS::Reset() {
 
 		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_AW[i]->Reset(); };
 		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_AR[i]->Reset(); };
-		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_CD[i]->Reset(); };
+		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_W[i]->Reset(); };
 		for (int i=0; i<this->NUM_PORT; i++) { this->cpFIFO_CCI_CR[i]->Reset(); };
-		for (int i=0; i<this->NUM_PORT; i++) { this->cpSnoopID[i]->Reset(); };
+		for (int i=0; i<this->NUM_PORT; i++) { this->cpSnoop_CRID[i]->Reset(); };
+		for (int i=0; i<this->NUM_PORT; i++) { this->cpSnoop_CDID[i]->Reset(); };
 		for (int i=0; i<this->NUM_PORT; i++) { this->cpSnoopAC[i]->Reset(); };
 
 		for (int i=0; i<this->NUM_PORT; i++) {
@@ -958,7 +968,8 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 
 		// d. Do not do anything if there is no master ready for a snoop.
 		if (nSnoopSelector == 0) {
-			return (ERESULT_TYPE_FAIL);
+			//return (ERESULT_TYPE_FAIL);
+			continue;
 		}
 		// -------------------------------------------------
 
@@ -1017,6 +1028,8 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 
 		// READ: Encoding the SNOOP transactions.
 		if (initTrans->GetDir() == ETRANS_DIR_TYPE_READ) { // Read transactions
+			SnoopPkt->SetTransDirType(ETRANS_DIR_TYPE_READ);
+			
 			if (initTrans->GetSnoop() == 0b0000) { // ReadOnce
 				SnoopPkt->SetSnoop(0b0000); // ReadOnce -> ReadOnce
 			}
@@ -1054,6 +1067,8 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 		}
 		// WRITE: Encoding the SNOOP transactions.
 		else if (initTrans->GetDir() == ETRANS_DIR_TYPE_WRITE) { // Write transactions
+			SnoopPkt->SetTransDirType(ETRANS_DIR_TYPE_WRITE);
+
 			if (initTrans->GetSnoop() == 0b0000) { // WriteUnique
 				SnoopPkt->SetSnoop(0b1001); // WriteUnique -> CleanInvalid
 				// Snoop other masters.
@@ -1083,6 +1098,10 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 				// this->cpTx_AW->PutAx(initTrans);
 				this->cpFIFO_CCI_AW[initMaster]->Pop();
 
+				#ifdef DEBUG_BUS
+					printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) Drop EVICT of Master[%d].\n", nCycle, this->cName.c_str(), initTrans->GetName().c_str(), initMaster);
+				#endif
+
 				continue; // Not doing the rest.
 				// Update the External Snoop Filter if it is, otherwise, drop this transaction.
 				// Do not need to snoop other masters.
@@ -1107,7 +1126,7 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 			}
 
 			if ((nSnoopSelector & (1 << snoopMaster)) != 0) {
-
+				
 				// If AC is busy, reset the selecting bit.
 				if (this->cpTx_AC[snoopMaster]->IsBusy() == ERESULT_TYPE_YES) {
 					nSnoopSelector &= ~(1 << snoopMaster);
@@ -1115,18 +1134,20 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 				}
 
 				// If the FIFO is full (BUS do not ready to receive transactions), reset the selecting bit.
-				if ((this->cpSnoopID[snoopMaster]->IsFull() == ERESULT_TYPE_YES) && 
-					(this->cpSnoopAC[snoopMaster]->IsFull() == ERESULT_TYPE_YES)) {
+				if (this->cpSnoopAC[snoopMaster]->IsFull() == ERESULT_TYPE_YES) {
 					nSnoopSelector &= ~(1 << snoopMaster);
 					continue;
 				}
 
+				assert(this->cpSnoop_CRID[snoopMaster]->IsFull() == ERESULT_TYPE_NO);
+				assert(this->cpSnoop_CDID[snoopMaster]->IsFull() == ERESULT_TYPE_NO);
+
 				// Software Hack: Depending on transaction types, selecting the correct types.
-				UPUD upAW_new = new UUD;
+				UPUD upAx_new = new UUD;
 				if (initTrans->GetDir() == ETRANS_DIR_TYPE_READ) {
-					upAW_new->cpAR = Copy_CAxPkt(initTrans);
+					upAx_new->cpAR = Copy_CAxPkt(initTrans);
 				} else if (initTrans->GetDir() == ETRANS_DIR_TYPE_WRITE) {
-					upAW_new->cpAW = Copy_CAxPkt(initTrans);
+					upAx_new->cpAW = Copy_CAxPkt(initTrans);
 				} else {
 					assert (false); // Undefined transactions.
 				}
@@ -1134,12 +1155,13 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 				// Put the Snoop transaction to snooped MASTERs.
 				this->cpTx_AC[snoopMaster]->PutAC(SnoopPkt);
 				// Recording the transaction IDs.
-				this->cpSnoopID[snoopMaster]->Push(upAW_new);
+				this->cpSnoop_CRID[snoopMaster]->Push(upAx_new);
+				this->cpSnoop_CDID[snoopMaster]->Push(upAx_new);
 
-				upAW_new = new UUD;
-				upAW_new->cpAC = Copy_CACPkt(SnoopPkt);
+				upAx_new = new UUD;
+				upAx_new->cpAC = Copy_CACPkt(SnoopPkt);
 				// Recording the transaction types + data, for WriteUnique and WriteLineUnique.
-				this->cpSnoopAC[snoopMaster]->Push(upAW_new);
+				this->cpSnoopAC[snoopMaster]->Push(upAx_new);
 
 				#ifdef DEBUG_BUS
 					printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) put Tx_AC[%d].\n", nCycle, this->cName.c_str(), SnoopPkt->GetName().c_str(), snoopMaster);
@@ -1190,46 +1212,69 @@ EResultType CBUS::Do_AC_bwd(int64_t nCycle) {
 // CD ready
 // 	1. Getting transactions from Masters (put into local cpRx_CD ports) = READY.
 //		1.1. If the BUS's cpRx_CD is gotten, MASTERs will keep the current transactions at its ports. 
-//	2. Encode the CD transactions and push it into cpFIFO_CCI_CD.
+//	2. Encode the CD transactions and push it into cpFIFO_CCI_W.
 //	3. The copying only happens if:
-//		2.1. cpFIFO_CCI_CD is not full.
+//		2.1. cpFIFO_CCI_W is not full.
 //		2.2. The transaction is valid at the Master's ports.
 //------------------------------------------------------
 EResultType CBUS::Do_CD_fwd(int64_t nCycle) {
+
+	bool fcaptured = false;
+
 	for (int i=0; i < this->NUM_PORT; i++) {
 
 		// ---- 1. Checking receiving conditions ---
 		// Do not accept the transactions if the FIFO is full.
-		if (this->cpFIFO_CCI_CD[i]->IsFull() == ERESULT_TYPE_YES) { // No transaction
+		if (this->cpFIFO_CCI_W[i]->IsFull() == ERESULT_TYPE_YES) { // No transaction
 			continue;
 		}
 
 		// Get CD - Check if the port is busy.
 		// Skip if MASTERs' ports do not have transactions.
-		if (this->cpRx_CR[i]->GetPair()->IsBusy() == ERESULT_TYPE_NO) { // No transaction
+		if (this->cpRx_CD[i]->GetPair()->IsBusy() == ERESULT_TYPE_NO) { // No transaction
 			continue;
 		}
 
 		// ---- 2. BUS READY receives AR transactions ---
 		// Get the transactions from MASTER ports.
-		CPCDPkt cpCD = this->cpRx_CD[i]->GetPair()->GetCD();	
+		CPCDPkt cpCD = this->cpRx_CD[i]->GetPair()->GetCD();
 		
 		if (cpCD == NULL) {
 			continue;
 		};
-		
+
 		// Put the AR transactions to local port = READY.
 		this->cpRx_CD[i]->PutCD(cpCD);
 
-		// ---- 3. Push AR transactions to cpFIFO_CCI_CD ---
+		// ---- 3. Push AR transactions to cpFIFO_CCI_W ---
 		// Instead of putting Rx to Tx, we put to a FIFO and maintain the FIFO to waiting snoops.
-		UPUD upCD_new = new UUD;
-		upCD_new->cpCD = Copy_CCDPkt(cpCD);
-		this->cpFIFO_CCI_CD[i]->Push(upCD_new);
+		CPWPkt cpW = new CWPkt;
 
-		#ifdef DEBUG_BUS
-			printf("[Cycle %3ld: %s.Do_CD_fwd] (%s) put Rx_CD[%d].\n", nCycle, this->cName.c_str(), cpCD->GetName().c_str(), i);
-		#endif
+		// Encode ID
+		int nID = this->cpSnoop_CDID[i]->GetTop()->cpAR->GetID(); // Initialize as EUD_TYPE_AR
+		int nData = cpCD->GetData();
+		EResultType IsLast = cpCD->IsLast();
+
+		// Only get the first data matches, every data should be the same.
+		// Other data is dropped.
+		if (!fcaptured) {
+			// Set pkt
+			cpW->SetPkt(nID, nData, IsLast);
+			cpW->SetLast(IsLast);
+
+			UPUD upW_new = new UUD;
+			upW_new->cpW = Copy_CWPkt(cpW);
+			this->cpFIFO_CCI_W[i]->Push(upW_new);
+			fcaptured = true;
+
+			#ifdef DEBUG_BUS
+				printf("[Cycle %3ld: %s.Do_CD_fwd] (%s) put Rx_CD[%d] - IsLast = %s.\n", nCycle, this->cName.c_str(), cpCD->GetName().c_str(), i, Convert_eResult2string(upW_new->cpW->IsLast()).c_str());
+			#endif
+		}
+
+		//if (IsLast == ERESULT_TYPE_YES) {
+		//	this->cpSnoop_CDID[i]->Pop();
+		//}
 	}
 	return (ERESULT_TYPE_SUCCESS);
 };
@@ -1270,7 +1315,7 @@ int CBUS::Find_the_snoopMaster(int64_t nCycle) {
 
 	for (int i=0; i < this->NUM_PORT; i++) {
 	
-		if (this->cpSnoopID[i]->GetTop() == NULL) {
+		if (this->cpSnoop_CRID[i]->GetTop() == NULL) {
 			continue;
 		}
 
@@ -1278,11 +1323,11 @@ int CBUS::Find_the_snoopMaster(int64_t nCycle) {
 
 			if (i == j) { continue; }
 
-			if (this->cpSnoopID[j]->GetTop() == NULL) {
+			if (this->cpSnoop_CRID[j]->GetTop() == NULL) {
 				continue;
 			}
 
-			if ( GetPortNum(this->cpSnoopID[i]->GetTop()->cpAR->GetID()) != GetPortNum(this->cpSnoopID[j]->GetTop()->cpAR->GetID())) {
+			if ( GetPortNum(this->cpSnoop_CRID[i]->GetTop()->cpAR->GetID()) != GetPortNum(this->cpSnoop_CRID[j]->GetTop()->cpAR->GetID())) {
 				fflag = false;
 				break;
 			}
@@ -1314,58 +1359,68 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 
 	// Check if snoopedMaster ready - in case no SnoopMaster is READY.
 	int nReadyMaster = 0;
-	if (this->cpSnoopID[snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
-		return (ERESULT_TYPE_SUCCESS);
-	};
+	int  InitMaster = -1;
+
+	#ifdef MASTER_ACE
+		InitMaster = MASTER_ACE;
+	#endif
+
+	assert(InitMaster > 0);
+
+	//if (this->cpFIFO_CCI_CR[snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
+	//	return (ERESULT_TYPE_SUCCESS);
+	//};
 	
 	// Get the initiating Master address.
-	int  InitMaster = GetPortNum(this->cpSnoopID[snoopMaster]->GetTop()->cpAR->GetID()); // FIXME: Need to update the "3".
+	//if (this->cpSnoop_CRID[snoopMaster]->IsEmpty() == ERESULT_TYPE_NO) {
+	//	InitMaster = GetPortNum(this->cpSnoop_CRID[snoopMaster]->GetTop()->cpAR->GetID());
+	//}
 
 	// ----------------------------------------------------------------------------------------------------
 	// 1. Collect CR from snoop targets to FIFOs by putting the CR transactions from remote ports to local ports.
 	// ----------------------------------------------------------------------------------------------------
-	for (int snoopMaster = 0; snoopMaster < this->NUM_PORT; snoopMaster++) {
+	for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
 
 		// Skip if the SnoopMaster and InitMaster is the same.
-		if (snoopMaster == InitMaster) { continue; }
+		if (for_snoopMaster == InitMaster) { continue; }
 
 		// ---- 1. Checking receiving conditions ---
 		// Do not accept the transactions if the FIFO is full.
-		if (this->cpFIFO_CCI_CR[snoopMaster]->IsFull() == ERESULT_TYPE_YES) { // No transaction
+		if (this->cpFIFO_CCI_CR[for_snoopMaster]->IsFull() == ERESULT_TYPE_YES) { // No transaction
 			continue;
 		}
 
 		// Get CR - Check if the port is busy.
 		// Skip if MASTERs' ports do not have transactions.
-		if (this->cpRx_CR[snoopMaster]->GetPair()->IsBusy() == ERESULT_TYPE_NO) { // No transaction
+		if (this->cpRx_CR[for_snoopMaster]->GetPair()->IsBusy() == ERESULT_TYPE_NO) { // No transaction
 			continue;
 		}
 
 		// ---- 2. BUS READY receives CR transactions ---
 		// Get the transactions from MASTER ports.
-		CPCRPkt cpCR = this->cpRx_CR[snoopMaster]->GetPair()->GetCR();
+		CPCRPkt cpCR = this->cpRx_CR[for_snoopMaster]->GetPair()->GetCR();
 		
 		if (cpCR == NULL) {
 			continue;
 		};
 
 		// Put the AR transactions to local port = READY.
-		this->cpRx_CR[snoopMaster]->PutCR(cpCR);
+		this->cpRx_CR[for_snoopMaster]->PutCR(cpCR);
 
 		// ---- 3. Push AR transactions to cpFIFO_CCI_CR ---
 		// Instead of putting Rx to Tx, we put to a FIFO and maintain the FIFO to waiting snoops.
 		UPUD upCR_new = new UUD;
 		upCR_new->cpCR = Copy_CCRPkt(cpCR);
-		this->cpFIFO_CCI_CR[snoopMaster]->Push(upCR_new);
+		this->cpFIFO_CCI_CR[for_snoopMaster]->Push(upCR_new);
 
 		#ifdef DEBUG_BUS
-			printf("[Cycle %3ld: %s.Do_AR_fwd] (%s) push to cpFIFO_CR[%d].\n", nCycle, this->cName.c_str(), cpCR->GetName().c_str(), snoopMaster);
+			printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) push to cpFIFO_CR[%d].\n", nCycle, this->cName.c_str(), cpCR->GetName().c_str(), for_snoopMaster);
 		#endif
 	}
 
 	// Ensure all snoop targets have returned CR
-	for (int snoopMaster = 0; snoopMaster < this->NUM_PORT; snoopMaster++) {
-		if (this->cpFIFO_CCI_CR[snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
+	for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
+		if (this->cpFIFO_CCI_CR[for_snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
 			continue;
 		};
 		nReadyMaster++;
@@ -1394,136 +1449,185 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 
 	// ---- Receives Transactions ---
 	// Checking every MASTERs' ports.
-	for (int snoopMaster = 0; snoopMaster < this->NUM_PORT; snoopMaster++) {
+	for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
 		
 		// Skip if the SnoopMaster and InitMaster is the same.
-		if (snoopMaster == InitMaster) {continue;}
+		if (for_snoopMaster == InitMaster) {continue;}
 
 		// Check if the current CR FIFO is available.
-		if (this->cpFIFO_CCI_CR[snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
+		if (this->cpFIFO_CCI_CR[for_snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
 			continue;
 		};
 
 		// Get the response signals and encode it.
-		nCRRespList[snoopMaster] = this->cpFIFO_CCI_CR[snoopMaster]->GetTop()->cpCR->GetResp(); // Record source port in ID
+		nCRRespList[for_snoopMaster] = this->cpFIFO_CCI_CR[for_snoopMaster]->GetTop()->cpCR->GetResp(); // Record source port in ID
 		
-		if ((nCRRespList[snoopMaster] & 0b00001) == 0b00001) { // DataTransfer
+		if ((nCRRespList[for_snoopMaster] & 0b00001) == 0b00001) { // DataTransfer
 			bDataTransfer |= true;
 		}
 		
-		if ((nCRRespList[snoopMaster] & 0b00100) == 0b00100) { // PassDirty
+		if ((nCRRespList[for_snoopMaster] & 0b00100) == 0b00100) { // PassDirty
 			bPassDirty |= true;
 		}
 		
-		if ((nCRRespList[snoopMaster] & 0b01000) == 0b01000) { // IsShared
+		if ((nCRRespList[for_snoopMaster] & 0b01000) == 0b01000) { // IsShared
 			bIsShared |= true;
 		}
 		
-		if ((nCRRespList[snoopMaster] & 0b10000) == 0b10000) { // WasUnique
+		if ((nCRRespList[for_snoopMaster] & 0b10000) == 0b10000) { // WasUnique
 			bWasUnique |= true;
 		}
-		if (nCRRespList[snoopMaster] == 0b00000) { // NoSnoop or ReadClean or CleanShared, etc.
+		if (nCRRespList[for_snoopMaster] == 0b00000) { // NoSnoop or ReadClean or CleanShared, etc.
 			// No supported: NoSnoop, ReadClean, CleanShared, etc.
 		}
 	}
 
+	// If (bDataTransfer == 0), bPassDirty have to be de-assert.
+	if (!bDataTransfer) assert(!bPassDirty);
+
 	// --------------------------------------------------
 	// 3. Write to the main memory
 	// --------------------------------------------------
-	if ((this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1000) || // CleanShared
-		(this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1001) || // CleanInvalid
-		(this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1101)	// MakeInvalid
+	// =========================== Issuing the Write data ===========================
+	bool WriteEn = (this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetDir() == ETRANS_DIR_TYPE_WRITE);
+	if (((this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1000) && (bDataTransfer || WriteEn)) ||
+		((this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1001) && (bDataTransfer || WriteEn))
 	){
+		if ((this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1000) || // CleanShared
+			(this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1001)    // CleanInvalid
+		) {
+			if (bDataTransfer) assert(bPassDirty);
+			else assert(!bPassDirty);
+		}
+		// This environment do not allow to PassDirty for non-Clear* transactions.
+		else {
+			assert(!bPassDirty);
+		}
+		
+		// Checking every MASTERs' ports.
+		for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
+
+			if (for_snoopMaster == InitMaster) {
+				continue;
+			}
+
+			if (this->cpTx_W->IsBusy() == ERESULT_TYPE_YES) {
+				continue;
+				//return (ERESULT_TYPE_FAIL);
+			};
+
+			if (this->cpTx_W->IsBusy() == ERESULT_TYPE_YES) {
+				continue;
+			};
+
+			if (this->cpFIFO_CCI_W[for_snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
+				continue;
+			}
+
+			CPWPkt cpW = Copy_CWPkt(this->cpFIFO_CCI_W[for_snoopMaster]->GetTop()->cpW);
+
+			// Checking if the W responses are received + Assertion.
+			// Assmupt that only one master response data because only one master hold the dirty data.
+			// FIXME: Should uncover this assertion when the MASTER is complete.
+			// if (cpW != NULL) assert(this->cpFIFO_CCI_W[for_snoopMaster]->GetTop()->cpW == NULL); // Only one dirty
+
+			// Merge written data.
+			// The environment is the performance environment, the merge data can be skipped.
+		
+			// Set pkt for write to memory.
+			this->cpTx_W->PutW(cpW);
+			// Pop-out the snoop response.
+			this->cpFIFO_CCI_W[for_snoopMaster]->Pop();
+
+			if (cpW->IsLast() == ERESULT_TYPE_YES) {
+				// Pop all response and temporary data.
+				for (int i = 0; i < this->NUM_PORT; i++) {
+
+					if (i == InitMaster) {
+						continue;
+					}
+
+					this->cpSnoopAC[i]->Pop();
+					this->cpFIFO_CCI_CR[i]->Pop();
+					this->cpSnoop_CDID[i]->Pop();
+				}
+			}
+
+			#ifdef DEBUG_BUS
+				printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put Tx_W.\n", nCycle, this->cName.c_str(), cpW->GetName().c_str());
+				// cpAR->Display();
+			#endif
+			
+			delete(cpW);
+			cpW = NULL;
+		}
+
+		// =========================== Issuing the Write request ===========================
+		// =========================== Get the Write data ===========================
 		// ---- Check MO ---
 		if (this->GetMO_AW() >= MAX_MO_COUNT) {
 			return (ERESULT_TYPE_FAIL);
 		};
 
-		// Data have not returned yet.
-		CPCDPkt cpCD = new CCDPkt;
-
-		// Checking if the CD responses are received + Assertion.
-		if (bDataTransfer) {
-
-			// Checking every MASTERs' ports.
-			for (int snoopMaster = 0; snoopMaster < this->NUM_PORT; snoopMaster++) {
-				if (snoopMaster == InitMaster) {
-					continue;
-				}
-
-				// Assmupt that only one master response data because only one master hold the dirty data.
-				// FIXME: Should uncover this assertion when the MASTER is complete.
-				// assert((cpCD != NULL) &&
-				// 	   (this->cpRx_CD[snoopMaster]->GetPair()->GetCD() == NULL)); // Only one dirty
-
-				if (cpCD == NULL) { cpCD = this->cpRx_CD[snoopMaster]->GetPair()->GetCD(); }
-			}
-
-			if (cpCD == NULL) { // The data have not returned yet.
-				return (ERESULT_TYPE_SUCCESS);
-			}
-			// PassDirty must be asserted because only Diry data is allowed to transfer data for Clean* transactions.
-			if ((this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1000) || // CleanShared
-				(this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() == 0b1001)) { // CleanInvalid
-				assert(bPassDirty);
-			}
-			// This environment do not allow to PassDirty for non-Clear* transactions.
-			else {
-				assert(!bPassDirty);
-			}
+		 // cpSnoop_CRID is empty means the bus has already issued Write request to the main memory.
+		if (this->cpSnoop_CRID[snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
+			return (ERESULT_TYPE_FAIL);
 		}
 
-		// Merge written data.
-		// The environment is the performance environment, the merge data can be skipped.
-
+		// PassDirty must be asserted because only Diry data is allowed to transfer data for Clean* transactions.
 		// Issuing to the main memory
-		CPAxPkt cpAW = new CAxPkt("", ETRANS_DIR_TYPE_UNDEFINED);
+		CPAxPkt cpAx = new CAxPkt("", ETRANS_DIR_TYPE_UNDEFINED);
 
-		if (this->cpSnoopID[snoopMaster]->GetTop()->cpAR != NULL) {
-			cpAW = this->cpSnoopID[snoopMaster]->GetTop()->cpAR;
-		} else if (this->cpSnoopID[snoopMaster]->GetTop()->cpAW != NULL) {
-			cpAW = this->cpSnoopID[snoopMaster]->GetTop()->cpAW;
+		if (this->cpSnoop_CRID[snoopMaster]->GetTop()->cpAR != NULL) {
+			cpAx = Copy_CAxPkt(this->cpSnoop_CRID[snoopMaster]->GetTop()->cpAR);
+		} else if (this->cpSnoop_CRID[snoopMaster]->GetTop()->cpAW != NULL) {
+			cpAx = Copy_CAxPkt(this->cpSnoop_CRID[snoopMaster]->GetTop()->cpAW);
+		} else {
+			return (ERESULT_TYPE_SUCCESS);
 		}
 
-		int     nID   = cpAW->GetID();
-		int64_t nAddr = cpAW->GetAddr();
-		int     nLen  = cpAW->GetLen();
+		int     nID   = cpAx->GetID();
+		int64_t nAddr = cpAx->GetAddr();
+		int     nLen  = cpAx->GetLen();
+
 		nID = (nID << this->BIT_PORT) + InitMaster;
 
 		// Set pkt for write to memory.
-		cpAW->SetPkt(nID, nAddr, nLen);
+		cpAx->SetPkt(nID, nAddr, nLen);
 
-		this->cpTx_AW->PutAx(cpAW);
+		this->cpTx_AW->PutAx(cpAx);
 
 		#ifdef DEBUG_BUS
-			printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put Tx_AW.\n", nCycle, this->cName.c_str(), cpAW->GetName().c_str());
+			printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put Tx_AW.\n", nCycle, this->cName.c_str(), cpAx->GetName().c_str());
 			// cpAR->Display();
 		#endif
 
 		// Pop-out the snoop response.
-		for (int snoopMaster = 0; snoopMaster < this->NUM_PORT; snoopMaster++) {
-			if (snoopMaster == InitMaster) continue;
+		for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
+			
+			if (for_snoopMaster == InitMaster) continue;
+			// Pop the CRID to indicate that the Write request has been finished.
+			this->cpSnoop_CRID[for_snoopMaster]->Pop();
+			
 			if (!bDataTransfer) {
-				this->cpFIFO_CCI_CR[snoopMaster]->Pop();
-				this->cpSnoopID[snoopMaster]->Pop();
-				this->cpSnoopAC[snoopMaster]->Pop();
-			} else {
-				this->cpFIFO_CCI_CD[snoopMaster]->Pop();
-				if (cpCD->IsLast()) {
-					this->cpFIFO_CCI_CR[snoopMaster]->Pop();
-					this->cpSnoopID[snoopMaster]->Pop();
-					this->cpSnoopAC[snoopMaster]->Pop();
-				}
+				this->cpSnoopAC[for_snoopMaster]->Pop();
+				this->cpFIFO_CCI_CR[for_snoopMaster]->Pop();
+				this->cpSnoop_CDID[for_snoopMaster]->Pop();
 			}
 		}
 
+		delete(cpAx);
+		cpAx = NULL;
 		return (ERESULT_TYPE_SUCCESS);
 	}
 
 	// --------------------------------------------------
 	// 4. Read the main memory
 	// --------------------------------------------------
-	if (!bIsShared && !bWasUnique && !bDataTransfer && !bPassDirty) {
+	if ((this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() != 0b1000) && // CleanShared
+		(this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() != 0b1001) && // CleanInvalid
+		(this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() != 0b1101) &&	// MakeInvalid
+		(!bIsShared && !bWasUnique && !bDataTransfer && !bPassDirty)) {
 		// In this environemnt, the Master should  never PassDirty.
 
 		// ---- Check MO ---
@@ -1537,7 +1641,7 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 		}
 
 		// Issuing to the main memory
-		CPAxPkt cpAR = this->cpSnoopID[snoopMaster]->GetTop()->cpAR; // FIXME
+		CPAxPkt cpAR = this->cpSnoop_CRID[snoopMaster]->GetTop()->cpAR; // FIXME
 
 		// Encode ID
 		int     nID   = cpAR->GetID();
@@ -1552,11 +1656,12 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 
 		// this->Increase_MO_AR(); // FIXME: Only tracking memory access.
 		// Pop-out the snoop response.
-		for (int snoopMaster = 0; snoopMaster < this->NUM_PORT; snoopMaster++) {
-			if (snoopMaster == InitMaster) continue;
-			this->cpFIFO_CCI_CR[snoopMaster]->Pop();			
-			this->cpSnoopID[snoopMaster]->Pop();
-			this->cpSnoopAC[snoopMaster]->Pop();
+		for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
+			if (for_snoopMaster == InitMaster) continue;
+			this->cpFIFO_CCI_CR[for_snoopMaster]->Pop();			
+			this->cpSnoop_CRID[for_snoopMaster]->Pop();
+			this->cpSnoop_CDID[for_snoopMaster]->Pop();
+			this->cpSnoopAC[for_snoopMaster]->Pop();
 		}
 
 		#ifdef DEBUG_BUS
@@ -1578,28 +1683,37 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 	bool brespIsShared = bIsShared;
 	bool brespPassDirty = false; // We don't model the dirty state in this version, so PassDirty is treated as no hit.
 	
-	bool IsLast = false;
+	EResultType IsLast = ERESULT_TYPE_NO;
 	bool DataReturned = false;
 
 	// Checking all of snooped MASTERs to collect data.
-	for (int snoopMaster = 0; snoopMaster < this->NUM_PORT; snoopMaster++) {
+	for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
 
 		// Skip if the SnoopMaster and InitMaster is the same.
-		if (snoopMaster == InitMaster) { continue; }
+		if (for_snoopMaster == InitMaster) { continue; }
 
 		if (!bDataTransfer) { continue; }
 
-		if (this->cpFIFO_CCI_CD[snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
+		if (this->cpFIFO_CCI_W[for_snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
 			continue;
 		}
 
 		// Collecting IsLast + DataReturned
-		IsLast |= this->cpFIFO_CCI_CD[snoopMaster]->GetTop()->cpCD->IsLast();
+		if (this->cpFIFO_CCI_W[for_snoopMaster]->GetTop()->cpW->IsLast() == ERESULT_TYPE_YES) {
+			IsLast = ERESULT_TYPE_YES;
+		}
 		DataReturned = true;
 	}
 
-	// If any data returned.
-	if (!DataReturned) { return (ERESULT_TYPE_SUCCESS); }
+	if ((this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() != 0b1000) && // CleanShared
+		(this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() != 0b1001) && // CleanInvalid
+		(this->cpSnoopAC[snoopMaster]->GetTop()->cpAC->GetSnoop() != 0b1101)	// MakeInvalid
+	){	
+		// If any data returned.
+		if (!DataReturned) { return (ERESULT_TYPE_SUCCESS); }
+	} else {
+		IsLast = ERESULT_TYPE_YES;
+	}
 
 	// Construct the R transactions.
 	respTrans->cpR->SetPkt(
@@ -1608,32 +1722,37 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 		IsLast, 	// FIXME: Assump the length is only 1
 		brespIsShared << 3 | brespPassDirty << 2
 	); // Response only contains IsShared information in this version
+	respTrans->cpR->SetLast(IsLast);
 
 	// Put to R.
 	this->cpTx_R[InitMaster]->PutR(respTrans->cpR);
 
 	#ifdef DEBUG_BUS
-		printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put cpTx_R[%d].\n", nCycle, this->cName.c_str(), respTrans->cpR->GetName().c_str(), InitMaster);
+		printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put cpTx_R[%d] - bDataTransfer = %d; IsLast = %s.\n", nCycle, this->cName.c_str(), respTrans->cpR->GetName().c_str(), InitMaster, bDataTransfer, Convert_eResult2string(IsLast).c_str());
 		// cpAR->Display();
 	#endif
 
 	// Checking every MASTERs' ports.
-	for (int snoopMaster = 0; snoopMaster < this->NUM_PORT; snoopMaster++) {
+	for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
 
 		// Skip if the SnoopMaster and InitMaster is the same.
-		if (snoopMaster == InitMaster) { continue; }
+		if (for_snoopMaster == InitMaster) { continue; }
 
 		// Pop-out the snoop response.
 		if (!bDataTransfer) {
-			this->cpFIFO_CCI_CR[snoopMaster]->Pop();
-			this->cpSnoopID[snoopMaster]->Pop();
-			this->cpSnoopAC[snoopMaster]->Pop();
+			this->cpFIFO_CCI_CR[for_snoopMaster]->Pop();
+			this->cpSnoop_CRID[for_snoopMaster]->Pop();
+			this->cpSnoop_CDID[for_snoopMaster]->Pop();
+			this->cpSnoopAC[for_snoopMaster]->Pop();
 		} else {
-			this->cpFIFO_CCI_CD[snoopMaster]->Pop();
-			if (IsLast) {
-				this->cpFIFO_CCI_CR[snoopMaster]->Pop();
-				this->cpSnoopID[snoopMaster]->Pop();
-				this->cpSnoopAC[snoopMaster]->Pop();
+			if (this->cpFIFO_CCI_W[for_snoopMaster]->IsEmpty() == ERESULT_TYPE_NO) {
+				this->cpFIFO_CCI_W[for_snoopMaster]->Pop();
+			}
+			if (IsLast == ERESULT_TYPE_YES) {
+				this->cpFIFO_CCI_CR[for_snoopMaster]->Pop();
+				this->cpSnoop_CRID[for_snoopMaster]->Pop();
+				this->cpSnoop_CDID[for_snoopMaster]->Pop(); // Do_CD_fwd has already handled it.
+				this->cpSnoopAC[for_snoopMaster]->Pop();
 			}
 		}
 	}
@@ -1799,7 +1918,7 @@ EResultType CBUS::Do_R_fwd(int64_t nCycle) {
 	delete (cpR_new);
 	cpR_new = NULL;
 
-        return (ERESULT_TYPE_SUCCESS);
+    return (ERESULT_TYPE_SUCCESS);
 };
 
 
@@ -2155,7 +2274,7 @@ EResultType CBUS::UpdateState(int64_t nCycle) {
 	// MI 
     this->cpTx_AR->UpdateState();
 	this->cpTx_AW->UpdateState();
-	// this->cpTx_W ->UpdateState();
+	this->cpTx_W ->UpdateState();
     this->cpRx_R ->UpdateState();
     this->cpRx_B ->UpdateState();
 

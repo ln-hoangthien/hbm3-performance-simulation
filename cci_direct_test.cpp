@@ -44,8 +44,6 @@ int main() {
 
 	CPBUS   cpBUS  = new CBUS("BUS", 4);
 
-	CPCache cpCacheL3 = new CCache("CacheL3");
-
 	CPSLV	cpSLV	= new CSLV("SLV", 0);
 
 	//------------------------------------
@@ -91,27 +89,19 @@ int main() {
   cpBUS->cpTx_B[3]->SetPair(cpMST3->cpRx_B);
   cpBUS->cpTx_AC[3]->SetPair(cpMST3->cpRx_AC);
 
-  // BUS and CacheL3
-  cpBUS->cpTx_AR->SetPair(cpCacheL3->cpRx_AR);
-  cpBUS->cpTx_AW->SetPair(cpCacheL3->cpRx_AW);
-  cpBUS->cpTx_W->SetPair(cpCacheL3->cpRx_W);
-  cpCacheL3->cpTx_R->SetPair(cpBUS->cpRx_R);
-  cpCacheL3->cpTx_B->SetPair(cpBUS->cpRx_B);
+  // BUS and SLV
+  cpBUS->cpTx_AR->SetPair(cpSLV->cpRx_AR);
+  cpBUS->cpTx_AW->SetPair(cpSLV->cpRx_AW);
+  cpBUS->cpTx_W->SetPair(cpSLV->cpRx_W);
+  cpSLV->cpTx_R->SetPair(cpBUS->cpRx_R);
+  cpSLV->cpTx_B->SetPair(cpBUS->cpRx_B);
 
-   // CacheL3 and SLV
-   cpCacheL3->cpTx_AR->SetPair(cpSLV->cpRx_AR);
-   cpCacheL3->cpTx_AW->SetPair(cpSLV->cpRx_AW);
-   cpCacheL3->cpTx_W->SetPair(cpSLV->cpRx_W);
-   cpSLV->cpTx_R->SetPair(cpCacheL3->cpRx_R);
-   cpSLV->cpTx_B->SetPair(cpCacheL3->cpRx_B); 
-  
   // Debug
   cpMST0->CheckLink();
   cpMST1->CheckLink();
   cpMST2->CheckLink();
   cpMST3->CheckLink();
   cpBUS->CheckLink();
-  cpCacheL3->CheckLink();
   cpSLV->CheckLink();
 
 	//------------------------------
@@ -127,7 +117,7 @@ int main() {
 	//cpMST3->Set_nAW_GEN_NUM(NUM);
 	//cpMST3->Set_nAR_GEN_NUM(NUM);
 
-	cpMST3->Set_nAW_GEN_NUM(NUM);
+	cpMST3->Set_nAW_GEN_NUM(0);
 	cpMST3->Set_nAR_GEN_NUM(NUM);
 
 	//------------------------------
@@ -243,7 +233,6 @@ int main() {
 			#endif
 
 			cpBUS->Reset();
-			cpCacheL3->Reset();
 			cpSLV->Reset();
 		};
 		//---------------------------------------------
@@ -309,28 +298,16 @@ int main() {
 			cpBUS->Do_CR_fwd(nCycle);
 		#endif
 		//--------------------------------
-		#ifdef Cache_OFF	
-		cpCacheL3->Do_AR_fwd_Cache_OFF(nCycle);
-		cpCacheL3->Do_AW_fwd_Cache_OFF(nCycle);
-		// cpCacheL3->Do_W_fwd_Cache_OFF(nCycle);
-		#endif
-		#ifdef Cache_ON
-		cpCacheL3->Do_AR_fwd_SI(nCycle);
-		cpCacheL3->Do_AR_fwd_MI(nCycle);
-		cpCacheL3->Do_AW_fwd_SI(nCycle);
-		cpCacheL3->Do_AW_fwd_MI(nCycle);
-		// cpCacheL3->Do_W_fwd(nCycle);
-		#endif
 		//-------------------------------
 		#ifdef IDEAL_MEMORY
 		cpSLV->Do_AR_fwd(nCycle);
 		cpSLV->Do_AW_fwd(nCycle);
-		// cpSLV->Do_W_fwd(nCycle);
+		cpSLV->Do_W_fwd(nCycle);
 		#endif
 		#ifdef MEMORY_CONTROLLER
 		cpSLV->Do_AR_fwd_MC_Frontend(nCycle);
 		cpSLV->Do_AW_fwd_MC_Frontend(nCycle);
-		// cpSLV->Do_W_fwd_MC_Frontend(nCycle);
+		cpSLV->Do_W_fwd_MC_Frontend(nCycle);
 		#endif
 		#ifdef MEMORY_CONTROLLER
 		cpSLV->Do_Ax_fwd_MC_Backend_Request(nCycle);
@@ -346,16 +323,6 @@ int main() {
 		cpSLV->Do_R_fwd(nCycle);
 		cpSLV->Do_B_fwd(nCycle);
 		//---------------------------
-		#ifdef Cache_OFF
-		cpCacheL3->Do_R_fwd_Cache_OFF(nCycle);
-		cpCacheL3->Do_B_fwd_Cache_OFF(nCycle);
-		#endif
-		#ifdef Cache_ON
-		cpCacheL3->Do_R_fwd_MI(nCycle);
-		cpCacheL3->Do_R_fwd_SI(nCycle);
-		cpCacheL3->Do_B_fwd_MI(nCycle);
-		cpCacheL3->Do_B_fwd_SI(nCycle);
-		#endif
 		//---------------------------
 		cpBUS->Do_R_fwd(nCycle);
 		cpBUS->Do_B_fwd(nCycle);
@@ -373,18 +340,8 @@ int main() {
 		//---------------------------------
 		cpSLV->Do_AR_bwd(nCycle);
 		cpSLV->Do_AW_bwd(nCycle);
-		// cpSLV->Do_W_bwd(nCycle);
+		cpSLV->Do_W_bwd(nCycle);
 		//-----------------------------
-		#ifdef Cache_OFF
-			cpCacheL3->Do_AR_bwd_Cache_OFF(nCycle);
-			cpCacheL3->Do_AW_bwd_Cache_OFF(nCycle);
-			// cpCacheL3->Do_W_bwd_Cache_OFF(nCycle);
-		#endif
-		#ifdef Cache_ON
-			cpCacheL3->Do_AR_bwd(nCycle);
-			cpCacheL3->Do_AW_bwd(nCycle);
-			// cpCacheL3->Do_W_bwd(nCycle);
-		#endif
 		//-------------------------------
 		cpBUS->Do_AR_bwd(nCycle);
 		cpBUS->Do_AW_bwd(nCycle);
@@ -392,7 +349,7 @@ int main() {
 		//-----------------------------
 		cpMST3->Do_AR_bwd(nCycle);
 		cpMST3->Do_AW_bwd(nCycle);
-		//cpMST3->Do_W_bwd(nCycle);
+		cpMST3->Do_W_bwd(nCycle);
 
 		#ifdef CCI_ON
 			cpMST0->Do_AC_bwd(nCycle);
@@ -428,16 +385,6 @@ int main() {
 		cpBUS->Do_R_bwd(nCycle);
 		cpBUS->Do_B_bwd(nCycle);
 		//---------------------------
-		#ifdef Cache_OFF
-		cpCacheL3->Do_R_bwd_Cache_OFF(nCycle);
-		cpCacheL3->Do_B_bwd_Cache_OFF(nCycle);
-		#endif
-		#ifdef Cache_ON
-		cpCacheL3->Do_R_bwd_SI(nCycle);
-		cpCacheL3->Do_R_bwd_MI(nCycle);
-		cpCacheL3->Do_B_bwd_SI(nCycle);
-		cpCacheL3->Do_B_bwd_MI(nCycle);
-		#endif
 		//---------------------------
 		cpSLV->Do_R_bwd(nCycle);
 		cpSLV->Do_B_bwd(nCycle);
@@ -453,7 +400,6 @@ int main() {
 		#endif
 
 		cpBUS->UpdateState(nCycle);
-		cpCacheL3->UpdateState(nCycle);
 		cpSLV->UpdateState(nCycle);
 
 
@@ -540,7 +486,6 @@ int main() {
 			//cpSLV ->PrintStat(nCycle, fp);
 			#ifdef Cache_ON
 			FILE *fp = NULL;
-			cpCacheL3->PrintStat(nCycle, fp);
 			#endif //Cache_ON
 			break;
 		};
@@ -574,7 +519,6 @@ int main() {
 	delete (cpMST2);
 	delete (cpMST3);
 	delete (cpBUS);
-	delete (cpCacheL3);
 	delete (cpSLV);
 
 	#ifdef BUDDY_ENABLE
@@ -583,4 +527,3 @@ int main() {
 
 	return (-1);
 }
-

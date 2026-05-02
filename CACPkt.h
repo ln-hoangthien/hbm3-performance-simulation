@@ -30,7 +30,7 @@ class CACPkt{
 
 public:
 	// 1. Contructor and Destructor
-	CACPkt(string cName);
+	CACPkt(string cName, ETransDirType eDir);
 	CACPkt();
 	~CACPkt();
 
@@ -40,11 +40,13 @@ public:
 	EResultType	SetName(string cName);
 	EResultType	SetSnoop(int nSnoop);
 	EResultType	SetAddr(int64_t nAddr);
+	EResultType	SetTransDirType(ETransDirType eDir);
 	EResultType	SetFinalTrans(EResultType eResult);
 
 	// Get value
 	SPACPkt		GetPkt();
 	string		GetName();
+	ETransDirType GetDir();
 	int			GetSnoop();
 	int64_t		GetAddr();
 	EResultType	IsFinalTrans();
@@ -58,8 +60,9 @@ private:
 	SPACPkt		spPkt;
 
 	// Control info
-	string		cName;
-	EResultType	eFinalTrans;
+	string			cName;
+	ETransDirType	eDir;
+	EResultType		eFinalTrans;
 };
 
 #endif

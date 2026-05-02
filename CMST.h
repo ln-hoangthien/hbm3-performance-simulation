@@ -241,6 +241,7 @@ private:
 	int			Trace_rewind;								// Back to previous line
 	int			simCDlen = 0;								// FIXME: just a temopary variable. should remove and update the real behavior.
 	bool 		simDataTransfer = false;					// FIXME: just a temopary variable. should remove and update the real behavior.
+	bool		passDirty = false;							// FIXME: just a temopary variable. should remove and update the real behavior.
 };
 
 #endif
