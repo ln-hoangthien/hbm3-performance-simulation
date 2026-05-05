@@ -39,6 +39,7 @@ public:
 		EResultType	Do_AC_bwd(int64_t nCycle);
 		EResultType	Do_CR_fwd(int64_t nCycle);
 		EResultType	Do_CR_bwd(int64_t nCycle);
+		EResultType	Do_W_snoop_fwd(int64_t nCycle);
 		EResultType	Do_CD_fwd(int64_t nCycle);
 		EResultType	Do_CD_bwd(int64_t nCycle);
 	#endif
@@ -92,10 +93,7 @@ public:
 	#endif
 
 private:
-	#ifdef CCI_ON
-		int	Find_the_snoopMaster(int64_t nCycle);
-	#endif
-        // Original
+    // Original
 	string		cName;
 
 	// Control
@@ -106,7 +104,7 @@ private:
 	int		nMO_AW;	
 
 	// Stat
-	int*		nAR_SI;					// [NUM_PORT]
+	int*		nAR_SI;				// [NUM_PORT]
 	int*		nAW_SI;
 	int*		nR_SI ;
 	int*		nB_SI ;
@@ -123,25 +121,24 @@ private:
 	// CPFIFO	cpFIFO_B;
 
 	#ifdef CCI_ON
-		CPFIFO*		cpFIFO_CCI_AW; // [NUM_PORT]
-		CPFIFO*		cpFIFO_CCI_AR;
+		CPFIFO*		cpFIFO_MstAW; // [NUM_PORT]
+		CPFIFO*		cpFIFO_MstAR; // [NUM_PORT]
 
 		//=======================================================
 		// Purpose:
-		// 		cpFIFO_CCI_W: Storing the returned data from snooped master. The data can be issue to the main memory for WR operation or send-back to the initiating Master.
-		// 		cpFIFO_CCI_CR: Storing the returned response from snooped master.
-		// 		cpSnoop_CRID: Storing the ID of returned response from snooped master.
-		// 		cpSnoop_CDID: Storing the ID of returned data from snooped master.
-		// 		cpSnoopAC: Storing the ACSnoop types of returned data. This is used to determine the destination of the returned response and data.
+		// 		cpFIFO_SnoopData: Storing the returned data from snooped master. The data can be issue to the main memory for WR operation or send-back to the initiating Master.
+		// 		cpFIFO_SnoopResp: Storing the returned response from snooped master.
+		// 		cpFIFO_ActiveSnoopAx: Storing the ID of returned response from snooped master.
+		// 		cpFIFO_ActiveSnoopAC: Storing the ACSnoop types of returned data. This is used to determine the destination of the returned response and data.
 		//=======================================================
-		CPFIFO*		cpFIFO_CCI_W;
-		CPFIFO*		cpFIFO_CCI_CR;
-		CPFIFO*		cpSnoop_CRID;
-		CPFIFO*		cpSnoop_CDID;
-		CPFIFO*		cpSnoopAC;
+		CPFIFO		cpFIFO_SnoopData;
+		CPFIFO*		cpFIFO_SnoopResp;
+		CPFIFO		cpFIFO_ActiveSnoopAx;
+		CPFIFO		cpFIFO_ActiveSnoopAC;
 		int*		nSnoopedMaster;
-		UPUD* 		initTrans;
 		bool* 		bArb; // Round-robin for CCI snoop
+		std::vector<int> m_outstandingMemARID;
+		std::vector<int> m_outstandingMemAWID;
 	#endif
 };
 

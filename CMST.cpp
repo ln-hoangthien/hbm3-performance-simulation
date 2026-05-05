@@ -4736,7 +4736,7 @@ EResultType CMST::Do_B_fwd(int64_t nCycle) {
 	this->cpRx_B->PutB(cpB);
 
 	#ifdef DEBUG_MST
-	// printf("[Cycle %3ld: %s.Do_B_fwd] (%s) Put Rx_B.\n", nCycle, this->cName.c_str(), cPktName.c_str());
+	printf("[Cycle %3ld: %s.Do_B_fwd] (%s) Put Rx_B.\n", nCycle, this->cName.c_str(), cPktName.c_str());
 	// cpB->Display();
 	#endif
 		
@@ -4926,19 +4926,16 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		// ------ 1. Checking for receiving AC ------
 		// a. Check the CR channel is ready.
 		if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES) {
-			printf("[Cycle %3ld: %s.Do_AC_fwd] cpTx_CR is busy.\n", nCycle, this->cName.c_str());
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CR channel.
 		}
 
 		// b. Check the CD channel is ready.
 		if (this->simDataTransfer && (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES)) {
-			printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) Check the CD channel is ready.\n", nCycle, this->cName.c_str(), this->cpTx_CD->GetCD()->GetName().c_str());
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CD channel.
 		}
 
 		// c. Check if all BURSTs is transfered.
 		if (this->simDataTransfer && (this->simCDlen > 0)) {
-			printf("[Cycle %3ld: %s.Do_AC_fwd] Check if all BURSTs is transfered.\n", nCycle, this->cName.c_str());
 			return (ERESULT_TYPE_SUCCESS); // Do not issuing enough data.
 		}
 
@@ -5093,7 +5090,6 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	//	3. Put the remote AC transactions to local port.
 	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CD_fwd(int64_t nCycle){
-
 		// ------ 1. Checking if CD is necessary ------
 		// If the CD is busy, do not need to do anythings with CD ports.
 		if (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES) {
@@ -5138,11 +5134,10 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		this->cpTx_CD->PutCD(cpCD_new);
 		
 		#ifdef DEBUG_MST
-		printf("[Cycle %3ld: %s.Do_CD_fwd] %s handshake Tx_CD - simDataTransfer = %d; simCDlen = %d; IsLast  = %d.\n", nCycle, this->cName.c_str(), cCDPktName, this->simDataTransfer, this->simCDlen, (cpCD_new->IsLast() == ERESULT_TYPE_YES));
+		printf("[Cycle %3ld: %s.Do_CD_fwd] %s handshake Tx_CD - simCDlen = %d; IsLast  = %d.\n", nCycle, this->cName.c_str(), cCDPktName, this->simCDlen, (cpCD_new->IsLast() == ERESULT_TYPE_YES));
 		#endif
 
 		if (this->simCDlen == nLen) { this->simCDlen = 0; } // restarting counting.
-
 		return (ERESULT_TYPE_SUCCESS);
 	};
 

@@ -264,6 +264,7 @@ int main() {
 		//-------------------------------
 		cpBUS->Do_AR_fwd(nCycle);
 		cpBUS->Do_AW_fwd(nCycle);
+		cpBUS->Do_W_fwd(nCycle);
 		//--------------------------------
 		//--------------------------------
 
@@ -297,6 +298,7 @@ int main() {
 			cpBUS->Do_CD_fwd(nCycle);
 			cpBUS->Do_CR_fwd(nCycle);
 		#endif
+		cpBUS->Do_W_fwd(nCycle);
 		//--------------------------------
 		//-------------------------------
 		#ifdef IDEAL_MEMORY
@@ -345,6 +347,7 @@ int main() {
 		//-------------------------------
 		cpBUS->Do_AR_bwd(nCycle);
 		cpBUS->Do_AW_bwd(nCycle);
+		cpBUS->Do_W_bwd(nCycle);
 		
 		//-----------------------------
 		cpMST3->Do_AR_bwd(nCycle);

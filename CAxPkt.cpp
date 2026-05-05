@@ -22,7 +22,9 @@ CAxPkt::CAxPkt(string cName, ETransDirType eDir) {
 	this->spPkt->nID   = -1;
 	this->spPkt->nAddr = -1;
 	this->spPkt->nLen  = -1;
+	#ifdef CCI_ON
 	this->spPkt->nSnoop = -1;
+	#endif
 
 	this->cName        = cName;
 	this->eDir         = eDir;
@@ -46,7 +48,9 @@ CAxPkt::CAxPkt(ETransDirType eDir) {
 	this->spPkt->nID   = -1;
 	this->spPkt->nAddr = -1;
 	this->spPkt->nLen  = -1;
+	#ifdef CCI_ON
 	this->spPkt->nSnoop = -1;
+	#endif
 
 	this->cName        = "Ax_Pkt";
 	this->eDir         = eDir;

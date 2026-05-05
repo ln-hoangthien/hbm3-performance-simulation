@@ -74,6 +74,26 @@ EResultType Delete_UD(UPUD upThis, EUDType eType) {
 			delete (upThis); 
 			upThis = NULL; 
 			break;
+		#ifdef CCI_ON
+		case EUD_TYPE_AC:
+			delete (upThis->cpAC);
+			upThis->cpAC = NULL;
+			delete (upThis);
+			upThis = NULL;
+			break;
+		case EUD_TYPE_CR:
+			delete (upThis->cpCR);
+			upThis->cpCR = NULL;
+			delete (upThis);
+			upThis = NULL;
+			break;
+		case EUD_TYPE_CD:
+			delete (upThis->cpCD);
+			upThis->cpCD = NULL;
+			delete (upThis);
+			upThis = NULL;
+			break;
+		#endif
 		case EUD_TYPE_UNDEFINED: 
 			assert(0);
 			return(ERESULT_TYPE_FAIL);
