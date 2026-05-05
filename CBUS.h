@@ -126,10 +126,10 @@ private:
 
 		//=======================================================
 		// Purpose:
-		// 		cpFIFO_SnoopData: Storing the returned data from snooped master. The data can be issue to the main memory for WR operation or send-back to the initiating Master.
-		// 		cpFIFO_SnoopResp: Storing the returned response from snooped master.
-		// 		cpFIFO_ActiveSnoopAx: Storing the ID of returned response from snooped master.
-		// 		cpFIFO_ActiveSnoopAC: Storing the ACSnoop types of returned data. This is used to determine the destination of the returned response and data.
+		// 	 cpFIFO_SnoopData: Storing the returned data from snooped master. The data can be issue to the main memory for WR operation or send-back to the initiating Master.
+		// 	 cpFIFO_SnoopResp: Storing the returned response from snooped master.
+		// 	 cpFIFO_ActiveSnoopAx: Storing the ID of returned response from snooped master.
+		// 	 cpFIFO_ActiveSnoopAC: Storing the ACSnoop types of returned data. This is used to determine the destination of the returned response and data.
 		//=======================================================
 		CPFIFO		cpFIFO_SnoopData;
 		CPFIFO*		cpFIFO_SnoopResp;

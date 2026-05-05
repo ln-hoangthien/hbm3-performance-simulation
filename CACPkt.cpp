@@ -28,14 +28,13 @@ CACPkt::CACPkt(string cName, ETransDirType eDir) {
 // Construct
 CACPkt::CACPkt() {
 
-	// Generate and initialize 
-	this->spPkt = new SACPkt;
-	this->spPkt->nAddr = -1;
-	this->spPkt->nSnoop = -1;
-	this->spPkt->nSnoop = ETRANS_DIR_TYPE_UNDEFINED;
-	this->cName = "AC_pkt";
+        // Generate and initialize 
+        this->spPkt = new SACPkt;
+        this->spPkt->nAddr = -1;
+        this->spPkt->nSnoop = -1;
+        this->eDir = ETRANS_DIR_TYPE_UNDEFINED;
+        this->cName = "AC_pkt";
 };
-
 
 // Destruct
 CACPkt::~CACPkt() {

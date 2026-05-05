@@ -1110,6 +1110,25 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 			}
 			else if (initTrans->GetSnoop() == 0b0001) { // WriteLineUnique
 				SnoopPkt->SetSnoop(0b1101); // WriteLineUnique -> MakeInvalid
+
+				// WriteLineUnique can also write to the main memory without waiting the snoop response.
+				if (this->cpTx_AW->IsBusy() == ERESULT_TYPE_NO && this->cpFIFO_AW->IsFull() == ERESULT_TYPE_NO) {
+					CPAxPkt cpAx = Copy_CAxPkt(initTrans);
+					this->cpTx_AW->PutAx(cpAx);
+					this->m_outstandingMemAWID.push_back(cpAx->GetID());
+
+					#ifdef DEBUG_BUS
+						printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) WriteLineUnique: put Tx_AW immediately.\n", nCycle, this->cName.c_str(), cpAx->GetName().c_str());
+					#endif
+
+					// Mark as issued to memory
+					initTrans->SetTransDirType(ETRANS_DIR_TYPE_UNDEFINED);
+					delete(cpAx);
+				} else {
+					// Stall until memory is available to keep snoop and memory synchronized
+					delete SnoopPkt; SnoopPkt = NULL;
+					return (ERESULT_TYPE_SUCCESS);
+				}
 			}
 			else if ((initTrans->GetSnoop() == 0b0011) || // WriteBack
 					 (initTrans->GetSnoop() == 0b0010) || // WriteClean
@@ -1300,16 +1319,13 @@ EResultType CBUS::Do_CD_fwd(int64_t nCycle) {
 		this->cpRx_CD[i]->PutCD(cpCD);
 
 		// ---- 3. Push CD transactions to cpFIFO_SnoopData ---
-		// Instead of putting Rx to Tx, we put to a FIFO and maintain the FIFO to waiting snoops.
-		// Only capture data if there is an active snoop transaction.
-		//if (this->cpSnoop_CDID->IsEmpty() == ERESULT_TYPE_YES) {
-		//	#ifdef DEBUG_BUS
-		//		printf("[Cycle %3ld: %s.Do_CD_fwd] Unexpected CD packet from Master[%d] without active snoop.\n", nCycle, this->cName.c_str(), i);
-		//	#endif
-		//	continue;
-		//}
-
 		// Encode ID
+		if (this->cpFIFO_ActiveSnoopAx->IsEmpty() == ERESULT_TYPE_YES) {
+			#ifdef DEBUG_BUS
+				printf("[Cycle %3ld: %s.Do_CD_fwd] Unexpected CD packet from Master[%d] without active snoop.\n", nCycle, this->cName.c_str(), i);
+			#endif
+			continue;
+		}
 		UPUD upTop = this->cpFIFO_ActiveSnoopAx->GetTop();
 		int nID = (upTop->cpAR != NULL) ? upTop->cpAR->GetID() : upTop->cpAW->GetID();
 		int nData = cpCD->GetData();
@@ -1506,9 +1522,65 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 	UPUD upTopStatus = this->cpFIFO_ActiveSnoopAx->GetTop();
 	CPAxPkt cpAxStatus = (upTopStatus->cpAR != NULL) ? upTopStatus->cpAR : upTopStatus->cpAW;
 	bool isUndefined = (cpAxStatus->GetDir() == ETRANS_DIR_TYPE_UNDEFINED);
+	string curPktName = cpAxStatus->GetName();
+
+	#ifdef DEBUG_BUS
+		printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) Checking snoop responses.\n", nCycle, this->cName.c_str(), curPktName.c_str());
+	#endif
 
 	if (((snoopType == 0b1000 || snoopType == 0b1001) && bDataTransfer) || isWrite)
 	{
+		// The WriteLineUnique snoop type is MakeInvalid (0b1101).
+		// If it's a write and snoop is MakeInvalid, it was already issued in Do_AC_fwd.
+		// We drop the snoop response and pop tracking FIFOs here.
+		if (isWrite && snoopType == 0b1101) {
+			
+			// Discard any data provided by snooped masters for WriteLineUnique.
+			// We must wait for the data to arrive before popping trackers to avoid CD/W channel crashes.
+			if (bDataTransfer) {
+				if (this->cpFIFO_SnoopData->IsEmpty() == ERESULT_TYPE_YES) {
+					return (ERESULT_TYPE_SUCCESS); // Wait for data
+				}
+				
+				while (this->cpFIFO_SnoopData->IsEmpty() == ERESULT_TYPE_NO) {
+					UPUD upW = this->cpFIFO_SnoopData->Pop();
+					if (upW == NULL) break;
+					bool isLast = (upW->cpW->IsLast() == ERESULT_TYPE_YES);
+					Delete_UD(upW, EUD_TYPE_W);
+					if (isLast) break;
+					else {
+						// If not last, we need to wait for more beats in next calls
+						// but Do_CR_fwd is called once per cycle. 
+						// Actually, we should probably return and wait.
+						return (ERESULT_TYPE_SUCCESS); 
+					}
+				}
+			}
+
+			// All responses and data (if any) are collected/discarded. Now pop trackers.
+			for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
+				if (for_snoopMaster == InitMaster) continue;
+				UPUD upTmp = this->cpFIFO_SnoopResp[for_snoopMaster]->Pop();
+				if (upTmp) Delete_UD(upTmp, EUD_TYPE_CR);
+			}
+
+			// Pop shared FIFOs
+			UPUD upTmpAx = this->cpFIFO_ActiveSnoopAx->Pop();
+			if (upTmpAx) {
+				if (upTmpAx->cpAR) Delete_UD(upTmpAx, EUD_TYPE_AR);
+				else             Delete_UD(upTmpAx, EUD_TYPE_AW);
+			}
+
+			UPUD upTmpAC = this->cpFIFO_ActiveSnoopAC->Pop();
+			if (upTmpAC) Delete_UD(upTmpAC, EUD_TYPE_AC);
+
+			#ifdef DEBUG_BUS
+				printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) WriteLineUnique: dropped snoop response and popped trackers.\n", nCycle, this->cName.c_str(), curPktName.c_str());
+			#endif
+
+			return (ERESULT_TYPE_SUCCESS);
+		}
+
 		if (isUndefined) return (ERESULT_TYPE_SUCCESS);
 
 		// =========================== Issuing the Write request ===========================
@@ -1763,7 +1835,22 @@ EResultType CBUS::Do_W_snoop_fwd(int64_t nCycle) {
 
 	assert(InitMaster >= 0);
 
-	// Since Do_CR_fwd already verified all responses were in before marking UNDEFINED,
+	// Ensure all snoop targets have returned CR
+	int nReadyMaster = 0;
+	for (int for_snoopMaster = 0; for_snoopMaster < this->NUM_PORT; for_snoopMaster++) {
+		if (for_snoopMaster == InitMaster) continue;
+		if (this->cpFIFO_SnoopResp[for_snoopMaster]->IsEmpty() == ERESULT_TYPE_YES) {
+			continue;
+		};
+		nReadyMaster++;
+	}
+
+	// Process only when all snoop targets have returned CR.
+	if (nReadyMaster < (this->NUM_PORT - 1)) {
+		return (ERESULT_TYPE_SUCCESS);
+	}
+
+	// Since we verified all responses were in,
 	// we check bDataTransfer from the stored slave responses.
 	bool bDataTransfer = false;
 	for (int i = 0; i < this->NUM_PORT; i++) {
