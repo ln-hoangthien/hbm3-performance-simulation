@@ -117,8 +117,8 @@ int main() {
 	//cpMST3->Set_nAW_GEN_NUM(NUM);
 	//cpMST3->Set_nAR_GEN_NUM(NUM);
 
-	cpMST3->Set_nAW_GEN_NUM(0);
-	cpMST3->Set_nAR_GEN_NUM(NUM);
+	cpMST3->Set_nAW_GEN_NUM(NUM);
+	cpMST3->Set_nAR_GEN_NUM(0);
 
 	//------------------------------
 	// Set image scaling
@@ -264,7 +264,7 @@ int main() {
 		//-------------------------------
 		cpBUS->Do_AR_fwd(nCycle);
 		cpBUS->Do_AW_fwd(nCycle);
-		cpBUS->Do_W_fwd(nCycle);
+		cpBUS->Do_W_snoop_fwd(nCycle);
 		//--------------------------------
 		//--------------------------------
 
@@ -299,6 +299,7 @@ int main() {
 			cpBUS->Do_CR_fwd(nCycle);
 		#endif
 		cpBUS->Do_W_fwd(nCycle);
+
 		//--------------------------------
 		//-------------------------------
 		#ifdef IDEAL_MEMORY
@@ -347,7 +348,6 @@ int main() {
 		//-------------------------------
 		cpBUS->Do_AR_bwd(nCycle);
 		cpBUS->Do_AW_bwd(nCycle);
-		cpBUS->Do_W_bwd(nCycle);
 		
 		//-----------------------------
 		cpMST3->Do_AR_bwd(nCycle);
@@ -483,7 +483,8 @@ int main() {
 			// FILE out
 			//--------------------------------------------------------------
 
-			cpSLV->PrintStat(nCycle, nullptr);
+			//cpSLV->PrintStat(nCycle, nullptr);
+			cpMST3->PrintStat(nCycle, nullptr);
 			// DUONGTRAN comment
 			//cpBUS ->PrintStat(nCycle, fp);
 			//cpSLV ->PrintStat(nCycle, fp);

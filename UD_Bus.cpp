@@ -93,6 +93,15 @@ EResultType Delete_UD(UPUD upThis, EUDType eType) {
 			delete (upThis);
 			upThis = NULL;
 			break;
+		case EUD_TYPE_CENTRAL:
+			if (upThis->cpCentral) {
+				if (upThis->cpCentral->cpAx) delete (upThis->cpCentral->cpAx);
+				if (upThis->cpCentral->cpAC) delete (upThis->cpCentral->cpAC);
+				delete (upThis->cpCentral);
+			}
+			delete (upThis);
+			upThis = NULL;
+			break;
 		#endif
 		case EUD_TYPE_UNDEFINED: 
 			assert(0);
@@ -148,6 +157,16 @@ UPUD Copy_UD(UPUD upThis, EUDType eType) {
 				break;
 			case EUD_TYPE_CD:    
 				upNew->cpCD  = Copy_CCDPkt(upThis->cpCD);
+				break;
+			case EUD_TYPE_CENTRAL:
+				upNew->cpCentral = new SCentral;
+				upNew->cpCentral->cpAx = Copy_CAxPkt(upThis->cpCentral->cpAx);
+				if(upThis->cpCentral->cpAC != NULL) upNew->cpCentral->cpAC = Copy_CACPkt(upThis->cpCentral->cpAC);
+				upNew->cpCentral->nCounter = upThis->cpCentral->nCounter;
+				upNew->cpCentral->nLength = upThis->cpCentral->nLength;
+				upNew->cpCentral->nSnoopMask = upThis->cpCentral->nSnoopMask;
+				upNew->cpCentral->bEarlyRespSent = upThis->cpCentral->bEarlyRespSent;
+
 				break;
 		#endif
 		default:
@@ -365,6 +384,10 @@ EResultType Display_UD(UPUD upThis, EUDType eType) {
 		case EUD_TYPE_B:
 			upThis->cpB->Display();
 			break;
+		case EUD_TYPE_CENTRAL:
+			if (upThis->cpCentral->cpAx) upThis->cpCentral->cpAx->Display();
+			if (upThis->cpCentral->cpAC) upThis->cpCentral->cpAC->Display();
+			break;
 		case EUD_TYPE_UNDEFINED:
 			assert(0);
 		default:
@@ -383,10 +406,10 @@ CPACPkt Copy_CACPkt(CPACPkt cpThis) {
 	CPACPkt cpCR_new = new CACPkt();	// New instance. Note: spPkt generated when CCRPkt generated
 
 	// Get all member values 
-	string	    cName       = cpThis->GetName();
-	EResultType eFinalTrans = cpThis->IsFinalTrans();
-	ETransDirType eDir 		= cpThis->GetDir();
-	int 		Snoop		= cpThis->GetSnoop();
+	string	    	cName       = cpThis->GetName();
+	EResultType 	eFinalTrans = cpThis->IsFinalTrans();
+	ETransDirType 	eDir 		= cpThis->GetDir();
+	int 			Snoop		= cpThis->GetSnoop();
 
 	// Set all member values
 	cpCR_new->SetName(cName);

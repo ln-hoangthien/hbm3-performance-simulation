@@ -295,7 +295,7 @@
 //-------------------------------------------------------------
 #define CCI_ON
 #define CCI_TESTING
-#define SNOOP_MASK 0
+#define SNOOP_MASK 2
 #define MASTER_ACE 3
 
 //-------------------------------------------------------------
@@ -619,6 +619,7 @@ typedef enum{
 		EUD_TYPE_AC,
 		EUD_TYPE_CR,
 		EUD_TYPE_CD,
+		EUD_TYPE_CENTRAL,
 	#endif
 	EUD_TYPE_W,
 	EUD_TYPE_R,

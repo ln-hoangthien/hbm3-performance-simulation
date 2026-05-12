@@ -126,15 +126,13 @@ private:
 
 		//=======================================================
 		// Purpose:
-		// 	 cpFIFO_SnoopData: Storing the returned data from snooped master. The data can be issue to the main memory for WR operation or send-back to the initiating Master.
+		// 	 cpFIFO_SnoopData: Storing the returned data from snooped master.
 		// 	 cpFIFO_SnoopResp: Storing the returned response from snooped master.
-		// 	 cpFIFO_ActiveSnoopAx: Storing the ID of returned response from snooped master.
-		// 	 cpFIFO_ActiveSnoopAC: Storing the ACSnoop types of returned data. This is used to determine the destination of the returned response and data.
+		// 	 cpFIFO_Central: Unified FIFO for tracking active snoop transactions (Ax and AC).
 		//=======================================================
 		CPFIFO		cpFIFO_SnoopData;
 		CPFIFO*		cpFIFO_SnoopResp;
-		CPFIFO		cpFIFO_ActiveSnoopAx;
-		CPFIFO		cpFIFO_ActiveSnoopAC;
+		CPFIFO		cpFIFO_Central;
 		int*		nSnoopedMaster;
 		bool* 		bArb; // Round-robin for CCI snoop
 		std::vector<int> m_outstandingMemARID;

@@ -48,14 +48,8 @@ CFIFO::~CFIFO() {
 		spTarget = spScan;
 		spScan   = spScan->spNext;
 		Delete_UD(spTarget->upData, this->eUDType);
-		spTarget->upData = NULL;
-		spTarget = NULL;
-		// spTarget->spNext = NULL;
+		delete (spTarget);
 	};
-
-	// Debug
-	// assert (this->spUDList_head == NULL);
-	// assert (this->spUDList_tail == NULL);
 };
 
 
@@ -70,8 +64,7 @@ EResultType CFIFO::Reset() {
 		spTarget = spScan;
 		spScan   = spScan->spNext;
 		Delete_UD(spTarget->upData, this->eUDType);
-		delete (spTarget->upData);
-		spTarget->upData = NULL;
+		delete (spTarget);
 	};
 	
 	// Initialize 
@@ -362,4 +355,3 @@ EResultType CFIFO::Display() {
 	
 	return (ERESULT_TYPE_SUCCESS);
 };
-

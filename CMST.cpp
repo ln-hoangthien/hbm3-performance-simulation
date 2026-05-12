@@ -5291,6 +5291,7 @@ EResultType CMST::Set_nAR_GEN_NUM(int nNum) {
 EResultType CMST::Set_nAW_GEN_NUM(int nNum) {  
 
 	this->nAW_GEN_NUM = nNum;
+
 	this->cpAddrGen_AW->SetNumTotalTrans(nNum);
 	   	return (ERESULT_TYPE_YES);
 };
@@ -5509,8 +5510,8 @@ EResultType CMST::PrintStat(int64_t nCycle, FILE *fp) {
 	printf("--------------------------------------------------------\n");
 	printf("\t Name: %s\n",	this->cName.c_str());
 	printf("--------------------------------------------------------\n");
-	printf("\t Number AR					  : %d\n",	this->nARTrans);
-	printf("\t Number AW					  : %d\n",	this->nAWTrans);
+	printf("\t Number AR					  : %d/%d\n",	this->nARTrans, this->nARTransFinished);
+	printf("\t Number AW					  : %d/%d\n",	this->nAWTrans, this->nAWTransFinished);
 	printf("\t Number R					   : %d\n",	this->nR);
 	printf("\t Number B					   : %d\n",	this->nB);
 
