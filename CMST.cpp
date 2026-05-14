@@ -4351,6 +4351,11 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 		}
 
 		cpAW_new->SetSnoop(SnoopType);
+
+		if (SnoopType == 1) { // WriteLineUnique
+			cpAW_new->SetLen(63); // Set fixed 2048 burst = 512 cachelines.
+		}
+
 	#endif
 	
 	// Check final trans application
@@ -4776,7 +4781,7 @@ EResultType CMST::Do_R_bwd(int64_t nCycle) {
 	if (cpR->IsLast() == ERESULT_TYPE_YES) {
 
 		#ifdef DEBUG_MST
-		printf("[Cycle %3ld: %s.Do_R_bwd] (%s) RLAST handshake Rx_R.\n", nCycle, this->cName.c_str(), cRPktName.c_str());
+		printf("[Cycle %3ld: %s.Do_R_bwd] (%s) RLAST handshake Rx_R: %d/%d.\n", nCycle, this->cName.c_str(), cRPktName.c_str(), this->nARTransFinished, this->nAR_GEN_NUM);
 		#endif
 
 		// Stat  
@@ -4790,14 +4795,14 @@ EResultType CMST::Do_R_bwd(int64_t nCycle) {
 			this->SetARTransFinished(ERESULT_TYPE_YES);
 			this->Set_nCycle_AR_Finished(nCycle);
 			#ifdef DEBUG_MST
-			printf("[Cycle %3ld: %s.Do_R_bwd] All read transactions finished Rx_R.\n", nCycle, this->cName.c_str());
+			printf("[Cycle %3ld: %s.Do_R_bwd] 1. All read transactions finished Rx_R: %d/%d.\n", nCycle, this->cName.c_str(), this->nARTransFinished, this->nAR_GEN_NUM);
 			#endif
 		};
 
 		if (this->nAllTransFinished == this->nAR_GEN_NUM + this->nAW_GEN_NUM) {
 			this->SetAllTransFinished(ERESULT_TYPE_YES);
 			#ifdef DEBUG_MST
-			printf("[Cycle %3ld: %s.Do_R_bwd] All transactions finished Rx_R.\n", nCycle, this->cName.c_str());
+			printf("[Cycle %3ld: %s.Do_R_bwd] 2. All transactions finished Rx_R: %d/(%d + %d).\n", nCycle, this->cName.c_str(), this->nAllTransFinished, this->nAR_GEN_NUM, this->nAW_GEN_NUM);
 			#endif
 		};
 		#endif
@@ -4808,7 +4813,7 @@ EResultType CMST::Do_R_bwd(int64_t nCycle) {
 			this->SetARTransFinished(ERESULT_TYPE_YES);
 			this->Set_nCycle_AR_Finished(nCycle);
 			#ifdef DEBUG_MST
-				printf("[Cycle %3ld: %s.Do_R_bwd] All read transactions finished Rx_R.\n", nCycle, this->cName.c_str());
+				printf("[Cycle %3ld: %s.Do_R_bwd] 3. All read transactions finished Rx_R.\n", nCycle, this->cName.c_str());
 			 #endif
 		};
 		
@@ -4816,7 +4821,7 @@ EResultType CMST::Do_R_bwd(int64_t nCycle) {
 		if (this->IsARTransFinished() == ERESULT_TYPE_YES and this->IsAWTransFinished() == ERESULT_TYPE_YES) {	// FIXME
 				this->SetAllTransFinished(ERESULT_TYPE_YES);
 				#ifdef DEBUG_MST
-				printf("[Cycle %3ld: %s.Do_R_bwd] All transactions finished Rx_R.\n", nCycle, this->cName.c_str());
+				printf("[Cycle %3ld: %s.Do_R_bwd] 4. All transactions finished Rx_R.\n", nCycle, this->cName.c_str());
 				#endif
 		};
 
@@ -4953,7 +4958,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	
 		#ifdef DEBUG_MST
 		string cPktName = cpAC->GetName();
-		printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) put Rx_AC - simCDlen = %d; simDataTransfer=%d.\n", nCycle, this->cName.c_str(), cPktName.c_str(), this->simCDlen, this->simDataTransfer);
+		printf("[Cycle %3ld: %s.Do_AC_fwd] (%s) put Rx_AC.\n", nCycle, this->cName.c_str(), cPktName.c_str());
 		// cpR->Display();
 		#endif
 	
@@ -5016,21 +5021,24 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 			return (ERESULT_TYPE_SUCCESS);
 		};
 
+		int rresponse = 0;
+
 		#ifdef CCI_TESTING
-			if (cpAC->GetSnoop() == 0b1101) {	// MakeInvalid. Do not need return data.
-				this->simDataTransfer = false;
-			}
-
-			if (!this->simDataTransfer) this->passDirty = false;
-
 			if ((cpAC->GetSnoop() == 0b1001) || // CleanInvalid
 				(cpAC->GetSnoop() == 0b1000)	// CleanShared
 			) {
 				if (this->simDataTransfer) this->passDirty = true;
 			}
-		#endif
 
-		int rresponse = 0 + (this->passDirty << 2) + this->simDataTransfer; // FIXME: Response decode shoulds be determine by the MASTER not a fixed value.
+			if (!this->simDataTransfer) this->passDirty = false;
+
+			if ((cpAC->GetSnoop() == 0b1101) || (cpAC->GetSnoop() == 0b1100)) {	// Make*. Do not need return data.
+				rresponse = 0;
+			} else {
+				rresponse = 0 + (this->passDirty << 2) + this->simDataTransfer; // FIXME: Response decode shoulds be determine by the MASTER not a fixed value.
+			}
+
+		#endif
 
 		if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES) {
 			return (ERESULT_TYPE_SUCCESS);
@@ -5090,6 +5098,21 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	//	3. Put the remote AC transactions to local port.
 	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CD_fwd(int64_t nCycle){
+
+		CPACPkt cpAC = this->cpRx_AC->GetAC();
+
+		if (cpAC == NULL) {
+			return (ERESULT_TYPE_SUCCESS);
+		};
+
+		#ifdef CCI_TESTING
+			// Check Rx valid
+			if ((cpAC->GetSnoop() == 0b1101) || (cpAC->GetSnoop() == 0b1100)) {	// Make*. Do not need return data.
+				return (ERESULT_TYPE_SUCCESS);
+			}
+
+		#endif
+
 		// ------ 1. Checking if CD is necessary ------
 		// If the CD is busy, do not need to do anythings with CD ports.
 		if (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES) {
@@ -5103,12 +5126,6 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 
 		// ------ 2. Receive AC transactions ------
 		// a. Get the snoop transactions from AC port.
-		CPACPkt cpAC = this->cpRx_AC->GetAC();
-
-		if (cpAC == NULL) {
-			return (ERESULT_TYPE_SUCCESS);
-		};
-
 		this->simCDlen++;
 
 		// Debug
@@ -5134,7 +5151,7 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		this->cpTx_CD->PutCD(cpCD_new);
 		
 		#ifdef DEBUG_MST
-		printf("[Cycle %3ld: %s.Do_CD_fwd] %s handshake Tx_CD - simCDlen = %d; IsLast  = %d.\n", nCycle, this->cName.c_str(), cCDPktName, this->simCDlen, (cpCD_new->IsLast() == ERESULT_TYPE_YES));
+		printf("[Cycle %3ld: %s.Do_CD_fwd] %s handshake Tx_CD.\n", nCycle, this->cName.c_str(), cCDPktName);
 		#endif
 
 		if (this->simCDlen == nLen) { this->simCDlen = 0; } // restarting counting.
@@ -5475,9 +5492,11 @@ int CMST::GetMO_AW() {
 // Update state
 EResultType CMST::UpdateState(int64_t nCycle) {
 
-	if ((nCycle % 2000) == 0) { // For testing only
-		this->simDataTransfer = !this->simDataTransfer; // Flip the data transfer.
-	}
+	#ifdef CCI_TESTING
+		if (((nCycle % 7000) == 0) && (this->simCDlen == 0)) { // For testing only
+			this->simDataTransfer = !this->simDataTransfer; // Flip the data transfer.
+		}
+	#endif
 	
 	this->cpTx_AR   ->UpdateState();
 	this->cpTx_AW   ->UpdateState();

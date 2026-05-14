@@ -524,8 +524,11 @@ EResultType CAxPkt::CheckPkt() {
 	assert (this->spPkt->nID   <  0xfff);	
 	assert (this->spPkt->nAddr >= MIN_ADDR);	// 0
 	assert (this->spPkt->nAddr <= MAX_ADDR);	// If nAddr int64_t. Max 7FFF_FFFF_FFFF_FFFF
-	assert (this->spPkt->nLen  >= 0); 
-	assert (this->spPkt->nLen  < 16);
+	assert (this->spPkt->nLen  >= 0);
+	#ifndef CCI_ON
+		// FIXME: Expanding the lenghth for multiple cache line access. If nLen int, max 0xffff (256KB if 16B cache line).
+		assert (this->spPkt->nLen  < 16);
+	#endif
 	
 	// assert (this->GetBankNum() >= 0);
 	// assert (this->GetBankNum() < (2^BANK_WIDTH));

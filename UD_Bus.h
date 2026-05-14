@@ -28,10 +28,9 @@ typedef struct tagSCentral{
         CPAxPkt cpAx;
         CPACPkt cpAC;
         int     nCounter;
+        int     nDataCounter;
         int     nLength;
         int     nSnoopMask;
-        bool    bEarlyRespSent;
-
 }SCentral;
 #endif
 

@@ -264,7 +264,7 @@ int main() {
 		//-------------------------------
 		cpBUS->Do_AR_fwd(nCycle);
 		cpBUS->Do_AW_fwd(nCycle);
-		cpBUS->Do_W_snoop_fwd(nCycle);
+		
 		//--------------------------------
 		//--------------------------------
 
@@ -298,7 +298,9 @@ int main() {
 			cpBUS->Do_CD_fwd(nCycle);
 			cpBUS->Do_CR_fwd(nCycle);
 		#endif
+		
 		cpBUS->Do_W_fwd(nCycle);
+		cpBUS->Do_W_snoop_fwd(nCycle);
 
 		//--------------------------------
 		//-------------------------------

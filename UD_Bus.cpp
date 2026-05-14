@@ -163,10 +163,9 @@ UPUD Copy_UD(UPUD upThis, EUDType eType) {
 				upNew->cpCentral->cpAx = Copy_CAxPkt(upThis->cpCentral->cpAx);
 				if(upThis->cpCentral->cpAC != NULL) upNew->cpCentral->cpAC = Copy_CACPkt(upThis->cpCentral->cpAC);
 				upNew->cpCentral->nCounter = upThis->cpCentral->nCounter;
+				upNew->cpCentral->nDataCounter = upThis->cpCentral->nDataCounter;
 				upNew->cpCentral->nLength = upThis->cpCentral->nLength;
 				upNew->cpCentral->nSnoopMask = upThis->cpCentral->nSnoopMask;
-				upNew->cpCentral->bEarlyRespSent = upThis->cpCentral->bEarlyRespSent;
-
 				break;
 		#endif
 		default:
@@ -181,6 +180,7 @@ UPUD Copy_UD(UPUD upThis, EUDType eType) {
 // Copy all member values one-by-one
 CPAxPkt Copy_CAxPkt(CPAxPkt cpThis) {
 
+	if (cpThis == NULL) return (NULL);
 	ETransDirType eDir = cpThis->GetDir();
 
 	CPAxPkt cpAx_new = new CAxPkt(eDir);	// New instance. Note: spPkt generated when CAxPkt generated
@@ -233,6 +233,7 @@ CPAxPkt Copy_CAxPkt(CPAxPkt cpThis) {
 // Copy member values
 CPRPkt Copy_CRPkt(CPRPkt cpThis) {
 
+	if (cpThis == NULL) return (NULL);
 	CPRPkt cpR_new = new CRPkt;	// New instance
 
 	// *(cpR_new) = *(cpThis);	// Be careful. Memory leak.
@@ -287,6 +288,7 @@ CPRPkt Copy_CRPkt(CPRPkt cpThis) {
 // Copy member values
 CPWPkt Copy_CWPkt(CPWPkt cpThis) {
 	
+	if (cpThis == NULL) return (NULL);
 	CPWPkt cpW_new = new CWPkt;	// New instance
 
 	// *(cpW_new) = *(cpThis);	// Be careful. Memory leak
@@ -339,6 +341,7 @@ CPWPkt Copy_CWPkt(CPWPkt cpThis) {
 // Copy member values
 CPBPkt Copy_CBPkt(CPBPkt cpThis) {
 	
+	if (cpThis == NULL) return (NULL);
 	CPBPkt cpB_new = new CBPkt;	// New instance
 
 	// *(cpB_new) = *(cpThis);	// Be careful. Memory leak.
@@ -403,6 +406,7 @@ EResultType Display_UD(UPUD upThis, EUDType eType) {
 CPACPkt Copy_CACPkt(CPACPkt cpThis) {
 
 
+	if (cpThis == NULL) return (NULL);
 	CPACPkt cpCR_new = new CACPkt();	// New instance. Note: spPkt generated when CCRPkt generated
 
 	// Get all member values 
@@ -446,6 +450,7 @@ CPCDPkt Copy_CCDPkt(CPCDPkt cpThis) {
 CPCRPkt Copy_CCRPkt(CPCRPkt cpThis) {
 
 
+	if (cpThis == NULL) return (NULL);
 	CPCRPkt cpCR_new = new CCRPkt();	// New instance. Note: spPkt generated when CCRPkt generated
 	
 	// Get all member values 
