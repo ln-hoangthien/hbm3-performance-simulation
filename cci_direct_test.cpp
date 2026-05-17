@@ -267,21 +267,22 @@ int main() {
 		
 		//--------------------------------
 		//--------------------------------
-
 		// Bus receives the AR and AW transaction and bypass it into AC ports.
 		#ifdef CCI_ON
 			cpBUS->Do_AC_fwd(nCycle);
 		#endif
+
 		//--------------------------------
-		//-------------------------------
+		//--------------------------------
+		// Bus receives the AR and AW transaction and bypass it into AC ports.
+		#ifdef CCI_ON
+			cpBUS->Do_CD_fwd(nCycle);
+			cpBUS->Do_CR_fwd(nCycle);
+		#endif
+
+
 		// Master receive the AC transactions from BUS and forward it into CR and CD.
 		#ifdef CCI_ON
-			cpMST0->Do_AC_fwd(nCycle);
-			cpMST1->Do_AC_fwd(nCycle);
-			cpMST2->Do_AC_fwd(nCycle);
-			cpMST3->Do_AC_fwd(nCycle);
-
-
 			cpMST0->Do_CR_fwd(nCycle);
 			cpMST1->Do_CR_fwd(nCycle);
 			cpMST2->Do_CR_fwd(nCycle);
@@ -291,12 +292,11 @@ int main() {
 			cpMST1->Do_CD_fwd(nCycle);
 			cpMST2->Do_CD_fwd(nCycle);
 			cpMST3->Do_CD_fwd(nCycle);
-		#endif
 
-		// Bus receives the AR and AW transaction and bypass it into AC ports.
-		#ifdef CCI_ON
-			cpBUS->Do_CD_fwd(nCycle);
-			cpBUS->Do_CR_fwd(nCycle);
+			cpMST0->Do_AC_fwd(nCycle);
+			cpMST1->Do_AC_fwd(nCycle);
+			cpMST2->Do_AC_fwd(nCycle);
+			cpMST3->Do_AC_fwd(nCycle);
 		#endif
 		
 		cpBUS->Do_W_fwd(nCycle);

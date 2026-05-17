@@ -162,6 +162,7 @@ UPUD Copy_UD(UPUD upThis, EUDType eType) {
 				upNew->cpCentral = new SCentral;
 				upNew->cpCentral->cpAx = Copy_CAxPkt(upThis->cpCentral->cpAx);
 				if(upThis->cpCentral->cpAC != NULL) upNew->cpCentral->cpAC = Copy_CACPkt(upThis->cpCentral->cpAC);
+				else upNew->cpCentral->cpAC = NULL;
 				upNew->cpCentral->nCounter = upThis->cpCentral->nCounter;
 				upNew->cpCentral->nDataCounter = upThis->cpCentral->nDataCounter;
 				upNew->cpCentral->nLength = upThis->cpCentral->nLength;
@@ -410,16 +411,18 @@ CPACPkt Copy_CACPkt(CPACPkt cpThis) {
 	CPACPkt cpCR_new = new CACPkt();	// New instance. Note: spPkt generated when CCRPkt generated
 
 	// Get all member values 
-	string	    	cName       = cpThis->GetName();
-	EResultType 	eFinalTrans = cpThis->IsFinalTrans();
-	ETransDirType 	eDir 		= cpThis->GetDir();
-	int 			Snoop		= cpThis->GetSnoop();
+	string			cName 	    = cpThis->GetName();
+	EResultType		eFinalTrans = cpThis->IsFinalTrans();
+	ETransDirType	eDir		= cpThis->GetDir();
+	int				Snoop		= cpThis->GetSnoop();
+	int64_t     	nAddr       = cpThis->GetAddr();
 
 	// Set all member values
 	cpCR_new->SetName(cName);
 	cpCR_new->SetFinalTrans(eFinalTrans);
 	cpCR_new->SetTransDirType(eDir);
 	cpCR_new->SetSnoop(Snoop);
+	cpCR_new->SetAddr(nAddr);
 
 	return (cpCR_new);
 };
@@ -494,4 +497,3 @@ CPCRPkt Copy_CCRPkt(CPCRPkt cpThis) {
 //	
 //	return (ERESULT_TYPE_SUCCESS);
 // };
-

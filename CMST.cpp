@@ -36,6 +36,9 @@ CMST::CMST(string cName) {
 	this->cpFIFO_AR = new CFIFO(cName + "_FIFO_AR", EUD_TYPE_AR, MAX_MO_COUNT);
 	this->cpFIFO_AW = new CFIFO(cName + "_FIFO_AW", EUD_TYPE_AW, MAX_MO_COUNT);
 	this->cpFIFO_W  = new CFIFO(cName + "_FIFO_W",  EUD_TYPE_W,  MAX_MO_COUNT*4);
+	#ifdef CCI_ON
+		this->cpFIFO_AC = new CFIFO(cName + "_FIFO_AC", EUD_TYPE_AC, MAX_MO_COUNT);
+	#endif
 
 	// this->cpFIFO_AR = new CFIFO("MST_FIFO_AR", EUD_TYPE_AR, 10000000);		// Debug. AR_ADDR_GEN_TEST
 	// this->cpFIFO_AW = new CFIFO("MST_FIFO_AW", EUD_TYPE_AW, 10000000);
@@ -121,6 +124,11 @@ CMST::~CMST() {
 	assert (this->cpFIFO_AW != NULL);
 	assert (this->cpFIFO_W  != NULL);
 
+	#ifdef CCI_ON
+		assert (this->cpFIFO_AC  != NULL);
+	#endif
+
+
 	assert (this->cpAddrGen_AR != NULL);
 	assert (this->cpAddrGen_AW != NULL);
 
@@ -134,6 +142,10 @@ CMST::~CMST() {
 	delete (this->cpFIFO_AW);
 	delete (this->cpFIFO_W);
 
+	#ifdef CCI_ON
+		delete (this->cpFIFO_AC);
+	#endif
+
 	delete (this->cpAddrGen_AR);
 	delete (this->cpAddrGen_AW);
 
@@ -146,6 +158,10 @@ CMST::~CMST() {
 	this->cpFIFO_AR = NULL;
 	this->cpFIFO_AW = NULL;
 	this->cpFIFO_W  = NULL;
+	
+	#ifdef CCI_ON
+		this->cpFIFO_AC = NULL;
+	#endif
 
 	this->cpAddrGen_AR = NULL;
 	this->cpAddrGen_AW = NULL;
@@ -169,7 +185,10 @@ EResultType CMST::Reset() {
 
 	this->cpFIFO_AR->Reset();	
 	this->cpFIFO_AW->Reset();	
-	this->cpFIFO_W ->Reset();	
+	this->cpFIFO_W ->Reset();
+	#ifdef CCI_ON
+		this->cpFIFO_AC->Reset();
+	#endif
 	#if !defined MATRIX_MULTIPLICATION && !defined MATRIX_MULTIPLICATIONKIJ && !defined MATRIX_TRANSPOSE && !defined MATRIX_CONVOLUTION && !defined MATRIX_SOBEL
 	this->cpAddrGen_AR->Reset();
 	this->cpAddrGen_AW->Reset();
@@ -4350,10 +4369,12 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 			SnoopType = 0;
 		}
 
+		//SnoopType = 1; // Test WriteLineUnique only
 		cpAW_new->SetSnoop(SnoopType);
 
 		if (SnoopType == 1) { // WriteLineUnique
 			cpAW_new->SetLen(63); // Set fixed 2048 burst = 512 cachelines.
+			//cpAW_new->SetLen(4);
 		}
 
 	#endif
@@ -4929,19 +4950,9 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	EResultType	CMST::Do_AC_fwd(int64_t nCycle) {
 
 		// ------ 1. Checking for receiving AC ------
-		// a. Check the CR channel is ready.
-		if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES) {
-			return (ERESULT_TYPE_SUCCESS); // Cannot response through CR channel.
-		}
-
-		// b. Check the CD channel is ready.
-		if (this->simDataTransfer && (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES)) {
-			return (ERESULT_TYPE_SUCCESS); // Cannot response through CD channel.
-		}
-
-		// c. Check if all BURSTs is transfered.
-		if (this->simDataTransfer && (this->simCDlen > 0)) {
-			return (ERESULT_TYPE_SUCCESS); // Do not issuing enough data.
+		// a. Check the FIFO is ready.
+		if (this->cpFIFO_AC->IsFull() == ERESULT_TYPE_YES) {
+			return (ERESULT_TYPE_SUCCESS); // Cannot response through FIFO.
 		}
 
 		// ------ 2. Receive AC transactions ------
@@ -4974,9 +4985,8 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CR channel.
 		}
 
-		// c. Check if all BURSTs is transfered.
-		if (this->simDataTransfer && (this->simCDlen > 0)) {
-			return (ERESULT_TYPE_SUCCESS); // Do not issuing enough data.
+		if (this->cpFIFO_AC->IsFull() == ERESULT_TYPE_YES) {
+			return (ERESULT_TYPE_SUCCESS); // Cannot response through FIFO.
 		}
 
 		CPACPkt cpAC = this->cpRx_AC->GetAC();
@@ -4988,6 +4998,14 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		string cACPktName = cpAC->GetName();
 		
 		// Set ready
+		UPUD upAC_new = new UUD;
+		upAC_new->cpAC = new CACPkt(cpAC->GetName(), cpAC->GetDir());
+		upAC_new->cpAC->SetSnoop(cpAC->GetSnoop());
+		upAC_new->cpAC->SetAddr(cpAC->GetAddr());
+		this->cpFIFO_AC->Push(upAC_new, MST_FIFO_LATENCY);
+
+		Delete_UD(upAC_new, EUD_TYPE_AC);
+
 		this->cpRx_AC->FlushPkt();
 		this->cpRx_AC->SetAcceptResult(ERESULT_TYPE_ACCEPT);
 
@@ -5015,7 +5033,11 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 		}
 
 		// Check Rx valid
-		CPACPkt cpAC = this->cpRx_AC->GetAC();
+		if (this->cpFIFO_AC->IsEmpty() == ERESULT_TYPE_YES) {
+			return (ERESULT_TYPE_SUCCESS);
+		}
+
+		CPACPkt cpAC = this->cpFIFO_AC->GetTop()->cpAC;
 
 		if (cpAC == NULL) {
 			return (ERESULT_TYPE_SUCCESS);
@@ -5059,9 +5081,24 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 
 		this->cpTx_CR->PutCR(cpCR_new);
 
+		bool shouldPop = false;
+		if (!this->simDataTransfer) {
+			shouldPop = true;
+		}
+		#ifdef CCI_TESTING
+		else if ((cpAC->GetSnoop() == 0b1101) || (cpAC->GetSnoop() == 0b1100)) {
+			shouldPop = true;
+		}
+		#endif
+
 		#ifdef DEBUG_MST
 		printf("[Cycle %3ld: %s.Do_CR_fwd] %s/%s handshake Tx_CR - Response = %x.\n", nCycle, this->cName.c_str(), cCRPktName, cpAC->GetName().c_str(), cpCR_new->GetResp());
 		#endif
+
+		if (shouldPop) {
+			UPUD upPop = this->cpFIFO_AC->Pop();
+			Delete_UD(upPop, EUD_TYPE_AC);
+		}
 
 		return (ERESULT_TYPE_SUCCESS);
 	};
@@ -5099,7 +5136,11 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CD_fwd(int64_t nCycle){
 
-		CPACPkt cpAC = this->cpRx_AC->GetAC();
+		if (this->cpFIFO_AC->IsEmpty() == ERESULT_TYPE_YES) {
+			return (ERESULT_TYPE_SUCCESS);
+		}
+
+		CPACPkt cpAC = this->cpFIFO_AC->GetTop()->cpAC;
 
 		if (cpAC == NULL) {
 			return (ERESULT_TYPE_SUCCESS);
@@ -5150,11 +5191,17 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 
 		this->cpTx_CD->PutCD(cpCD_new);
 		
+		if (this->simCDlen == nLen) { 
+			printf("Do_CD_fwd: Pop AC in CD_fwd because data transfer finished.\n");
+			this->simCDlen = 0; // restarting counting.
+			UPUD upPop = this->cpFIFO_AC->Pop();
+			Delete_UD(upPop, EUD_TYPE_AC);
+		}
+
 		#ifdef DEBUG_MST
 		printf("[Cycle %3ld: %s.Do_CD_fwd] %s handshake Tx_CD.\n", nCycle, this->cName.c_str(), cCDPktName);
 		#endif
 
-		if (this->simCDlen == nLen) { this->simCDlen = 0; } // restarting counting.
 		return (ERESULT_TYPE_SUCCESS);
 	};
 

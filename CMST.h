@@ -167,6 +167,7 @@ public:
 	CPTRx		cpTx_W;
 	CPTRx		cpRx_B;
 	#ifdef CCI_ON
+		CPFIFO	cpFIFO_AC;
 		CPTRx	cpRx_AC;
 		CPTRx	cpTx_CR;
 		CPTRx	cpTx_CD;
