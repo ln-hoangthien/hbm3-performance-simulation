@@ -4263,7 +4263,11 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
 	) {
 		SnoopType = 0;
 	}
+	
+	if (MEMCOPY) SnoopType = 1; // ReadShared
+
 	cpAR_new->SetSnoop(SnoopType);
+	cpAR_new->SetLen(nCACHELINE * 4 - 1);
 	#endif
 	
 	// Check final trans application
@@ -4369,12 +4373,11 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap, string cOpera
 			SnoopType = 0;
 		}
 
-		//SnoopType = 1; // Test WriteLineUnique only
+		if (MEMCOPY) SnoopType = 1; // Test WriteLineUnique only
 		cpAW_new->SetSnoop(SnoopType);
 
 		if (SnoopType == 1) { // WriteLineUnique
-			cpAW_new->SetLen(63); // Set fixed 2048 burst = 512 cachelines.
-			//cpAW_new->SetLen(4);
+			cpAW_new->SetLen(nCACHELINE * 4 - 1);
 		}
 
 	#endif
@@ -5022,6 +5025,11 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	//	2. Simulating the responding signals: DataTransfer and PassDirty.
 	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CR_fwd(int64_t nCycle){
+
+		if(nCycle % SNOOP_LATENCY != 0){
+			return (ERESULT_TYPE_FAIL);
+		}
+
 		// b. Check the CD channel is ready.
 		if (this->simDataTransfer && (this->cpTx_CD->IsBusy() == ERESULT_TYPE_YES)) {
 			return (ERESULT_TYPE_SUCCESS); // Cannot response through CD channel.
@@ -5135,6 +5143,10 @@ EResultType CMST::Do_B_bwd(int64_t nCycle) {
 	//	3. Put the remote AC transactions to local port.
 	//---------------------------------------------------------------------------------------
 	EResultType	CMST::Do_CD_fwd(int64_t nCycle){
+
+		if(nCycle % SNOOP_LATENCY != 0){
+			return (ERESULT_TYPE_FAIL);
+		}
 
 		if (this->cpFIFO_AC->IsEmpty() == ERESULT_TYPE_YES) {
 			return (ERESULT_TYPE_SUCCESS);
@@ -5653,3 +5665,27 @@ EResultType CMST::PrintStat(int64_t nCycle, FILE *fp) {
 	return (ERESULT_TYPE_SUCCESS);
 };
 
+
+int CMST::Get_nARTrans() {
+	return this->nARTrans;
+}
+
+int CMST::Get_nAWTrans() {
+	return this->nAWTrans;
+}
+
+int CMST::Get_nR() {
+	return this->nR;
+}
+
+int CMST::Get_nB() {
+	return this->nB;
+}
+
+int CMST::Get_nAR_GEN_NUM() {
+	return this->nAR_GEN_NUM;
+}
+
+int CMST::Get_nAW_GEN_NUM() {
+	return this->nAW_GEN_NUM;
+}

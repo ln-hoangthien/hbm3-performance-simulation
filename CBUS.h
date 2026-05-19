@@ -55,12 +55,20 @@ public:
 	EResultType	Decrease_MO_AR();
 	EResultType	Increase_MO_AW();
 	EResultType	Decrease_MO_AW();
+	
+	EResultType Set_nR_GEN_NUM(int nNum);
+	EResultType Set_nB_GEN_NUM(int nNum);
 
 	// Get value
 	int		GetMO_AR(); 	
 	int		GetMO_AW(); 
 
 	int		GetPortNum(int nID); 
+	
+	int		Get_nRTrans();
+	int		Get_nBTrans();
+	int		Get_nR_GEN_NUM();
+	int		Get_nB_GEN_NUM();
 
 	// Control
 	EResultType	UpdateState(int64_t nCycle);
@@ -108,6 +116,11 @@ private:
 	int*		nAW_SI;
 	int*		nR_SI ;
 	int*		nB_SI ;
+	
+	int		nRTrans;
+	int		nBTrans;
+	int		nR_GEN_NUM;
+	int		nB_GEN_NUM;
 
 	// Arbiter
 	CPArb		cpArb_AR;
@@ -137,6 +150,8 @@ private:
 		bool* 		bArb; // Round-robin for CCI snoop
 		std::vector<int> m_outstandingMemARID;
 		std::vector<int> m_outstandingMemAWID;
+		std::vector<int64_t> m_outstandingMemARAddr;
+		std::vector<int64_t> m_outstandingMemAWAddr;
 	#endif
 };
 

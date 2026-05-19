@@ -149,6 +149,10 @@ CBUS::CBUS(string cName, int NUM_PORT) {
 	this->cName = cName;
 	this->nMO_AR = -1;
 	this->nMO_AW = -1;
+	this->nRTrans = 0;
+	this->nBTrans = 0;
+	this->nR_GEN_NUM = 0;
+	this->nB_GEN_NUM = 0;
 };
 
 
@@ -299,6 +303,8 @@ EResultType CBUS::Reset() {
 		}
 		this->m_outstandingMemARID.clear();
 		this->m_outstandingMemAWID.clear();
+		this->m_outstandingMemARAddr.clear();
+		this->m_outstandingMemAWAddr.clear();
 	#endif
 
 	// Arb
@@ -939,9 +945,6 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 			return (ERESULT_TYPE_SUCCESS);
 		}
 
-		// Filter the transaction type for special handling (e.g. WriteLineUnique with multiple beats may require special encoding or handling)
-		bool isMultipleWR = ((initTrans->GetSnoop() == 0b0001) && (initTrans->GetDir() == ETRANS_DIR_TYPE_WRITE)); // WriteLineUnique with multiple beats
-
 		// Get the master ID from the transaction ID encoding
 		int initMaster = GetPortNum(initTrans->GetID());
 		assert (initMaster >= 0);
@@ -1022,13 +1025,6 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 			if ((centralEntry->nSnoopMask & allTargetsMask) == allTargetsMask) { // All master is snoopped.
 
 				centralEntry->cpAC->SetTransDirType(ETRANS_DIR_TYPE_UNDEFINED);
-
-				if (isMultipleWR) {
-
-					centralEntry->cpAx->SetAddr(centralEntry->cpAx->GetAddr() +  64); // Assuming 64B beat size, update the address for the next beat
-					if (centralEntry->cpAC) centralEntry->cpAC->SetAddr(initTrans->GetAddr());
-
-				}
 				
 				// If there are more beats to be snooped for this transaction, we reset the snoop mask to start the next round of snooping for the next beat.
 				centralEntry->nSnoopMask = 0; // Reset for next beat issuance
@@ -1099,6 +1095,7 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 				// Do not need to check for potential hazards here since all of writes requested transfer to the memory.
 				if (initTrans->GetDir() == ETRANS_DIR_TYPE_WRITE) {
 					this->m_outstandingMemAWID.push_back(initTrans->GetID());
+					this->m_outstandingMemAWAddr.push_back(initTrans->GetAddr());
 				}
 
 				#ifdef DEBUG_BUS
@@ -1120,9 +1117,22 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
 					
 					// If there are outstanding memory writes, we need to check for potential hazards cause by WriteUnique.
 					int nID = initTrans->GetID();
+					int64_t nAddr = initTrans->GetAddr();
 					auto it = std::find(this->m_outstandingMemAWID.begin(), this->m_outstandingMemAWID.end(), nID);
 					if (it != this->m_outstandingMemAWID.end()) { // Found an outstanding memory write with the same ID.
 						continue; // Stall if this transaction is already outstanding to memory (should not happen for new transactions, but added as a safety check)
+					}
+					
+					// Write-to-Write guarantee
+					auto itAddr = std::find(this->m_outstandingMemAWAddr.begin(), this->m_outstandingMemAWAddr.end(), nAddr);
+					if (itAddr != this->m_outstandingMemAWAddr.end()) { 
+						continue; // Stall if address hazard detected
+					}
+
+					// Read-to-Write guarantee
+					auto itAddrR = std::find(this->m_outstandingMemARAddr.begin(), this->m_outstandingMemARAddr.end(), nAddr);
+					if (itAddrR != this->m_outstandingMemARAddr.end()) { 
+						continue; // Stall if address hazard detected
 					}
 
 					this->cpTx_AW->PutAx(initTrans);
@@ -1430,14 +1440,20 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 		this->cpTx_AW->PutAx(cpAx);
 		centralEntry->cpAC->SetTransDirType(ETRANS_DIR_TYPE_WRITE);
 
-		if (isRead) { this->m_outstandingMemARID.push_back(cpAx->GetID()); }
+		if (isRead) { 
+			this->m_outstandingMemARID.push_back(cpAx->GetID()); 
+			this->m_outstandingMemARAddr.push_back(cpAx->GetAddr()); 
+		}
 
 		// For WriteLineUnique with multiple beats, we only want to count it as 1 issuance for the whole burst, so we check the snoop type and direction to determine how to update the counter.
 		centralEntry->nCounter += 1;
+		centralEntry->cpAx->SetAddr(centralEntry->cpAx->GetAddr() +  (MAX_TRANS_SIZE/BYTE_PER_PIXEL*BYTE_PER_PIXEL)); // Assuming 64B beat size, update the address for the next beat
+		centralEntry->cpAC->SetAddr(centralEntry->cpAC->GetAddr() +  (MAX_TRANS_SIZE/BYTE_PER_PIXEL*BYTE_PER_PIXEL)); 
 
 		#ifdef DEBUG_BUS
-			if (isWriteLineUnique) 	printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put Tx_AW. Mark top snoop UNDEFINED.\n", nCycle, this->cName.c_str(), cpAx->GetName().c_str());
-			else  					printf("[Cycle %3ld: %s.Do_CR_fwd] (%s/%s) put Tx_AW. Mark top snoop UNDEFINED.\n", nCycle, this->cName.c_str(), cpAx->GetName().c_str(), this->cpFIFO_SnoopResp[0]->GetTop()->cpCR->GetName().c_str());
+			printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put Tx_AW to %lx. Mark top snoop UNDEFINED.\n", nCycle, this->cName.c_str(), cpAx->GetName().c_str(), cpAx->GetAddr());
+			//if (isWriteLineUnique) 	printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put Tx_AW. Mark top snoop UNDEFINED.\n", nCycle, this->cName.c_str(), cpAx->GetName().c_str());
+			//else  					printf("[Cycle %3ld: %s.Do_CR_fwd] (%s/%s) put Tx_AW. Mark top snoop UNDEFINED.\n", nCycle, this->cName.c_str(), cpAx->GetName().c_str(), this->cpFIFO_SnoopResp[0]->GetTop()->cpCR->GetName().c_str());
 		#endif
 
 		return (ERESULT_TYPE_SUCCESS);
@@ -1448,14 +1464,30 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 		(!bIsShared && !bWasUnique && !bDataTransfer && !bPassDirty) && !isWrite) {
 		if (this->GetMO_AR() < MAX_MO_COUNT && this->cpTx_AR->IsBusy() == ERESULT_TYPE_NO) {
 
+			// Write-to-Read guarantee
+			auto itAddrW = std::find(this->m_outstandingMemAWAddr.begin(), this->m_outstandingMemAWAddr.end(), centralEntry->cpAx->GetAddr());
+			if (itAddrW != this->m_outstandingMemAWAddr.end()) {
+				return (ERESULT_TYPE_SUCCESS); // Stall
+			}
+
+			// Read-to-Read guarantee - Do not need
+			//auto itAddrR = std::find(this->m_outstandingMemARAddr.begin(), this->m_outstandingMemARAddr.end(), centralEntry->cpAx->GetAddr());
+			//if (itAddrR != this->m_outstandingMemARAddr.end()) {
+			//	return (ERESULT_TYPE_SUCCESS); // Stall
+			//}
+
+
 			CPAxPkt cpAR = Copy_CAxPkt(cpAxTop);
 			this->cpTx_AR->PutAx(cpAR);
 			this->m_outstandingMemARID.push_back(cpAR->GetID());
+			this->m_outstandingMemARAddr.push_back(cpAR->GetAddr());
 
 			centralEntry->cpAC->SetTransDirType(ETRANS_DIR_TYPE_UNDEFINED);
 			
 			// For WriteLineUnique with multiple beats, we only want to count it as 1 issuance for the whole burst, so we check the snoop type and direction to determine how to update the counter.
 			centralEntry->nCounter += 1;
+			centralEntry->cpAx->SetAddr(centralEntry->cpAx->GetAddr() +  (MAX_TRANS_SIZE/BYTE_PER_PIXEL*BYTE_PER_PIXEL) ); // Assuming 64B beat size, update the address for the next beat
+			centralEntry->cpAC->SetAddr(centralEntry->cpAC->GetAddr() +  (MAX_TRANS_SIZE/BYTE_PER_PIXEL*BYTE_PER_PIXEL)); 
 			
 			// Pop-out the data
 			for (int i=0; i<this->NUM_PORT; i++) {
@@ -1471,7 +1503,7 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 
 			// Print data.
 			#ifdef DEBUG_BUS
-				printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put Tx_AR.\n", nCycle, this->cName.c_str(), cpAR->GetName().c_str());
+				printf("[Cycle %3ld: %s.Do_CR_fwd] (%s) put Tx_AR to %lx.\n", nCycle, this->cName.c_str(), cpAR->GetName().c_str(), cpAR->GetAddr());
 			#endif
 
 			return (ERESULT_TYPE_SUCCESS);
@@ -1489,7 +1521,6 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 	UPUD upTop_hazard = this->cpFIFO_Central->GetTop();
 	int currentOriginalID = upTop_hazard->cpCentral->cpAx->GetID();
 	auto itAR = std::find(this->m_outstandingMemARID.begin(), this->m_outstandingMemARID.end(), currentOriginalID);
-	
 	if (itAR != this->m_outstandingMemARID.end()) {
 		return (ERESULT_TYPE_SUCCESS); // Stall
 	}
@@ -1521,6 +1552,8 @@ EResultType CBUS::Do_CR_fwd(int64_t nCycle) {
 
 		// For WriteLineUnique with multiple beats, we only want to count it as 1 issuance for the whole burst, so we check the snoop type and direction to determine how to update the counter.
 		centralEntry->nCounter += 1;
+		centralEntry->cpAx->SetAddr(centralEntry->cpAx->GetAddr() +  (MAX_TRANS_SIZE/BYTE_PER_PIXEL*BYTE_PER_PIXEL)); // Assuming 64B beat size, update the address for the next beat
+		centralEntry->cpAC->SetAddr(centralEntry->cpAC->GetAddr() +  (MAX_TRANS_SIZE/BYTE_PER_PIXEL*BYTE_PER_PIXEL)); 
 
 		// Pop when transaction is finished (last beat) AND all snoops issued
 		//if (IsLast == ERESULT_TYPE_YES && centralEntry->nCounter >= centralEntry->nLength && centralEntry->nDataCounter >= centralEntry->nLength) {
@@ -1667,9 +1700,7 @@ EResultType CBUS::Do_W_snoop_fwd(int64_t nCycle) {
 		return (ERESULT_TYPE_FAIL); 
 	};
 
-	if ((centralEntry->nDataCounter >= centralEntry->nCounter) ||
-		((centralEntry->nCounter < centralEntry->nLength) && (centralEntry->nDataCounter < centralEntry->nLength))
-	)  return (ERESULT_TYPE_SUCCESS);
+	if (centralEntry->nDataCounter >= centralEntry->nCounter) return (ERESULT_TYPE_SUCCESS);
 
 	// Issuing the data and pop the FIFOs when data transfer is expected.
 	// If no data transfer is expected, just pop the FIFOs to finish the transaction (Just assume there is no data from snooped masters).
@@ -1706,7 +1737,9 @@ EResultType CBUS::Do_W_snoop_fwd(int64_t nCycle) {
 					int nID = upTmpCentral->cpCentral->cpAx->GetID();
 					auto it = std::find(this->m_outstandingMemAWID.begin(), this->m_outstandingMemAWID.end(), nID);
 					if (it != this->m_outstandingMemAWID.end()) {
+						int index = std::distance(this->m_outstandingMemAWID.begin(), it);
 						this->m_outstandingMemAWID.erase(it);
+						this->m_outstandingMemAWAddr.erase(this->m_outstandingMemAWAddr.begin() + index);
 					}
 					Delete_UD(upTmpCentral, EUD_TYPE_CENTRAL);
 				}
@@ -1754,7 +1787,9 @@ EResultType CBUS::Do_W_snoop_fwd(int64_t nCycle) {
 				int nID = upTmpCentral->cpCentral->cpAx->GetID();
 				auto it = std::find(this->m_outstandingMemAWID.begin(), this->m_outstandingMemAWID.end(), nID);
 				if (it != this->m_outstandingMemAWID.end()) {
+					int index = std::distance(this->m_outstandingMemAWID.begin(), it);
 					this->m_outstandingMemAWID.erase(it);
+					this->m_outstandingMemAWAddr.erase(this->m_outstandingMemAWAddr.begin() + index);
 				}
 				Delete_UD(upTmpCentral, EUD_TYPE_CENTRAL);
 			}
@@ -1878,6 +1913,7 @@ EResultType CBUS::Do_R_fwd(int64_t nCycle) {
 
 	// Stat
 	this->nR_SI[nPort]++;
+	if (cpR_new->IsLast() == ERESULT_TYPE_YES) this->nRTrans++;
 
 	// Debug
 	#ifdef DEBUG_BUS
@@ -1983,7 +2019,7 @@ EResultType CBUS::Do_B_fwd(int64_t nCycle) {
 
 	// Existed in outstanding AR,
 	// means this B is for a read transaction that requires data return. We need to forward it to the master.
-		if (it != this->m_outstandingMemARID.end()) {
+	if (it != this->m_outstandingMemARID.end()) {
 
 		int nPort = GetPortNum(nID);
 		if (this->cpTx_R[nPort]->IsBusy() == ERESULT_TYPE_YES) {
@@ -1998,17 +2034,21 @@ EResultType CBUS::Do_B_fwd(int64_t nCycle) {
 		cpR_new->SetName(cpB->GetName());
 		this->cpTx_R[nPort]->PutR(cpR_new);
 		this->nR_SI[nPort]++;
+		this->nRTrans++;
 
+		int index = std::distance(this->m_outstandingMemARID.begin(), it);
 		this->m_outstandingMemARID.erase(it);
+		this->m_outstandingMemARAddr.erase(this->m_outstandingMemARAddr.begin() + index);
 
 		#ifdef DEBUG_BUS
 			printf("[Cycle %3ld: %s.Do_B_fwd] (%s) BID 0x%x put Tx_R.\n", nCycle, this->cName.c_str(), cpB->GetName().c_str(), cpB->GetID() );
 		#endif
 
-
 		delete (cpB_new);
 		return (ERESULT_TYPE_SUCCESS);
 
+	} else {
+		this->nBTrans++;
 	}
 
 	return (ERESULT_TYPE_SUCCESS);
@@ -2067,7 +2107,9 @@ EResultType CBUS::Do_R_bwd(int64_t nCycle) {
 		#ifdef CCI_ON
 		auto it = std::find(this->m_outstandingMemARID.begin(), this->m_outstandingMemARID.end(), cpR->GetID());
 		if (it != this->m_outstandingMemARID.end()) {
+			int index = std::distance(this->m_outstandingMemARID.begin(), it);
 			this->m_outstandingMemARID.erase(it);
+			this->m_outstandingMemARAddr.erase(this->m_outstandingMemARAddr.begin() + index);
 		}
 		#endif
 	} 
@@ -2344,6 +2386,38 @@ int CBUS::GetPortNum(int nID) {
 	#endif
 	
 	return (nPort);
+};
+
+
+EResultType CBUS::Set_nR_GEN_NUM(int nNum) {
+	this->nR_GEN_NUM = nNum;
+	return (ERESULT_TYPE_SUCCESS);
+};
+
+
+EResultType CBUS::Set_nB_GEN_NUM(int nNum) {
+	this->nB_GEN_NUM = nNum;
+	return (ERESULT_TYPE_SUCCESS);
+};
+
+
+int CBUS::Get_nRTrans() {
+	return (this->nRTrans);
+};
+
+
+int CBUS::Get_nBTrans() {
+	return (this->nBTrans);
+};
+
+
+int CBUS::Get_nR_GEN_NUM() {
+	return (this->nR_GEN_NUM);
+};
+
+
+int CBUS::Get_nB_GEN_NUM() {
+	return (this->nB_GEN_NUM);
 };
 
 

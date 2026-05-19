@@ -295,8 +295,12 @@
 //-------------------------------------------------------------
 #define CCI_ON
 #define CCI_TESTING
-#define SNOOP_MASK 2
-#define MASTER_ACE 3
+#define SNOOP_LATENCY 20
+
+extern int  SNOOP_MASK;
+extern int  TILEH;
+extern int  nCACHELINE;
+extern bool MEMCOPY;
 
 //-------------------------------------------------------------
 // (Master) Ax Address gen

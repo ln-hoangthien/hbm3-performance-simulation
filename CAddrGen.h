@@ -29,11 +29,6 @@ using namespace std;
 //-------------------------------------------------------------------------------
 // Tile size 
 //-------------------------------------------------------------------------------
-#ifdef TILEH
-	#define TILEH			TILEH*(MAX_TRANS_SIZE/BYTE_PER_PIXEL)
-#else
-	#define TILEH			MAX_TRANS_SIZE/BYTE_PER_PIXEL
-#endif
 
 #define TILEV				16								// Vertical 
 

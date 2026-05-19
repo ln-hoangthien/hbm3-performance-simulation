@@ -150,6 +150,12 @@ public:
 	int			GetMO_AR(); 	
 	int			GetMO_AW(); 
 
+	int			Get_nARTrans();
+	int			Get_nAWTrans();
+	int			Get_nR();
+	int			Get_nB();
+	int			Get_nAR_GEN_NUM();
+	int			Get_nAW_GEN_NUM();
 	// Stat
 	EResultType	PrintStat(int64_t nCycle, FILE *fp);
 
