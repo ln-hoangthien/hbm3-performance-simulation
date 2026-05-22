@@ -1,5 +1,5 @@
 //------------------------------------------------------------
-// Filename	: CROB.h 
+// Filename	: CROB.h
 // Version	: 0.1
 // Date		: 2 Mar 2020
 // Contact	: JaeYoung.Hur@gmail.com
@@ -23,87 +23,88 @@ using namespace std;
 //-------------------------------
 // Linked list node (for UD Queue. ROB)
 //-------------------------------
-typedef struct tagSLinkedRUD* SPLinkedRUD;
-typedef struct tagSLinkedRUD{
-	UPUD		upData;
-	int		nID;
-	int		nLatency;
+typedef struct tagSLinkedRUD *SPLinkedRUD;
+typedef struct tagSLinkedRUD {
+  UPUD upData;
+  int nID;
+  int nLatency;
 
-	int		nMemCh;					// Memory channel (0,1,2,..)
-	// EResultType	IsHead_Resp;				// only need in R,B
+  int nMemCh; // Memory channel (0,1,2,..)
+  // EResultType	IsHead_Resp;				// only need in
+  // R,B
 
-	int		nCycle_wait;				// Waiting cycles since allocation
-	SPLinkedRUD	spPrev;
-	SPLinkedRUD	spNext;
-}SLinkedRUD;
-
+  int nCycle_wait; // Waiting cycles since allocation
+  SPLinkedRUD spPrev;
+  SPLinkedRUD spNext;
+} SLinkedRUD;
 
 //----------------------------
 // ROB class
 //----------------------------
-typedef class CROB* CPROB;
-class CROB{
+typedef class CROB *CPROB;
+class CROB {
 
 public:
-        // 1. Contructor. Destructor
-	CROB(string cName, EUDType eType, int nMaxNum);
-	~CROB();
+  // 1. Contructor. Destructor
+  CROB(string cName, EUDType eType, int nMaxNum);
+  ~CROB();
 
-	// 2. Control
-	// Control	
-	EResultType	Reset();
+  // 2. Control
+  // Control
+  EResultType Reset();
 
-	// Set value
-	EResultType	Push(UPUD upUD, int nLatency);
-	EResultType	Push(UPUD upUD);
-	EResultType	Push(UPUD upUD, int nMemCh, int nLatency);
+  // Set value
+  EResultType Push(UPUD upUD, int nLatency);
+  EResultType Push(UPUD upUD);
+  EResultType Push(UPUD upUD, int nMemCh, int nLatency);
 
-	UPUD		Pop();							// In order
-	UPUD		Pop(int nKey);						// Out of order
-	UPUD		Pop(int nKey, int nMemCh);
+  UPUD Pop();         // In order
+  UPUD Pop(int nKey); // Out of order
+  UPUD Pop(int nKey, int nMemCh);
 
-	// EResultType	SetHead_Resp(int nID, int nMemCh);			// ROB_R,B
+  // EResultType	SetHead_Resp(int nID, int nMemCh); // ROB_R,B
 
-	EResultType	UpdateState();	
-	
-	// Get value
-	string		GetName();
-	EUDType		GetUDType();
-	int		GetCurNum();
-	int		GetMaxNum();
-	UPUD		GetTop();
-	UPUD		GetTarget(int nID);					// ROB
-	int		GetMemCh_ReqHead(int nID);				// ROB_Ax
+  EResultType UpdateState();
 
-	SPLinkedRUD	GetReqNode_ROB(int nID, int nMemch);
-	// SPLinkedRUD	GetResp_poppable_ROB(CPROB cpResp, CPROB cpReq);
-	SPLinkedRUD	GetResp_poppable_ROB(CPROB cpReq);
-	
-	EResultType	IsEmpty();
-	EResultType	IsFull();
+  // Get value
+  string GetName();
+  EUDType GetUDType();
+  int GetCurNum();
+  int GetMaxNum();
+  UPUD GetTop();
+  UPUD GetTarget(int nID);       // ROB
+  int GetMemCh_ReqHead(int nID); // ROB_Ax
 
-	// Stat
-	// int		GetMaxCycleWait();					// Max waiting cycle among entries
-	// int		GetCycleWait(UPUD upThis);				// Waiting cycle
+  SPLinkedRUD GetReqNode_ROB(int nID, int nMemch);
+  // SPLinkedRUD	GetResp_poppable_ROB(CPROB cpResp, CPROB cpReq);
+  SPLinkedRUD GetResp_poppable_ROB(CPROB cpReq);
 
-	// Debug
-	EResultType	CheckROB();
-	EResultType	Display();
+  EResultType IsEmpty();
+  EResultType IsFull();
+
+  // Stat
+  // int		GetMaxCycleWait();
+  // // Max waiting cycle among entries int		GetCycleWait(UPUD
+  // upThis);				// Waiting cycle
+
+  // Debug
+  EResultType CheckROB();
+  EResultType Display();
 
 private:
-	// Original info
-	string		cName;
-	EUDType		eUDType;
-	int		nCurNum;
-	int		nMaxNum;
+  // Original info
+  string cName;
+  EUDType eUDType;
+  int nCurNum;
+  int nMaxNum;
 
-	// Stat
-	// int		nMaxCycleWait;						// Max waiting time (among all entries)
+  // Stat
+  // int		nMaxCycleWait;
+  // // Max waiting time (among all entries)
 
-	// Node 
-	SPLinkedRUD	spRUDList_head;
-	SPLinkedRUD	spRUDList_tail;
+  // Node
+  SPLinkedRUD spRUDList_head;
+  SPLinkedRUD spRUDList_tail;
 };
 
 #endif
-

@@ -5,10 +5,10 @@
 // Contact	: JaeYoung.Hur@gmail.com
 // DesACiption	: B Pkt class definition
 //-----------------------------------------------------------
-#include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 #include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string>
 
 #include "CACPkt.h"
@@ -16,154 +16,147 @@
 // Construct
 CACPkt::CACPkt(string cName, ETransDirType eDir) {
 
-	// Generate and initialize 
-	this->spPkt = new SACPkt;
-	this->spPkt->nAddr = -1;
-	this->spPkt->nSnoop = -1;
-	this->eDir = eDir;
-	this->cName = cName;
+  // Generate and initialize
+  this->spPkt = new SACPkt;
+  this->spPkt->nAddr = -1;
+  this->spPkt->nSnoop = -1;
+  this->eDir = eDir;
+  this->cName = cName;
 };
-
 
 // Construct
 CACPkt::CACPkt() {
 
-        // Generate and initialize 
-        this->spPkt = new SACPkt;
-        this->spPkt->nAddr = -1;
-        this->spPkt->nSnoop = -1;
-        this->eDir = ETRANS_DIR_TYPE_UNDEFINED;
-        this->cName = "AC_pkt";
+  // Generate and initialize
+  this->spPkt = new SACPkt;
+  this->spPkt->nAddr = -1;
+  this->spPkt->nSnoop = -1;
+  this->eDir = ETRANS_DIR_TYPE_UNDEFINED;
+  this->cName = "AC_pkt";
 };
 
 // Destruct
 CACPkt::~CACPkt() {
 
-	this->CheckPkt();
+  this->CheckPkt();
 
-	delete (this->spPkt);	
-	this->spPkt = NULL;
+  delete (this->spPkt);
+  this->spPkt = NULL;
 };
-
 
 // Set name
 EResultType CACPkt::SetName(string cName) {
 
-	this->cName = cName;
-	return (ERESULT_TYPE_SUCCESS);
+  this->cName = cName;
+  return (ERESULT_TYPE_SUCCESS);
 };
 
 // Get Address
 int64_t CACPkt::GetAddr() {
 
-	// this->CheckPkt();
-	return (this->spPkt->nAddr);
+  // this->CheckPkt();
+  return (this->spPkt->nAddr);
 };
 
 EResultType CACPkt::SetSnoop(int nSnoop) {
 
-	#ifdef DEBUG
-	assert (this->spPkt != NULL);
-	#endif
+#ifdef DEBUG
+  assert(this->spPkt != NULL);
+#endif
 
-	this->spPkt->nSnoop  = nSnoop;
-	return (ERESULT_TYPE_SUCCESS);
+  this->spPkt->nSnoop = nSnoop;
+  return (ERESULT_TYPE_SUCCESS);
 };
 
-// Set Ax Addr 
+// Set Ax Addr
 EResultType CACPkt::SetAddr(int64_t nAddr) {
 
-	#ifdef DEBUG
-	assert (this->spPkt != NULL);
-	#endif
+#ifdef DEBUG
+  assert(this->spPkt != NULL);
+#endif
 
-	this->spPkt->nAddr = nAddr;
-	return (ERESULT_TYPE_SUCCESS);
+  this->spPkt->nAddr = nAddr;
+  return (ERESULT_TYPE_SUCCESS);
 };
 
 // Set transaction (read or write) direction
 EResultType CACPkt::SetTransDirType(ETransDirType eDir) {
 
-	#ifdef DEBUG
-	assert (this->spPkt != NULL);
-	#endif
+#ifdef DEBUG
+  assert(this->spPkt != NULL);
+#endif
 
-	this->eDir = eDir;
-	return (ERESULT_TYPE_SUCCESS);
+  this->eDir = eDir;
+  return (ERESULT_TYPE_SUCCESS);
 };
 
 // Set final trans
 EResultType CACPkt::SetFinalTrans(EResultType eResult) {
 
-	#ifdef DEBUG	
-	assert (this->spPkt != NULL);
-	#endif
-	
-	this->eFinalTrans = eResult;
-	return (ERESULT_TYPE_SUCCESS);
+#ifdef DEBUG
+  assert(this->spPkt != NULL);
+#endif
+
+  this->eFinalTrans = eResult;
+  return (ERESULT_TYPE_SUCCESS);
 };
 
 // Get B pkt
 SPACPkt CACPkt::GetPkt() {
 
-	// this->CheckPkt();
-	return (this->spPkt);
+  // this->CheckPkt();
+  return (this->spPkt);
 };
-
 
 // Get B pkt name
 string CACPkt::GetName() {
 
-	// this->CheckPkt();
-	return (this->cName);
+  // this->CheckPkt();
+  return (this->cName);
 };
 
 // Get direction
 ETransDirType CACPkt::GetDir() {
 
-	// this->CheckPkt();
-	return (this->eDir);
+  // this->CheckPkt();
+  return (this->eDir);
 };
 
 // Get snoop
 int CACPkt::GetSnoop() {
-	// this->CheckPkt();
-	return (this->spPkt->nSnoop);
+  // this->CheckPkt();
+  return (this->spPkt->nSnoop);
 };
 
 // Check final trans
 EResultType CACPkt::IsFinalTrans() {
 
-	// this->CheckPkt();
-	return (this->eFinalTrans);
+  // this->CheckPkt();
+  return (this->eFinalTrans);
 };
-
-
 
 // Debug
 EResultType CACPkt::CheckPkt() {
 
-	assert (this != NULL);
-	assert (this->spPkt != NULL);
-	
-	return (ERESULT_TYPE_SUCCESS);
-};
+  assert(this != NULL);
+  assert(this->spPkt != NULL);
 
+  return (ERESULT_TYPE_SUCCESS);
+};
 
 // Debug
 EResultType CACPkt::Display() {
 
-	// this->CheckPkt();
+  // this->CheckPkt();
 
-	string cFinalTrans = Convert_eResult2string(this->eFinalTrans);
+  string cFinalTrans = Convert_eResult2string(this->eFinalTrans);
 
-	// printf("---------------------------------------------\n");
-	// printf("\t B pkt display\n");
-	printf("---------------------------------------------\n");
-	printf("\t Name		: \t %s\n",   this->cName.c_str());
-	printf("\t FinalTrans	: \t %s\n",   cFinalTrans.c_str());
-	printf("---------------------------------------------\n");
+  // printf("---------------------------------------------\n");
+  // printf("\t B pkt display\n");
+  printf("---------------------------------------------\n");
+  printf("\t Name		: \t %s\n", this->cName.c_str());
+  printf("\t FinalTrans	: \t %s\n", cFinalTrans.c_str());
+  printf("---------------------------------------------\n");
 
-	return (ERESULT_TYPE_SUCCESS);
+  return (ERESULT_TYPE_SUCCESS);
 };
-
