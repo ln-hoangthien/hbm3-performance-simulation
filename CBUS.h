@@ -123,6 +123,7 @@ private:
 
   uint32_t nCentralStall;
   uint32_t nACStall;
+  uint32_t nStall;
   uint32_t nWaitResp;
 
   int nSnoopCnt;

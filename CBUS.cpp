@@ -164,6 +164,7 @@ CBUS::CBUS(string cName, int NUM_PORT) {
   this->nB_GEN_NUM = 0;
   this->nCentralStall = 0;
   this->nACStall = 0;
+  this->nStall = 0;
   this->nWaitResp = 0;
   this->nSnoopCnt = 0;
 };
@@ -404,6 +405,7 @@ EResultType CBUS::Reset() {
 
   this->nCentralStall = 0;
   this->nACStall = 0;
+  this->nStall = 0;
   this->nWaitResp = 0;
   this->nSnoopCnt = 0;
 
@@ -1156,6 +1158,9 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
           this->nCentralStall++;
         if (this->cpFIFO_SnoopReq->IsFull() == ERESULT_TYPE_YES)
           this->nACStall++;
+        if ((this->cpFIFO_SnoopReq->IsFull() == ERESULT_TYPE_YES) &&
+            (this->cpFIFO_Central->IsFull() == ERESULT_TYPE_YES))
+          this->nStall++;
 
         // Exit the loop and stall if either FIFO is full, as we cannot proceed
         // with the snoop transaction until there is space in both FIFOs.
@@ -2834,6 +2839,7 @@ EResultType CBUS::PrintStat(int64_t nCycle, FILE *fp) {
 
   printf("\t Number of cycles when cpFIFO_Central is full           : %d\n", this->nCentralStall);
   printf("\t Number of cycles when cpFIFO_AC is full                : %d\n\n", this->nACStall);
+  printf("\t Number of cycles when both Central and AC are full     : %d\n\n", this->nStall);
   printf("\t Number of cycles when waiting for CR response          : %d\n\n", this->nWaitResp);
 
   // printf("\t Max allowed AR MO                : %d\n",   MAX_MO_COUNT);
