@@ -26,7 +26,11 @@ int main() {
   //===========================================
   // 0.  Configurations
   //=========================================s==
+#ifdef CCI_CACHELINE
+  nCACHELINE = CCI_CACHELINE;
+#else
   nCACHELINE = 64;
+#endif
   SNOOP_MASK = 0; // Set Snoop Mask here
   MEMCOPY = true;
 
@@ -87,27 +91,31 @@ int main() {
   //------------------------------
   int NUM = IMG_HORIZONTAL_SIZE * IMG_VERTICAL_SIZE * BYTE_PER_PIXEL / MAX_TRANS_SIZE;
 
-  // Number of transactions
+#if defined(CCI_READ_ONLY)
+  // READ-only (AR)
+  cpMST0->Set_nAW_GEN_NUM(0);
+  cpMST0->Set_nAR_GEN_NUM(0);
+  cpMST1->Set_nAW_GEN_NUM(0);
+  cpMST1->Set_nAR_GEN_NUM(ceil(NUM / nCACHELINE));
+  cpBUS->Set_nB_GEN_NUM(0);
+  cpBUS->Set_nR_GEN_NUM(NUM);
+#elif defined(CCI_READ_WRITE)
+  // READWRITE (ARAW)
+  cpMST0->Set_nAW_GEN_NUM(0);
+  cpMST0->Set_nAR_GEN_NUM(ceil(NUM / nCACHELINE));
+  cpMST1->Set_nAW_GEN_NUM(ceil(NUM / nCACHELINE));
+  cpMST1->Set_nAR_GEN_NUM(0);
+  cpBUS->Set_nB_GEN_NUM(NUM);
+  cpBUS->Set_nR_GEN_NUM(NUM);
+#else
+  // Default: WRITE-only (AW) (also matches CCI_WRITE_ONLY)
   cpMST0->Set_nAW_GEN_NUM(0);
   cpMST0->Set_nAR_GEN_NUM(0);
   cpMST1->Set_nAW_GEN_NUM(ceil(NUM / nCACHELINE));
   cpMST1->Set_nAR_GEN_NUM(0);
   cpBUS->Set_nB_GEN_NUM(NUM);
   cpBUS->Set_nR_GEN_NUM(0);
-
-  // cpMST0->Set_nAW_GEN_NUM(0);
-  // cpMST0->Set_nAR_GEN_NUM(0);
-  // cpMST1->Set_nAW_GEN_NUM(0);
-  // cpMST1->Set_nAR_GEN_NUM(ceil(NUM / nCACHELINE));
-  // cpBUS->Set_nB_GEN_NUM(0);
-  // cpBUS->Set_nR_GEN_NUM(NUM);
-
-  // cpMST0->Set_nAW_GEN_NUM(0);
-  // cpMST0->Set_nAR_GEN_NUM(ceil(NUM / nCACHELINE));
-  // cpMST1->Set_nAW_GEN_NUM(ceil(NUM / nCACHELINE));
-  // cpMST1->Set_nAR_GEN_NUM(0);
-  // cpBUS->Set_nB_GEN_NUM(NUM);
-  // cpBUS->Set_nR_GEN_NUM(NUM);
+#endif
 
   //------------------------------
   // Set image scaling
