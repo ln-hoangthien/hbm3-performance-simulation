@@ -33,6 +33,7 @@ public:
   EResultType Push(UPUD upUD, int nLatency);
   EResultType Push(UPUD upUD);
   UPUD Pop();
+  UPUD Pop(UPUD upTarget);
 
   EResultType UpdateState();
 
@@ -41,6 +42,8 @@ public:
   int GetCurNum();
   int GetMaxNum();
   UPUD GetTop();
+  SPLinkedUD GetHead() const { return spUDList_head; }
+  UPUD FindByName(const string& name);
   EResultType IsEmpty();
   EResultType IsFull();
 

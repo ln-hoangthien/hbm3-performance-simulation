@@ -13,8 +13,11 @@
 #include "CMST.h"
 #include "CSLV.h"
 
-#define MST1_AR_VSTART 0x0000000000000000
-#define MST1_AW_VSTART 0x0000000000000000
+#define MST0_AR_VSTART 0x0000000000000000
+#define MST0_AW_VSTART 0x0000000000000000
+
+#define MST1_AR_VSTART 0x0000000000100000
+#define MST1_AW_VSTART 0x0000000000100000
 
 bool master_finish = false;
 
@@ -22,12 +25,12 @@ int main() {
 
   //===========================================
   // 0.  Configurations
-  //===========================================
-  nCACHELINE = 1;
+  //=========================================s==
+  nCACHELINE = 64;
   SNOOP_MASK = 0; // Set Snoop Mask here
-  MEMCOPY = false;
-  TILEH = TILEH * nCACHELINE;
-  //===========================================
+  MEMCOPY = true;
+
+  //===========================================G
 
   int64_t nCycle = 1;
   // int SEED = clock();
@@ -85,50 +88,55 @@ int main() {
   int NUM = IMG_HORIZONTAL_SIZE * IMG_VERTICAL_SIZE * BYTE_PER_PIXEL / MAX_TRANS_SIZE;
 
   // Number of transactions
+  cpMST0->Set_nAW_GEN_NUM(0);
+  cpMST0->Set_nAR_GEN_NUM(0);
   cpMST1->Set_nAW_GEN_NUM(ceil(NUM / nCACHELINE));
   cpMST1->Set_nAR_GEN_NUM(0);
   cpBUS->Set_nB_GEN_NUM(NUM);
   cpBUS->Set_nR_GEN_NUM(0);
+
+  // cpMST0->Set_nAW_GEN_NUM(0);
+  // cpMST0->Set_nAR_GEN_NUM(0);
   // cpMST1->Set_nAW_GEN_NUM(0);
   // cpMST1->Set_nAR_GEN_NUM(ceil(NUM / nCACHELINE));
   // cpBUS->Set_nB_GEN_NUM(0);
   // cpBUS->Set_nR_GEN_NUM(NUM);
 
+  // cpMST0->Set_nAW_GEN_NUM(0);
+  // cpMST0->Set_nAR_GEN_NUM(ceil(NUM / nCACHELINE));
+  // cpMST1->Set_nAW_GEN_NUM(ceil(NUM / nCACHELINE));
+  // cpMST1->Set_nAR_GEN_NUM(0);
+  // cpBUS->Set_nB_GEN_NUM(NUM);
+  // cpBUS->Set_nR_GEN_NUM(NUM);
+
   //------------------------------
   // Set image scaling
   //------------------------------
+  cpMST0->Set_ScalingFactor(1);
   cpMST1->Set_ScalingFactor(1);
 
   //------------------------------
   // Set start address MST
   //------------------------------
+  cpMST0->Set_nAR_START_ADDR(MST0_AR_VSTART);
+  cpMST0->Set_nAW_START_ADDR(MST0_AW_VSTART);
 
   cpMST1->Set_nAR_START_ADDR(MST1_AR_VSTART);
   cpMST1->Set_nAW_START_ADDR(MST1_AW_VSTART);
 
-//------------------------------
-// Set operation
-//------------------------------
-// RASTER_SCAN, ROTATION, RANDOM
-//------------------------------
-#ifdef RASTER_SCAN
+  //------------------------------
+  // Set operation
+  //------------------------------
+  // RASTER_SCAN, ROTATION, RANDOM
+  //------------------------------
   cpMST0->Set_AR_Operation("RASTER_SCAN");
   cpMST0->Set_AW_Operation("RASTER_SCAN");
 
   cpMST1->Set_AR_Operation("RASTER_SCAN");
   cpMST1->Set_AW_Operation("RASTER_SCAN");
-#elif ROTATION
-  cpMST0->Set_AR_Operation("ROTATION");
-  cpMST0->Set_AW_Operation("ROTATION");
 
-  cpMST1->Set_AR_Operation("ROTATION");
-  cpMST1->Set_AW_Operation("ROTATION");
-#else
-  assert(0);
-#endif
   // Simulate
   while (1) {
-
     //---------------------------
     // 3. Reset
     //---------------------------
@@ -139,10 +147,14 @@ int main() {
       cpBUS->Reset();
       cpSLV->Reset();
     };
+
     //---------------------------------------------
     // 4. Start simulation
     //---------------------------------------------
     // Master geneates transactions
+    cpMST0->LoadTransfer_AR(nCycle, "LIAM", "RASTER_SCAN");
+    cpMST0->LoadTransfer_AW(nCycle, "LIAM", "RASTER_SCAN");
+
     cpMST1->LoadTransfer_AR(nCycle, "LIAM", "RASTER_SCAN");
     cpMST1->LoadTransfer_AW(nCycle, "LIAM", "RASTER_SCAN");
 
@@ -152,6 +164,9 @@ int main() {
     //---------------------------------
     // AR, AW, W VALID
     //---------------------------------
+    cpMST0->Do_AR_fwd(nCycle);
+    cpMST0->Do_AW_fwd(nCycle);
+
     cpMST1->Do_AR_fwd(nCycle);
     cpMST1->Do_AW_fwd(nCycle);
     //--------------------------------
@@ -220,8 +235,10 @@ int main() {
     cpBUS->Do_B_fwd(nCycle);
 
     //---------------------------
-
     //---------------------------
+    cpMST0->Do_R_fwd(nCycle);
+    cpMST0->Do_B_fwd(nCycle);
+
     cpMST1->Do_R_fwd(nCycle);
     cpMST1->Do_B_fwd(nCycle);
     //---------------------------------
@@ -239,6 +256,10 @@ int main() {
     cpBUS->Do_AW_bwd(nCycle);
 
     //-----------------------------
+    cpMST0->Do_AR_bwd(nCycle);
+    cpMST0->Do_AW_bwd(nCycle);
+    cpMST0->Do_W_bwd(nCycle);
+
     cpMST1->Do_AR_bwd(nCycle);
     cpMST1->Do_AW_bwd(nCycle);
     cpMST1->Do_W_bwd(nCycle);
@@ -263,6 +284,9 @@ int main() {
     //---------------------------------
     // R, B READY
     //---------------------------------
+    cpMST0->Do_R_bwd(nCycle);
+    cpMST0->Do_B_bwd(nCycle);
+
     cpMST1->Do_R_bwd(nCycle);
     cpMST1->Do_B_bwd(nCycle);
     //---------------------------
@@ -286,13 +310,15 @@ int main() {
     //---------------------------------
     // 6. Check simulation finish
     //---------------------------------
-    if (cpMST1->IsAllTransFinished() == ERESULT_TYPE_YES && !master_finish) {
+    if (cpMST1->IsAllTransFinished() == ERESULT_TYPE_YES && cpMST0->IsAllTransFinished() == ERESULT_TYPE_YES &&
+        !master_finish) {
       printf("[Cycle %3ld] Master is finished.\n", nCycle);
       master_finish = true;
       // break;
     };
 
-    if (cpBUS->Get_nRTrans() == cpBUS->Get_nR_GEN_NUM() && cpBUS->Get_nBTrans() == cpBUS->Get_nB_GEN_NUM()) {
+    if (cpBUS->Get_nRTrans() == cpBUS->Get_nR_GEN_NUM() && cpBUS->Get_nBTrans() == cpBUS->Get_nB_GEN_NUM() &&
+        cpBUS->GetSnoopIssued() == cpBUS->GetSnoopResp()) {
       printf("[Cycle %3ld] Bus is finished.\n", nCycle);
       break;
     }
@@ -325,10 +351,14 @@ int main() {
 
   printf("\t R channel responses		: %d\n", cpBUS->Get_nRTrans());
   printf("\t B channel responses		: %d\n", cpBUS->Get_nBTrans());
-  printf("\t Total Read Transactions	: %d\n", cpMST1->Get_nARTrans());
-  printf("\t Total Write Transactions	: %d\n", cpMST1->Get_nAWTrans());
+  printf("\t [0] Total Read Transactions	: %d\n", cpMST0->Get_nARTrans());
+  printf("\t [0] Total Write Transactions	: %d\n", cpMST0->Get_nAWTrans());
+  printf("\t [1] Total Read Transactions	: %d\n", cpMST1->Get_nARTrans());
+  printf("\t [1] Total Write Transactions	: %d\n", cpMST1->Get_nAWTrans());
+
   printf("---------------------------------------------\n");
 
+  cpMST0->PrintStat(nCycle, nullptr);
   cpMST1->PrintStat(nCycle, nullptr);
   cpBUS->PrintStat(nCycle, nullptr);
   cpSLV->PrintStat(nCycle, nullptr);

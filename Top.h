@@ -261,7 +261,7 @@
 //-------------------------------------------------------------
 // #define MAX_BUS_NUM_PORT		6
 
-#define BUS_LATENCY 6
+#define BUS_LATENCY 50
 
 //-------------------------------------------------------------
 // (Bus) Arbiter
@@ -274,7 +274,7 @@
 //-------------------------------------------------------------
 #define CCI_ON
 #define CCI_TESTING
-#define SNOOP_LATENCY 20
+#define SNOOP_LATENCY 10
 
 extern int SNOOP_MASK;
 extern int TILEH;

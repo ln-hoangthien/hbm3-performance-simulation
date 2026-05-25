@@ -183,6 +183,78 @@ UPUD CFIFO::Pop() {
   return (upTarget); // Delete outside
 };
 
+// Pop a specific target node from anywhere in the FIFO
+UPUD CFIFO::Pop(UPUD upTarget) {
+  if (this->spUDList_head == NULL) {
+    return (NULL);
+  }
+
+  SPLinkedUD spPrev = NULL;
+  SPLinkedUD spScan = this->spUDList_head;
+  while (spScan != NULL) {
+    if (spScan->upData == upTarget) {
+      break;
+    }
+    spPrev = spScan;
+    spScan = spScan->spNext;
+  }
+
+  if (spScan == NULL) {
+    return (NULL); // Not found
+  }
+
+  this->nCurNum--;
+
+  if (spScan == this->spUDList_head) {
+    if (this->nCurNum == 0) {
+      this->spUDList_head = NULL;
+      this->spUDList_tail = NULL;
+    } else {
+      this->spUDList_head = this->spUDList_head->spNext;
+    }
+  } else {
+    spPrev->spNext = spScan->spNext;
+    if (spScan == this->spUDList_tail) {
+      this->spUDList_tail = spPrev;
+    }
+  }
+
+  delete (spScan);
+  return (upTarget);
+}
+
+// Find a packet in the FIFO by its unique name based on its EUDType
+UPUD CFIFO::FindByName(const string &name) {
+  SPLinkedUD spScan = this->spUDList_head;
+  while (spScan != NULL) {
+    if (spScan->upData != NULL) {
+      if (this->eUDType == EUD_TYPE_CR && spScan->upData->cpCR != NULL) {
+        if (spScan->upData->cpCR->GetName() == name) {
+          return spScan->upData;
+        }
+      } else if (this->eUDType == EUD_TYPE_CENTRAL && spScan->upData->cpCentral != NULL) {
+        if (spScan->upData->cpCentral->GetName() == name) {
+          return spScan->upData;
+        }
+      } else if (this->eUDType == EUD_TYPE_AC && spScan->upData->cpAC != NULL) {
+        if (spScan->upData->cpAC->GetName() == name) {
+          return spScan->upData;
+        }
+      } else if (this->eUDType == EUD_TYPE_AR && spScan->upData->cpAR != NULL) {
+        if (spScan->upData->cpAR->GetName() == name) {
+          return spScan->upData;
+        }
+      } else if (this->eUDType == EUD_TYPE_AW && spScan->upData->cpAW != NULL) {
+        if (spScan->upData->cpAW->GetName() == name) {
+          return spScan->upData;
+        }
+      }
+    }
+    spScan = spScan->spNext;
+  }
+  return (NULL);
+}
+
 // Get UD type
 EUDType CFIFO::GetUDType() { return (this->eUDType); };
 

@@ -3501,11 +3501,11 @@ EResultType CAddrGen::UpdateState() {
     };
 #else
     // Update coordinate temp
-    if (this->nApos + this->nNumPixelTrans >= ImgH) {
-      this->nApos = 0;
+    if (this->nApos + (nCACHELINE * this->nNumPixelTrans) >= ImgH) {
+      this->nApos = (this->nApos + (nCACHELINE * this->nNumPixelTrans)) % ImgH;
       this->nBpos++;
     } else {
-      this->nApos = this->nApos + TILEH;
+      this->nApos = this->nApos + (TILEH * nCACHELINE);
     };
 #endif
 

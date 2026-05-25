@@ -4423,18 +4423,15 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap,
                                                        // ROTATION, RANDOM)
 
   // Check master finished
-  if (this->cpAddrGen_AW->IsFinalTrans() == ERESULT_TYPE_YES) {
+  if (this->cpAddrGen_AW->IsFinalTrans() == ERESULT_TYPE_YES)
     return (ERESULT_TYPE_SUCCESS);
-  };
 
-  if (this->nAWTrans == this->nAW_GEN_NUM) {
+  if (this->nAWTrans == this->nAW_GEN_NUM)
     return (ERESULT_TYPE_SUCCESS);
-  };
 
   // Check FIFO full
-  if (this->cpFIFO_AW->IsFull() == ERESULT_TYPE_YES) {
+  if (this->cpFIFO_AW->IsFull() == ERESULT_TYPE_YES)
     return (ERESULT_TYPE_SUCCESS);
-  };
 
   CPAxPkt cpAW_new = NULL;
 
@@ -5648,10 +5645,10 @@ int CMST::GetMO_AW() {
 EResultType CMST::UpdateState(int64_t nCycle) {
 
 #ifdef CCI_TESTING
-  if (((nCycle % 10000) == 0) && (this->simCDlen == 0)) { // For testing only
-    this->simDataTransfer = !this->simDataTransfer;       // Flip the data transfer.
-  }
-  // this->simDataTransfer = 0;
+  // if (((nCycle % 10000) == 0) && (this->simCDlen == 0)) { // For testing only
+  //   this->simDataTransfer = !this->simDataTransfer;       // Flip the data transfer.
+  // }
+  this->simDataTransfer = 0;
 #endif
 
   this->cpTx_AR->UpdateState();

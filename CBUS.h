@@ -69,6 +69,9 @@ public:
   int Get_nR_GEN_NUM();
   int Get_nB_GEN_NUM();
 
+  uint32_t GetSnoopIssued();
+  uint32_t GetSnoopResp();
+
   // Control
   EResultType UpdateState(int64_t nCycle);
   EResultType Reset();
@@ -125,6 +128,8 @@ private:
   uint32_t nACStall;
   uint32_t nStall;
   uint32_t nWaitResp;
+  uint32_t nSnoopIssued;
+  uint32_t nSnoopResp;
 
   int nSnoopCnt;
 
@@ -151,9 +156,10 @@ private:
   //    cpFIFO_Central: Unified FIFO for tracking active snoop transactions (Ax
   // and AC).
   //=======================================================
-  CPFIFO cpFIFO_SnoopReq;
+  CPFIFO *cpFIFO_SnoopReq;
   CPFIFO cpFIFO_SnoopData;
   CPFIFO *cpFIFO_SnoopResp;
+  CPFIFO *cpFIFO_SnoopReqMst;
   CPFIFO cpFIFO_Central;
   int *nSnoopedMaster;
   bool *bArb; // Round-robin for CCI snoop
@@ -161,6 +167,15 @@ private:
   std::vector<int> m_outstandingMemAWID;
   std::vector<int64_t> m_outstandingMemARAddr;
   std::vector<int64_t> m_outstandingMemAWAddr;
+
+  bool HasIDConflictInCentralFIFO(UPUD upCentral);
+  int GetSnoopResponseCount(UPUD upCentral, int for_snoopMaster);
+  void PopSnoopResponses(int initMaster, const std::vector<UPUD>& readySnoopResps);
+  bool CheckSnoopResponses(UPUD upCentral, std::vector<UPUD>& readySnoopResps);
+  bool TryWriteToMemory(UPUD upCentral, bool isClean, bool isWriteLineUnique, const std::vector<UPUD>& readySnoopResps, int64_t nCycle);
+  bool TryReadFromMemory(UPUD upCentral, const std::vector<UPUD>& readySnoopResps, int64_t nCycle);
+  bool TryReturnResponseToMaster(UPUD upCentral, int initMaster, bool bIsShared, bool bPassDirty, const std::vector<UPUD>& readySnoopResps, int64_t nCycle);
+  bool ProcessCentralTransactions(int64_t nCycle);
 #endif
 };
 
