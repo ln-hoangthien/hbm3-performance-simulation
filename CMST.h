@@ -127,6 +127,7 @@ public:
 
   EResultType Set_nAR_GEN_NUM(int nNum); // Total number AR
   EResultType Set_nAW_GEN_NUM(int nNum);
+  EResultType Set_nCACHELINE(int nNum);           // Cacheline size
   EResultType Set_nAR_START_ADDR(int64_t nAddr);  // Start address AR
   EResultType Set_nAR_START_ADDR2(int64_t nAddr); // Start address AR2
   EResultType Set_nAW_START_ADDR(int64_t nAddr);
@@ -158,6 +159,7 @@ public:
   int Get_nB();
   int Get_nAR_GEN_NUM();
   int Get_nAW_GEN_NUM();
+  int Get_nCACHELINE();
   // Stat
   EResultType PrintStat(int64_t nCycle, FILE *fp);
 
@@ -242,6 +244,7 @@ private:
   int64_t nAW_START_ADDR;
 
   float ScalingFactor; // Image size scale
+  int nCACHELINE;
 
   int AR_ISSUE_MIN_INTERVAL; // Issue interval cycles
   int AW_ISSUE_MIN_INTERVAL;

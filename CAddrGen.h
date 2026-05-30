@@ -191,9 +191,10 @@ public:
   EResultType SetAddrMap(string cAddrMap);     // LIAM, BFAM, TILE
   EResultType Set_ScalingFactor(float Num);    // Image size scaling factor
 
-  // EResultType	SetFinalTrans(EResultType eResult);
   EResultType SetStartAddr(int64_t nAddr); // Start address
   EResultType SetNumTotalTrans(int nNum);  // Total number of transactions set by user
+  EResultType Set_nCACHELINE(int nVal);  // Cacheline size
+  int Get_nCACHELINE();
 
   // Block input info
   EResultType Set_nA(int Num); // (A, B)
@@ -288,6 +289,7 @@ private:
   int nB;
   int nAsize; // (Asize, Bsize) block size (pixels)
   int nBsize;
+  int nCACHELINE;
 
   // Variable
   int nTileNum;       // Tile number of (Apos, Bpos)

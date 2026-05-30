@@ -8,245 +8,272 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "Top.h"
-#include <math.h>
 #include <string>
+#include <math.h>
+#include "Top.h" 
 
 //-------------------------------------------------
-// TIming parameter
+// TIming parameter 
 //-------------------------------------------------
-// tCK		: Clock Cycle at 6.4GB/s.
+// tRCD	 : Activating. Miminum time between activate and RD/WR commands on the same bank
+// tCL	 : All banks. Fixed. CAS latency. Time after RD command until first data is available on the bus.
+// tRP	 : Precharging. Fixed. Minimum time between a precharge command and an activate command on the same bank
+// tRAS	 : Per-bank. Minimum time after an activate command to a bank until that bank is allowed to be precharged.
+// tRTP	 : Per-bank. Minimum time between RD and PRE command
+// tRRD	 : Different banks. Minimum time between ACTs to all banks 
+// tCCD	 : CAS to CAS command delay. Minimum time between two RD commands or two WR commands.
+// 
+// tRC	 : Minimum time between successive activate commands to the same bank
+// tWL	 : Write latency. Time after WR command until first data is available on the bus.
+// tWR	 : Write recovery time. Minimum time after the last data has been written until PRE may be issued on the same bank 
+// tWTR	 : Internal write to read command delay	
 //
-// tRC		: ACTIVE to ACTIVE command period. Minimum time between
-// successive activate commands to the same bank. tRAS		: ACTIVE to
-// PRECHARGE command period. Per-bank. Minimum time after an activate command to
-// a bank until that bank is allowed to be precharged.
-//
-// tRCDRD	: ACTIVE to READ command delay. Miminum time between activate
-// and RD commands on the same bank. tRCDWR	: ACTIVE to WRITE command delay.
-// Miminum time between activate and WR commands on the same bank.
-//
-// tRRDL 	: ACTIVE to ACTIVE or PER BANK REFRESH bank B command delay same
-// bank group. tRRDS	: ACTIVE to ACTIVE or PER BANK REFRESH bank B command
-// delay different bank group.
-//
-// tRTP		: Minimum time between READ to PRECHARGE command delay same
-// bank. tRP		: Minimum time between a precharge command and an
-// activate command on the same bank. tWR		: WRITE recovery time.
-// Minimum time after the last data has been written until PRE may be issued on
-// the same bank.
-//
-// tCCDL	: RD/WR bank A to RD/WR bank B command delay same bank group.
-// tCCDS	: RD/WR bank A to RD/WR bank B command delay different bank
-// group. tCCDR	: RD SID A to RD SID B command delay. tWTRL	: Internal WRITE
-// to READ command delay same bank group. tWTRS	: Internal WRITE to READ command
-// delay different bank group. tRTW		: READ to WRITE command delay.
-// tRL		: Read Latency.
-// tWL		: Write Latency.
-//
-// tRFCab	: Refresh command period
-// tRFCpb	: PER BANK REFRESH command period (same bank).
-// tRREFD	: PER BANK REFRESH command period (different bank).
-// tREFI	: PER BANK REFRESH to ACTIVATE command delay (different bank).
-// tREFIab	: Average periodic refresh interval for REFRESH command.
-// tREFIpb	: Average periodic refresh interval for PER BANK REFRESH
-// command.
-//
-// FAW		: Four Bank Active Window.
-// tDAL		: Auto precharge write recovery + Precharge time.
-// tPPD		: PRECHARGE to PRECHARGE delay same pseudo channel.
-// RAA		: Rolling Accumulated ACTIVATE count.
-//
-// tWDQS2DQ_O(max)	: WDQS to read data and RDQS offset.
-// tWDQS2DQ_I(min)	: WDQS to write data offset.
+// tFAW	 : Window in which maximally four banks may be activated
+// tRFC	 : Minimum time between a refresh command and a successive refresh or activate command
+// tREFI : Average refresh interval
+
 
 //-------------------------------------------------
 // Cycle counts that requires direction change
 //-------------------------------------------------
-#define CYCLE_COUNT_DIR_CHANGE 150
+#define CYCLE_COUNT_DIR_CHANGE  150	
+
 
 //-------------------------------------------------
 // Cycle time-out (scheduler)
 // * If no service in req Q entry, force scheduling
 //-------------------------------------------------
-#define CYCLE_TIMEOUT 400
+#define CYCLE_TIMEOUT           400
+
 
 //-------------------------------------------------
-// JDESD238B.01 - March 2025
+// DDR2-400 64MB x16 (512Mb), Page 2kB
 //-------------------------------------------------
-#define tCK 0.625          // Clock cycle time (ns) in ns at 6.4Gb/s.
-#define HBM_BURST_LENGTH 8 // HBM burst length in bytes.
-#define BanksPerBGroup 4   // Number of banks per bank group. HBM3 has 4 banks per bank group.
-#define BanksPerSID 16     // Number of banks per stack. HBM3 has 16 banks per stack.
+// #define	tRCD	3	// ACT2RD or ACT2WR
+// #define	tCL	3	// RD2DATA 
+// #define	tRP	3	// PRE2ACT
+// #define	tRAS	8	// ACT2PRE
+// #define	tRTP	2	// RD2PRE
+// #define	tRRD	2	// ACT2ACT (all banks)
+// #define	tCCD	2	// RD2RD. WR2WR. CAS to CAS command delay. Minimum time between two RD commands or two WR commands.
+// 
+// #define	tRC	11	// RC = RAS + RP
+// #define	tWL	2	// WR2DATA
+// #define	tWR	3	// 
+// #define	tFAW	10	// 
+// #define	tWTR	2	// WR2RD 
+// #define	tRFC	21	// 
+// #define	tREFI	1560	// Average refresh interval
 
-// Row Access Timing Parameters
-#define tRP                                                                                                            \
-  static_cast<int>(std::ceil(15 / tCK)) - 1 // (Min) PRE2ACT - Plus 1 due to the ACT command takes 2 CK cycles to
-                                            // complete
-#define tRAS                                                                                                           \
-  static_cast<int>(std::ceil(33 / tCK)) + 1 // (Min) ACT2PRE - Plus 1 due to the ACT command takes 2 CK cycles to
-                                            // complete
-#define tRAS_max 9 * tREFI                  // (Max) ACT2PRE
-#define tRC tRAS + tRP                      // RC = RAS + RP.  ACT2ACT. Inherently implemented
 
-#define tRCDRD                                                                                                         \
-  static_cast<int>(std::ceil(                                                                                          \
-      12 /                                                                                                             \
-      tCK)) // ACT2RD or ACT2WR - Copied from Gem5's HBM2:
-            // https://github.com/gem5/gem5/blob/ddd4ae35adb0a3df1f1ba11e9a973a5c2f8c2944/src/python/gem5/components/memory/dram_interfaces/hbm.py#L207
-#define tRCDWR                                                                                                         \
-  static_cast<int>(std::ceil(                                                                                          \
-      6 /                                                                                                              \
-      tCK)) // ACT2RD or ACT2WR - Copied from Gem5's HBM2:
-            // https://github.com/gem5/gem5/blob/ddd4ae35adb0a3df1f1ba11e9a973a5c2f8c2944/src/python/gem5/components/memory/dram_interfaces/hbm.py#L207
-#define tRCD (std::max(tRCDRD, tRCDWR)) // ACT2RD or ACT2WR - Copied from Gem5's HBM2:
+//-------------------------------------------------
+// DDR2-800 64MB x16 (512Mb), Page 2kB
+//-------------------------------------------------
+// #define	tRCD	4	// ACT2RD or ACT2WR
+// #define	tCL	4	// RD2DATA 
+// #define	tRP	4	// PRE2ACT
+// #define	tRAS	18	// ACT2PRE
+// #define	tRTP	3	// RD2PRE
+// #define	tRRD	4	// ACT2ACT (all banks)
+// #define	tCCD	2	// RD2RD. WR2WR. CAS to CAS command delay. Minimum time between two RD commands or two WR commands.
+// 
+// #define	tRC	22	// RC = RAS + RP
+// #define	tWL	3	// WR2DATA
+// #define	tWR	6	// 
+// #define	tFAW	18	// 
+// #define	tWTR	3	// WR2RD 
+// #define	tRFC	42	// 
+// #define	tREFI	3120	// Average refresh interval
 
-#define tRRDL                                                                                                          \
-  static_cast<int>(std::ceil(                                                                                          \
-      6 /                                                                                                              \
-      tCK)) // ACT2ACT or ACT2REF - Copied from Gem5's HBM2:
-            // https://github.com/gem5/gem5/blob/ddd4ae35adb0a3df1f1ba11e9a973a5c2f8c2944/src/python/gem5/components/memory/dram_interfaces/hbm.py#L207
-#define tRRDS                                                                                                          \
-  static_cast<int>(std::ceil(                                                                                          \
-      4 /                                                                                                              \
-      tCK)) // ACT2ACT or ACT2REF - Copied from Gem5's HBM2:
-            // https://github.com/gem5/gem5/blob/ddd4ae35adb0a3df1f1ba11e9a973a5c2f8c2944/src/python/gem5/components/memory/dram_interfaces/hbm.py#L207
-#define tRRD (std::max(tRRDL, tRRDS)) // ACT2ACT or ACT2REF - Copied from Gem5's HBM2:
 
-// Column Access Timing Parameters
-#define tRTP static_cast<int>(std::ceil(5 / tCK))     // RD2PRE
-#define tWR static_cast<int>(std::ceil(14 / tCK)) + 1 // WR2PRE. tWR + BurstLength + tWL. 11=6+4+5.
+//-------------------------------------------------
+// DDR2-800 Debug 
+//-------------------------------------------------
+//  #define	tRCD	4	// ACT2RD or ACT2WR
+//  #define	tCL	4	// RD2DATA 
+//  #define	tRP	4	// PRE2ACT
+//  #define	tRAS	18	// ACT2PRE
+//  #define	tRTP	3	// RD2PRE
+//  #define	tRRD	4	// ACT2ACT (all banks)
+//  #define	tCCD	2	// RD2RD. WR2WR. CAS to CAS command delay. Minimum time between two RD commands or two WR commands.
+//  
+//  #define	tRC	22	// RC = RAS + RP
+//  // #define	tWL	3	// WR2DATA
+//  #define	tWL	4	// WR2DATA
+//  #define	tWR	6	// 
+//  #define	tFAW	18	// 
+//  #define	tWTR	3	// WR2RD 
+//  #define	tRFC	42	// 
+//  #define	tREFI	3120	// Average refresh interval
 
-#define tCCDL                                                                                                          \
-  std::max(4, static_cast<int>(std::ceil(2.5 / tCK))) // RD2RD or WR2WR. CAS to CAS command delay same bank group.
-                                                      // Minimum time between two RD commands or two WR commands.
-#define tCCDS                                                                                                          \
-  2 // RD2RD or WR2WR. CAS to CAS command delay different bank group. Minimum
-    // time between two RD commands or two WR commands.
-#define tCCDR                                                                                                          \
-  tCCDS + 2 // RD2RD. CAS to CAS command delay different stack ID. Minimum time
-            // between two RD commands or two WR commands.
-// NOTE 17 of Table 93 — Timings Parameters: The tCCDR(min) value is vendor
-// specific and a range of tCCDS + 1 to 2nCK is supported. The tCCDR(min) is
-// dependent on the operation frequency. The vendor datasheet should be
-// consulted for details.
-#define tCCD                                                                                                           \
-  (std::max(tCCDL, tCCDS)) // RD2RD or WR2WR. CAS to CAS command delay. Minimum
-                           // time between two RD commands or two WR commands.
 
-#define tWTRL                                                                                                          \
-  static_cast<int>(std::ceil(                                                                                          \
-      9 /                                                                                                              \
-      tCK)) // WR2RD. Internal WRITE to READ command delay same bank group.  We
-            // assume CCD covers this - Copied from Gem5's HBM2:
-            // https://github.com/gem5/gem5/blob/ddd4ae35adb0a3df1f1ba11e9a973a5c2f8c2944/src/python/gem5/components/memory/dram_interfaces/hbm.py#L207
-#define tWTRS                                                                                                          \
-  static_cast<int>(std::ceil(                                                                                          \
-      4 /                                                                                                              \
-      tCK)) // WR2RD. Internal WRITE to READ command delay different bank group.
-            // We assume CCD covers this - Copied from Gem5's HBM2:
-            // https://github.com/gem5/gem5/blob/ddd4ae35adb0a3df1f1ba11e9a973a5c2f8c2944/src/python/gem5/components/memory/dram_interfaces/hbm.py#L207
-#define tWTR                                                                                                           \
-  (std::max(tWTRL, tWTRS)) // WR2RD. Internal WRITE to READ command delay.  We assume
-                           // CCD covers this - Copied from Gem5's HBM2:
+//-------------------------------------------------
+// DDR3-800 64MB x16 (512Mb), Page 2kB
+//-------------------------------------------------
+// #define		tRCD	5	// ACT2RD or ACT2WR
+// #define		tCL	5	// RD2DATA
+// #define		tRP	5	// PRE2ACT
+// #define		tRAS	15	// ACT2PRE
+// #define		tRTP	4	// RD2PRE
+// #define		tRRD	4	// ACT2ACT (all banks)
+// #define		tCCD	4	// RD2RD or WR2WR. CAS to CAS command delay. Minimum time between two RD commands or two WR commands.  
+// 
+// #define		tRC	20	// RC = RAS + RP.  ACT2ACT. Inherently implemented
+// 
+// #define		tWL	5	// WR2DATA
+// 
+// // #define		tWR	6	// WR2PRE 
+// // #define		tWR	10	// WR2PRE. tWR + BurstLength.       10=6+4.
+// // #define		tWR	11	// WR2PRE. tWR + tWL.               11=6+5.
+// #define		tWR	15	// WR2PRE. tWR + BurstLength + tWL. 11=6+4+5.
+// #define		tWTR	4	// WR2RD.  We assume CCD covers this.
+// 
+// #define		tFAW	20	// Not implemented. We do not need this, because we have 4 banks.
+// #define		tRFC	36	// Not implemented
+// #define		tREFI	3120	// Average refresh interval. Not implemented.
 
-#define tRL                                                                                                            \
-  6 // Read latency. Time after RD command until first data is available on the
-    // bus.
-#define tWL                                                                                                            \
-  4 // Write latency. Time after WR command until first data is available on the
-    // bus.
-#define tRL_simulation                                                                                                 \
-  1 // We skip returning data delay in simulation for simplicity. This is only
-    // for simulation.
-#define tWL_simulation                                                                                                 \
-  1 // We skip returning data delay in simulation for simplicity. This is only
-    // for simulation.
 
-// Other Access Timing Parameters
-#define tWDQS2DQ_O_max static_cast<int>(std::ceil(2.5 / tCK)) // WDQS to read data and RDQS offset
-#define tWDQS2DQ_I_min static_cast<int>(std::ceil(0.9 / tCK)) // WDQS to write data offset
+//-------------------------------------------------
+// DDR3-800 Debug 
+//-------------------------------------------------
+  #define		tRP	5	// PRE2ACT
+  #define		tRAS	15	// ACT2PRE
+  #define		tRCD	5	// ACT2RD or ACT2WR
 
-#define tRTW                                                                                                           \
-  static_cast<int>(std::ceil(((tRL + HBM_BURST_LENGTH / 4 - tWL + 0.5) + tWDQS2DQ_O_max -                              \
-                              tWDQS2DQ_I_min))) // READ to WRITE command delay = (RL + BL/4 - WL +
-                                                // 0.5) × tCK + tWDQS2DQ_O(max) - tWDQS2DQ_I(min)
-// tRTW is not a DRAM device limit but determined by the system bus turnaround
-// time.
+  #define		tRRD	4	// ACT2ACT (all banks)
+  #define		tCCD	4	// RD2RD or WR2WR. CAS to CAS command delay. Minimum time between two RD commands or two WR commands.  
+  
+  #define		tCL	5	// RD2DATA
+  // #define		tCL	6	// RD2DATA
+  #define		tWL	5	// WR2DATA
+  // #define		tWL	6	// WR2DATA
+  
+  #define		tRTP	4	// RD2PRE
+  // #define		tWR	6	// WR2PRE 
+  // #define		tWR	10	// WR2PRE. tWR + BurstLength.       10=6+4.
+  // #define		tWR	11	// WR2PRE. tWR + tWL.               11=6+5.
+  #define		tWR	15	// WR2PRE. tWR + BurstLength + tWL. 11=6+4+5.
 
-#define tFAW 20 // No more than 4 banks may be activated in a rolling tFAW window.
-#define tREFI static_cast<int>(std::floor(3900 / tCK))         // (Max Value) Average refresh interval. Not implemented.
-#define tREFIpb static_cast<int>(std::floor(tREFI / BANK_NUM)) // (Max Value) Average refresh interval. Not implemented.
-#define tRFCab static_cast<int>(std::ceil(350 / tCK))          // (Min Value) Not implemented
-#define tRFCpb static_cast<int>(std::ceil(200 / tCK))          // (Min Value) Not implemented
-#define tRREFD std::max(3, static_cast<int>(std::ceil(8 / tCK))) // PER BANK REFRESH command period (different bank)
+  #define		tRC	20	// RC = RAS + RP.  ACT2ACT. Inherently implemented
+
+  #define		tWTR	4	// WR2RD.  We assume CCD covers this.
+  #define		tFAW	20	// Not implemented. We do not need this, because we have 4 banks.
+  #define		tRFC	36	// Not implemented
+  #define		tREFI	3120	// Average refresh interval. Not implemented.
+
+
+
+//-------------------------------------------------
+// DDR3-1600 64MB x16 (512Mb), Page 2kB
+//-------------------------------------------------
+// #define	tRCD	8	// ACT2RD or ACT2WR
+// #define	tCL	8	// RD2DATA 
+// #define	tRP	8	// PRE2ACT
+// #define	tRAS	28	// ACT2PRE
+// #define	tRTP	6	// RD2PRE
+// #define	tRRD	6	// ACT2ACT (all banks)
+// #define	tCCD	4	// RD2RD. WR2WR. CAS to CAS command delay. Minimum time between two RD commands or two WR commands.
+// 
+// #define	tWL	5	// WR2DATA
+// #define	tWR	12	// 
+//
+// #define	tRC	36	// RC = RAS + RP
+// #define	tFAW	32	// 
+// #define	tWTR	6	// WR2RD 
+// #define	tRFC	72	// 
+// #define	tREFI	6240	// Average refresh interval
+
 
 //-------------------------------------------------
 
 using namespace std;
 
 //-------------------------------------------------
-// Memory state
+// Memory state 
 //-------------------------------------------------
-typedef enum {
-  EMEM_STATE_TYPE_IDLE,
-  EMEM_STATE_TYPE_REFRESHING,       // Doing activation
-  EMEM_STATE_TYPE_ACTIVATING,       // Doing activation
-  EMEM_STATE_TYPE_ACTIVE_for_READ,  // Activated
-  EMEM_STATE_TYPE_ACTIVE_for_WRITE, // Activated
-  EMEM_STATE_TYPE_ACTIVE,           // Activated
-  EMEM_STATE_TYPE_PRECHARGING,      // Doing precharge
-  EMEM_STATE_TYPE_UNDEFINED
-} EMemStateType;
+typedef enum{
+	EMEM_STATE_TYPE_IDLE,
+	EMEM_STATE_TYPE_ACTIVATING,			// Doing activation
+	EMEM_STATE_TYPE_ACTIVE,				// Activated
+	EMEM_STATE_TYPE_PRECHARGING,			// Doing precharge
+	EMEM_STATE_TYPE_UNDEFINED
+}EMemStateType;
+
 
 //-------------------------------------------------
-// Memory command
+// Memory command 
 //-------------------------------------------------
-typedef enum {
-  EMEM_CMD_TYPE_ACT,   // Activate
-  EMEM_CMD_TYPE_REFpb, // Per bank Refresh
-  EMEM_CMD_TYPE_PRE,   // Precharge
-  EMEM_CMD_TYPE_RD,    // Read
-  EMEM_CMD_TYPE_WR,    // Write
-  EMEM_CMD_TYPE_NOP,   // No operation
-  EMEM_CMD_TYPE_UNDEFINED
-} EMemCmdType;
+typedef enum{
+	EMEM_CMD_TYPE_ACT,				// Activate
+	EMEM_CMD_TYPE_PRE,				// Precharge
+	EMEM_CMD_TYPE_RD,				// Read
+	EMEM_CMD_TYPE_WR,				// Write
+	EMEM_CMD_TYPE_NOP,				// No operation 
+	EMEM_CMD_TYPE_UNDEFINED
+}EMemCmdType;
+
 
 //-------------------------------------------------
 // Command pkt (from MC to Mem)
 //-------------------------------------------------
-typedef struct tagSMemCmdPkt *SPMemCmdPkt;
-typedef struct tagSMemCmdPkt {
-  EMemCmdType eMemCmd; // Command (that memory receives)
-  // SPMemAddr	spMemAddr;			// Row, Bank, Column
-  int nBank;
-  int nRow;
-} SMemCmdPkt;
+typedef struct tagSMemCmdPkt* SPMemCmdPkt;
+typedef struct tagSMemCmdPkt{
+	EMemCmdType	eMemCmd;			// Command (that memory receives)
+	// SPMemAddr	spMemAddr;			// Row, Bank, Column  
+	int		nBank;
+	int		nRow;
+}SMemCmdPkt;
+
 
 //-------------------------------------------------
-// State pkt per bank (from Mem to MC)
+// State pkt per bank (from Mem to MC) 
 //-------------------------------------------------
-typedef struct tagSMemStatePkt *SPMemStatePkt;
-typedef struct tagSMemStatePkt {
-  EMemStateType eMemState[BANK_NUM]; // Bank state
+typedef struct tagSMemStatePkt* SPMemStatePkt;
+typedef struct tagSMemStatePkt{
+	EMemStateType	eMemState[BANK_NUM];		// Bank state 
 
-  EResultType IsRD_ready[BANK_NUM];
-  EResultType IsWR_ready[BANK_NUM];
-  EResultType IsPRE_ready[BANK_NUM];
-  EResultType IsACT_ready[BANK_NUM];
-  EResultType IsREF_ready[BANK_NUM];
-  EResultType forced_PRE[BANK_NUM];
-  EResultType forced_REFI[BANK_NUM];
+	EResultType	IsRD_ready[BANK_NUM];
+	EResultType	IsWR_ready[BANK_NUM];
+	EResultType	IsPRE_ready[BANK_NUM];
+	EResultType	IsACT_ready[BANK_NUM];
+	
+	EResultType	IsFirstData_ready[BANK_NUM];	// Can put first data in bank
+	EResultType	IsBankPrepared[BANK_NUM];	// Bank activated (not yet RD/WR) 
+	int		nActivatedRow[BANK_NUM];
+	EResultType	IsData_busy;			// Stat
+}SMemStatePkt;
 
-  EResultType IsFirstData_ready[BANK_NUM]; // Can put first data in bank
-  EResultType IsBankPrepared[BANK_NUM];    // Bank activated (not yet RD/WR)
-  int nActivatedRow[BANK_NUM];
-  EResultType IsData_busy; // Stat
-} SMemStatePkt;
 
 //-------------------------------------------------
-// Convert
+// Counter
+//-------------------------------------------------
+// typedef enum{
+//	EMEM_CNT_TYPE_ACT2RD,				// RC   (Activating)
+//	EMEM_CNT_TYPE_PRE2ACT,				// RP   (Precharging)
+//	EMEM_CNT_TYPE_RD2DATA,				// CL
+//	EMEM_CNT_TYPE_RD2RD,				// tCCD
+//	EMEM_CNT_TYPE_ACT2ACT,				// tRRD
+//	EMEM_CNT_TYPE_RD2PRE,				// RTP 
+//	EMEM_CNT_TYPE_ACT2PRE,				// RAS
+//	EMEM_CNT_TYPE_UNDEFINED
+// }EMemCntType;
+
+
+//-------------------------------------------------
+// Memory RBC address 
+//-------------------------------------------------
+// typedef struct tagSMemAddr* SPMemAddr;
+// typedef struct tagSMemAddr{
+//	int 	 nBank;
+//	int_64_t nRow;
+//	int 	 nCol;
+// }SMemAddr;
+
+
+//-------------------------------------------------
+// Convert 
 //-------------------------------------------------
 string Convert_eMemCmd2string(EMemCmdType eType);
 
 #endif
+

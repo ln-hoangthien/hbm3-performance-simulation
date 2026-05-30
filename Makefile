@@ -84,8 +84,10 @@ cci_test cci_test_debug: TILE_SIZE?=4
 cci_test cci_test_debug: SEED_INIT?=493
 cci_test cci_test_debug: nCACHELINE?=64
 cci_test cci_test_debug: TRANS_TYPE?=WRITE
-cci_test cci_test_debug: CCI_TRANS_FLAGS=$(if $(filter $(TRANS_TYPE),READ),-D"CCI_READ_ONLY",$(if $(filter $(TRANS_TYPE),READWRITE),-D"CCI_READ_WRITE",-D"CCI_WRITE_ONLY"))
-cci_test cci_test_debug: CCI_FLAGS=-D"CCI_CACHELINE=$(nCACHELINE)" $(CCI_TRANS_FLAGS)
+cci_test cci_test_debug: ISSUE_MIN_INTERVAL?=8
+cci_test cci_test_debug: SNOOP_LATENCY?=10
+cci_test cci_test_debug: CCI_TRANS_FLAGS=$(if $(filter $(TRANS_TYPE),READ),-D"CCI_READ_ONLY",$(if $(filter $(TRANS_TYPE),WRITE),-D"CCI_WRITE_ONLY",$(if $(filter $(TRANS_TYPE),WR),-D"CCI_WRITE_READ",$(if $(filter $(TRANS_TYPE),WW),-D"CCI_WRITE_WRITE",-D"CCI_WRITE_ONLY"))))
+cci_test cci_test_debug: CCI_FLAGS=-D"CCI_CACHELINE=$(nCACHELINE)" -D"ISSUE_MIN_INTERVAL=$(ISSUE_MIN_INTERVAL)" -D"CCI_SNOOP_LATENCY=$(SNOOP_LATENCY)" $(CCI_TRANS_FLAGS)
 
 cci_test: BBS_TRAD
 cci_test_debug: BBS_TRAD_DEBUG

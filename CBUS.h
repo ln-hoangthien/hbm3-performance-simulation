@@ -55,8 +55,8 @@ public:
   EResultType Increase_MO_AW();
   EResultType Decrease_MO_AW();
 
-  EResultType Set_nR_GEN_NUM(int nNum);
-  EResultType Set_nB_GEN_NUM(int nNum);
+  EResultType Set_nR_GEN_NUM(int nPort, int nNum);
+  EResultType Set_nB_GEN_NUM(int nPort, int nNum);
 
   // Get value
   int GetMO_AR();
@@ -64,10 +64,10 @@ public:
 
   int GetPortNum(int nID);
 
-  int Get_nRTrans();
-  int Get_nBTrans();
-  int Get_nR_GEN_NUM();
-  int Get_nB_GEN_NUM();
+  int Get_nRTrans(int nPort);
+  int Get_nBTrans(int nPort);
+  int Get_nR_GEN_NUM(int nPort);
+  int Get_nB_GEN_NUM(int nPort);
 
   uint32_t GetSnoopIssued();
   uint32_t GetSnoopResp();
@@ -119,10 +119,10 @@ private:
   int *nR_SI;
   int *nB_SI;
 
-  uint32_t nRTrans;
-  uint32_t nBTrans;
-  uint32_t nR_GEN_NUM;
-  uint32_t nB_GEN_NUM;
+  uint32_t *nRTrans;
+  uint32_t *nBTrans;
+  uint32_t *nR_GEN_NUM;
+  uint32_t *nB_GEN_NUM;
 
   uint32_t nCentralStall;
   uint32_t nACStall;

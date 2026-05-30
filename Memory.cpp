@@ -5,10 +5,10 @@
 // Contact	: JaeYoung.Hur@gmail.com
 // Description  : Memory global functions
 //-----------------------------------------------------------
+#include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "Memory.h"
 
@@ -17,9 +17,6 @@ string Convert_eMemCmd2string(EMemCmdType eType) {
   switch (eType) {
   case EMEM_CMD_TYPE_ACT:
     return ("ACT");
-    break;
-  case EMEM_CMD_TYPE_REFpb:
-    return ("REFpb");
     break;
   case EMEM_CMD_TYPE_PRE:
     return ("PRE");

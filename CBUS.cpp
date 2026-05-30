@@ -170,10 +170,16 @@ CBUS::CBUS(string cName, int NUM_PORT) {
   this->cName = cName;
   this->nMO_AR = -1;
   this->nMO_AW = -1;
-  this->nRTrans = 0;
-  this->nBTrans = 0;
-  this->nR_GEN_NUM = 0;
-  this->nB_GEN_NUM = 0;
+  this->nRTrans = new uint32_t[NUM_PORT];
+  this->nBTrans = new uint32_t[NUM_PORT];
+  this->nR_GEN_NUM = new uint32_t[NUM_PORT];
+  this->nB_GEN_NUM = new uint32_t[NUM_PORT];
+  for (int i = 0; i < NUM_PORT; i++) {
+    this->nRTrans[i] = 0;
+    this->nBTrans[i] = 0;
+    this->nR_GEN_NUM[i] = 0;
+    this->nB_GEN_NUM[i] = 0;
+  }
   this->nCentralStall = 0;
   this->nACStall = 0;
   this->nStall = 0;
@@ -278,6 +284,10 @@ CBUS::~CBUS() {
   delete[] this->nAW_SI;
   delete[] this->nR_SI;
   delete[] this->nB_SI;
+  delete[] this->nRTrans;
+  delete[] this->nBTrans;
+  delete[] this->nR_GEN_NUM;
+  delete[] this->nB_GEN_NUM;
 
   this->cpTx_AR = NULL;
   this->cpTx_AW = NULL;
@@ -380,6 +390,10 @@ EResultType CBUS::Reset() {
   for (int i = 0; i < this->NUM_PORT; i++) {
     this->nB_SI[i] = 0;
   };
+  for (int i = 0; i < this->NUM_PORT; i++) {
+    this->nRTrans[i] = 0;
+    this->nBTrans[i] = 0;
+  }
 
   // FIFO
   this->cpFIFO_AW->Reset();
@@ -448,10 +462,6 @@ EResultType CBUS::Reset() {
 // AR valid
 //------------------------------------------------------
 EResultType CBUS::Do_AR_fwd(int64_t nCycle) {
-
-  if (nCycle % BUS_LATENCY != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
 
   // Check Tx valid
   if (this->cpTx_AR->IsBusy() == ERESULT_TYPE_YES) {
@@ -537,10 +547,6 @@ EResultType CBUS::Do_AR_fwd(int64_t nCycle) {
 //---------------------------------------------------------------------------------------------------
 EResultType CBUS::Do_AR_fwd(int64_t nCycle) {
 
-  if (nCycle % BUS_LATENCY != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
-
   // ---- Check MO ---
   if (this->GetMO_AR() >= MAX_MO_COUNT) {
     return (ERESULT_TYPE_FAIL);
@@ -605,10 +611,6 @@ EResultType CBUS::Do_AR_fwd(int64_t nCycle) {
 //------------------------------------------------------
 #ifndef CCI_ON
 EResultType CBUS::Do_AW_fwd(int64_t nCycle) {
-
-  if (nCycle % BUS_LATENCY != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
 
   // Check Tx valid
   if (this->cpTx_AW->IsBusy() == ERESULT_TYPE_YES) {
@@ -709,10 +711,6 @@ EResultType CBUS::Do_AW_fwd(int64_t nCycle) {
 //---------------------------------------------------------------------------------------------------
 EResultType CBUS::Do_AW_fwd(int64_t nCycle) {
 
-  if (nCycle % BUS_LATENCY != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
-
   // ---- Check MO ---
   if (this->GetMO_AW() >= MAX_MO_COUNT) {
     return (ERESULT_TYPE_FAIL);
@@ -776,10 +774,6 @@ EResultType CBUS::Do_AW_fwd(int64_t nCycle) {
 // W valid
 //------------------------------------------------------
 EResultType CBUS::Do_W_fwd(int64_t nCycle) {
-
-  if (nCycle % BUS_LATENCY != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
 
   // Check Tx valid
   if (this->cpTx_W->IsBusy() == ERESULT_TYPE_YES) {
@@ -854,10 +848,6 @@ EResultType CBUS::Do_W_fwd(int64_t nCycle) {
 // AR ready
 //------------------------------------------------------
 EResultType CBUS::Do_AR_bwd(int64_t nCycle) {
-
-  // if(nCycle % BUS_LATENCY != 0){
-  //  return (ERESULT_TYPE_FAIL);
-  // }
 
   // Check Tx ready
   if (this->cpTx_AR->GetAcceptResult() == ERESULT_TYPE_REJECT) {
@@ -967,10 +957,6 @@ EResultType CBUS::Do_AR_bwd(int64_t nCycle) {
 //------------------------------------------------------
 #ifndef CCI_ON
 EResultType CBUS::Do_AW_bwd(int64_t nCycle) {
-
-  // if(nCycle % BUS_LATENCY != 0){
-  //  return (ERESULT_TYPE_FAIL);
-  // }
 
   // Check Tx ready
   if (this->cpTx_AW->GetAcceptResult() == ERESULT_TYPE_REJECT) {
@@ -1094,7 +1080,13 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
       continue; // Masked out snoop master
 
     if (this->cpFIFO_SnoopReq[snoopMaster]->IsEmpty() == ERESULT_TYPE_NO) {
+
       UPUD upTop = this->cpFIFO_SnoopReq[snoopMaster]->GetTop();
+
+      if (this->cpFIFO_SnoopReq[snoopMaster]->GetHead()->nLatency > 0) {
+        continue;
+      }
+
       CPACPkt snoopReqEntry = upTop->cpAC;
 
       if (this->cpTx_AC[snoopMaster]->IsBusy() == ERESULT_TYPE_NO) {
@@ -1264,7 +1256,7 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
       upCentral->nLength = ceil((initTrans->GetLen() + 1) / 4.0);
       upCentral->nSnoopMask = 0;
 
-      this->cpFIFO_Central->Push(upCentral);
+      this->cpFIFO_Central->Push(upCentral, BUS_LATENCY);
       Delete_UD(upCentral, EUD_TYPE_CENTRAL);
 
       // Push snoop requests to target master snoop request queues
@@ -1279,7 +1271,7 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
         upNew->nCounter = 0;
         upNew->nLength = ceil((initTrans->GetLen() + 1) / 4.0);
         upNew->nSnoopMask = 0;
-        this->cpFIFO_SnoopReq[snoopMaster]->Push(upNew);
+        this->cpFIFO_SnoopReq[snoopMaster]->Push(upNew, BUS_LATENCY);
         Delete_UD(upNew, EUD_TYPE_AC);
       }
 
@@ -1879,7 +1871,7 @@ bool CBUS::TryReturnResponseToMaster(UPUD upCentral, int initMaster, bool bIsSha
 
   // Update central transaction progress tracking
   upCentral->nCounter += 1;
-  this->nRTrans++;
+  this->nRTrans[initMaster]++;
   cpAxTop->SetAddr(cpAxTop->GetAddr() + MAX_TRANS_SIZE);
 
   return true;
@@ -1963,8 +1955,15 @@ bool CBUS::ProcessCentralTransactions(int64_t nCycle) {
     UPUD upCentral = spScan->upData;
     SPLinkedUD spNextScan = spScan->spNext;
 
+    // Check the latency of the current entry
+    if (spScan->nLatency > 0) {
+      spScan = spNextScan;
+      continue;
+    }
+
     // Check if the current transaction is already finished
     if (upCentral->nCounter >= upCentral->nLength) {
+
       UPUD upPopCentral = this->cpFIFO_Central->Pop(upCentral);
       if (upPopCentral) {
         Delete_UD(upPopCentral, EUD_TYPE_CENTRAL);
@@ -2377,10 +2376,6 @@ EResultType CBUS::Do_W_snoop_fwd(int64_t nCycle) {
 //------------------------------------------------------
 EResultType CBUS::Do_W_bwd(int64_t nCycle) {
 
-  // if(nCycle % BUS_LATENCY != 0){
-  //  return (ERESULT_TYPE_FAIL);
-  // }
-
   // Check Tx ready
   if (this->cpTx_W->GetAcceptResult() == ERESULT_TYPE_REJECT) {
     return (ERESULT_TYPE_SUCCESS);
@@ -2435,12 +2430,6 @@ EResultType CBUS::Do_W_bwd(int64_t nCycle) {
 //------------------------------------------------------
 EResultType CBUS::Do_R_fwd(int64_t nCycle) {
 
-  // Assump that the responseing to the master take less time to handle.
-  int response_latency = std::max(1, BUS_LATENCY / 5);
-  if (nCycle % response_latency != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
-
   // Check remote-Tx valid
   CPRPkt cpR = this->cpRx_R->GetPair()->GetR();
   if (cpR == NULL) {
@@ -2485,7 +2474,7 @@ EResultType CBUS::Do_R_fwd(int64_t nCycle) {
   // Stat
   this->nR_SI[nPort]++;
   if (cpR_new->IsLast() == ERESULT_TYPE_YES) {
-    this->nRTrans++;
+    this->nRTrans[nPort]++;
 
 #ifdef CCI_ON
     auto it = std::find(this->m_outstandingMemARID.begin(), this->m_outstandingMemARID.end(), cpR->GetID());
@@ -2526,10 +2515,6 @@ EResultType CBUS::Do_R_fwd(int64_t nCycle) {
 //------------------------------------------------------
 #ifndef CCI_ON
 EResultType CBUS::Do_B_fwd(int64_t nCycle) {
-
-  if (nCycle % BUS_LATENCY != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
 
   // Check remote-Tx valid
   CPBPkt cpB = this->cpRx_B->GetPair()->GetB();
@@ -2587,13 +2572,6 @@ EResultType CBUS::Do_B_fwd(int64_t nCycle) {
   // Drop all incoming B responses since CCI does not use the B channel for
   // write responses.
 
-  // Do not need to send back to the master.
-  // Thus, delay do not needed -> It is set very small.
-  int response_latency = std::max(1, BUS_LATENCY / 5);
-  if (nCycle % response_latency != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
-
   // Check remote-Tx valid
   CPBPkt cpB = this->cpRx_B->GetPair()->GetB();
 
@@ -2632,7 +2610,7 @@ EResultType CBUS::Do_B_fwd(int64_t nCycle) {
     cpR_new->SetName(cpB->GetName());
     this->cpTx_R[nPort]->PutR(cpR_new);
     this->nR_SI[nPort]++;
-    this->nRTrans++;
+    this->nRTrans[nPort]++;
 
     int index = std::distance(this->m_outstandingMemARID.begin(), itR);
     this->m_outstandingMemARID.erase(itR);
@@ -2648,7 +2626,8 @@ EResultType CBUS::Do_B_fwd(int64_t nCycle) {
 
   } else if (itW != this->m_outstandingMemAWID.end()) {
 
-    this->nBTrans++;
+    int nPort = GetPortNum(nID);
+    this->nBTrans[nPort]++;
     int index = std::distance(this->m_outstandingMemAWID.begin(), itW);
 
     this->m_outstandingMemAWID.erase(itW);
@@ -2666,10 +2645,6 @@ EResultType CBUS::Do_B_fwd(int64_t nCycle) {
 // R ready
 //------------------------------------------------------
 EResultType CBUS::Do_R_bwd(int64_t nCycle) {
-
-  // if(nCycle % BUS_LATENCY != 0){
-  //  return (ERESULT_TYPE_FAIL);
-  // }
 
   // Check Rx valid
   CPRPkt cpR = this->cpRx_R->GetR();
@@ -2731,10 +2706,6 @@ EResultType CBUS::Do_R_bwd(int64_t nCycle) {
 #ifndef CCI_ON
 EResultType CBUS::Do_B_bwd(int64_t nCycle) {
 
-  // if(nCycle % BUS_LATENCY != 0){
-  //  return (ERESULT_TYPE_FAIL);
-  // }
-
   // Check Rx valid
   CPBPkt cpB = this->cpRx_B->GetB();
 
@@ -2781,10 +2752,6 @@ EResultType CBUS::Do_B_bwd(int64_t nCycle) {
 };
 #else
 EResultType CBUS::Do_B_bwd(int64_t nCycle) {
-
-  // if(nCycle % BUS_LATENCY != 0){
-  //  return (ERESULT_TYPE_FAIL);
-  // }
 
   // Check Rx valid
   CPBPkt cpB = this->cpRx_B->GetB();
@@ -2985,23 +2952,23 @@ int CBUS::GetPortNum(int nID) {
   return (nPort);
 };
 
-EResultType CBUS::Set_nR_GEN_NUM(int nNum) {
-  this->nR_GEN_NUM = nNum;
+EResultType CBUS::Set_nR_GEN_NUM(int nPort, int nNum) {
+  this->nR_GEN_NUM[nPort] = nNum;
   return (ERESULT_TYPE_SUCCESS);
 };
 
-EResultType CBUS::Set_nB_GEN_NUM(int nNum) {
-  this->nB_GEN_NUM = nNum;
+EResultType CBUS::Set_nB_GEN_NUM(int nPort, int nNum) {
+  this->nB_GEN_NUM[nPort] = nNum;
   return (ERESULT_TYPE_SUCCESS);
 };
 
-int CBUS::Get_nRTrans() { return (this->nRTrans); };
+int CBUS::Get_nRTrans(int nPort) { return (this->nRTrans[nPort]); };
 
-int CBUS::Get_nBTrans() { return (this->nBTrans); };
+int CBUS::Get_nBTrans(int nPort) { return (this->nBTrans[nPort]); };
 
-int CBUS::Get_nR_GEN_NUM() { return (this->nR_GEN_NUM); };
+int CBUS::Get_nR_GEN_NUM(int nPort) { return (this->nR_GEN_NUM[nPort]); };
 
-int CBUS::Get_nB_GEN_NUM() { return (this->nB_GEN_NUM); };
+int CBUS::Get_nB_GEN_NUM(int nPort) { return (this->nB_GEN_NUM[nPort]); };
 
 uint32_t CBUS::GetSnoopIssued() { return (this->nSnoopIssued); };
 
@@ -3049,6 +3016,16 @@ EResultType CBUS::UpdateState(int64_t nCycle) {
 
   // FIFO
   this->cpFIFO_AW->UpdateState();
+  this->cpFIFO_SnoopData->UpdateState();
+  this->cpFIFO_Central->UpdateState();
+
+  for (int i = 0; i < NUM_PORT; i++) {
+    this->cpFIFO_MstAW[i]->UpdateState();
+    this->cpFIFO_MstAR[i]->UpdateState();
+    this->cpFIFO_SnoopReq[i]->UpdateState();
+    this->cpFIFO_SnoopResp[i]->UpdateState();
+    this->cpFIFO_SnoopReqMst[i]->UpdateState();
+  }
 
   return (ERESULT_TYPE_SUCCESS);
 };

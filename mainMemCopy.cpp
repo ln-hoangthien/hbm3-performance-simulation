@@ -29,7 +29,12 @@ int main() {
 #ifdef CCI_CACHELINE
   nCACHELINE = CCI_CACHELINE;
 #else
-  nCACHELINE = 64;
+  nCACHELINE = 1;
+#endif
+#ifdef CCI_SNOOP_LATENCY
+  SNOOP_LATENCY = CCI_SNOOP_LATENCY;
+#else
+  SNOOP_LATENCY = 10;
 #endif
   SNOOP_MASK = 0; // Set Snoop Mask here
   MEMCOPY = true;
@@ -49,6 +54,14 @@ int main() {
   CPMST cpMST1 = new CMST("MST1");
   CPBUS cpBUS = new CBUS("BUS", 2);
   CPSLV cpSLV = new CSLV("SLV", 0);
+
+#ifdef CCI_CACHELINE
+  cpMST0->Set_nCACHELINE(1);
+  cpMST1->Set_nCACHELINE(CCI_CACHELINE);
+#else
+  cpMST0->Set_nCACHELINE(1);
+  cpMST1->Set_nCACHELINE(1);
+#endif
 
   //------------------------------------
   // 2. Link TRx topology
@@ -96,25 +109,43 @@ int main() {
   cpMST0->Set_nAW_GEN_NUM(0);
   cpMST0->Set_nAR_GEN_NUM(0);
   cpMST1->Set_nAW_GEN_NUM(0);
-  cpMST1->Set_nAR_GEN_NUM(ceil(NUM / nCACHELINE));
-  cpBUS->Set_nB_GEN_NUM(0);
-  cpBUS->Set_nR_GEN_NUM(NUM);
-#elif defined(CCI_READ_WRITE)
-  // READWRITE (ARAW)
-  cpMST0->Set_nAW_GEN_NUM(0);
-  cpMST0->Set_nAR_GEN_NUM(ceil(NUM / nCACHELINE));
-  cpMST1->Set_nAW_GEN_NUM(ceil(NUM / nCACHELINE));
-  cpMST1->Set_nAR_GEN_NUM(0);
-  cpBUS->Set_nB_GEN_NUM(NUM);
-  cpBUS->Set_nR_GEN_NUM(NUM);
-#else
-  // Default: WRITE-only (AW) (also matches CCI_WRITE_ONLY)
+  cpMST1->Set_nAR_GEN_NUM(ceil(NUM / cpMST1->Get_nCACHELINE()));
+  cpBUS->Set_nB_GEN_NUM(0, 0);
+  cpBUS->Set_nB_GEN_NUM(1, 0);
+  cpBUS->Set_nR_GEN_NUM(0, 0);
+  cpBUS->Set_nR_GEN_NUM(1, NUM);
+
+#elif defined(CCI_WRITE_ONLY)
   cpMST0->Set_nAW_GEN_NUM(0);
   cpMST0->Set_nAR_GEN_NUM(0);
-  cpMST1->Set_nAW_GEN_NUM(ceil(NUM / nCACHELINE));
+  cpMST1->Set_nAW_GEN_NUM(ceil(NUM / cpMST1->Get_nCACHELINE()));
   cpMST1->Set_nAR_GEN_NUM(0);
-  cpBUS->Set_nB_GEN_NUM(NUM);
-  cpBUS->Set_nR_GEN_NUM(0);
+  cpBUS->Set_nB_GEN_NUM(0, 0);
+  cpBUS->Set_nB_GEN_NUM(1, NUM);
+  cpBUS->Set_nR_GEN_NUM(0, 0);
+  cpBUS->Set_nR_GEN_NUM(1, 0);
+
+#elif defined(CCI_WRITE_READ)
+  cpMST0->Set_nAW_GEN_NUM(0);
+  cpMST0->Set_nAR_GEN_NUM(ceil(NUM / cpMST0->Get_nCACHELINE() / 4));
+  cpMST1->Set_nAW_GEN_NUM(ceil(NUM / cpMST1->Get_nCACHELINE()));
+  cpMST1->Set_nAR_GEN_NUM(0);
+  cpBUS->Set_nB_GEN_NUM(0, 0);
+  cpBUS->Set_nB_GEN_NUM(1, NUM);
+  cpBUS->Set_nR_GEN_NUM(0, NUM / 4);
+  cpBUS->Set_nR_GEN_NUM(1, 0);
+
+#elif defined(CCI_WRITE_WRITE)
+  cpMST0->Set_nAW_GEN_NUM(ceil(NUM / cpMST0->Get_nCACHELINE() / 4));
+  cpMST0->Set_nAR_GEN_NUM(0);
+  cpMST1->Set_nAW_GEN_NUM(ceil(NUM / cpMST1->Get_nCACHELINE()));
+  cpMST1->Set_nAR_GEN_NUM(0);
+  cpBUS->Set_nB_GEN_NUM(0, NUM / 4);
+  cpBUS->Set_nB_GEN_NUM(1, NUM);
+  cpBUS->Set_nR_GEN_NUM(0, 0);
+  cpBUS->Set_nR_GEN_NUM(1, 0);
+#else
+  assert(0);
 #endif
 
   //------------------------------
@@ -155,6 +186,20 @@ int main() {
       cpBUS->Reset();
       cpSLV->Reset();
     };
+
+#ifdef ISSUE_MIN_INTERVAL
+    cpMST0->Set_AR_ISSUE_MIN_INTERVAL(ISSUE_MIN_INTERVAL);
+    cpMST0->Set_AW_ISSUE_MIN_INTERVAL(ISSUE_MIN_INTERVAL);
+
+    cpMST1->Set_AR_ISSUE_MIN_INTERVAL(ISSUE_MIN_INTERVAL);
+    cpMST1->Set_AW_ISSUE_MIN_INTERVAL(ISSUE_MIN_INTERVAL);
+#else
+    cpMST0->Set_AR_ISSUE_MIN_INTERVAL(8);
+    cpMST0->Set_AW_ISSUE_MIN_INTERVAL(8);
+
+    cpMST1->Set_AR_ISSUE_MIN_INTERVAL(8);
+    cpMST1->Set_AW_ISSUE_MIN_INTERVAL(8);
+#endif
 
     //---------------------------------------------
     // 4. Start simulation
@@ -325,8 +370,8 @@ int main() {
       // break;
     };
 
-    if (cpBUS->Get_nRTrans() == cpBUS->Get_nR_GEN_NUM() && cpBUS->Get_nBTrans() == cpBUS->Get_nB_GEN_NUM() &&
-        cpBUS->GetSnoopIssued() == cpBUS->GetSnoopResp()) {
+    if (cpBUS->Get_nRTrans(0) == cpBUS->Get_nR_GEN_NUM(0) && cpBUS->Get_nBTrans(0) == cpBUS->Get_nB_GEN_NUM(0) &&
+        cpBUS->Get_nRTrans(1) == cpBUS->Get_nR_GEN_NUM(1) && cpBUS->Get_nBTrans(1) == cpBUS->Get_nB_GEN_NUM(1)) {
       printf("[Cycle %3ld] Bus is finished.\n", nCycle);
       break;
     }
@@ -357,8 +402,10 @@ int main() {
   printf("\t IMG_VERTICAL_SIZE        : %d\n", IMG_VERTICAL_SIZE);
   printf("\t MAX_MO_COUNT				: %d\n", MAX_MO_COUNT);
 
-  printf("\t R channel responses		: %d\n", cpBUS->Get_nRTrans());
-  printf("\t B channel responses		: %d\n", cpBUS->Get_nBTrans());
+  printf("\t [0] R channel responses		: %d\n", cpBUS->Get_nRTrans(0));
+  printf("\t [0] B channel responses		: %d\n", cpBUS->Get_nBTrans(0));
+  printf("\t [1] R channel responses		: %d\n", cpBUS->Get_nRTrans(1));
+  printf("\t [1] B channel responses		: %d\n", cpBUS->Get_nBTrans(1));
   printf("\t [0] Total Read Transactions	: %d\n", cpMST0->Get_nARTrans());
   printf("\t [0] Total Write Transactions	: %d\n", cpMST0->Get_nAWTrans());
   printf("\t [1] Total Read Transactions	: %d\n", cpMST1->Get_nARTrans());

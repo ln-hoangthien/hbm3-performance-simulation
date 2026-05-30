@@ -174,9 +174,9 @@ EResultType CSLV::Reset() {
     this->spMemStatePkt->IsWR_ready[i] = ERESULT_TYPE_NO;
     this->spMemStatePkt->IsPRE_ready[i] = ERESULT_TYPE_NO;
     this->spMemStatePkt->IsACT_ready[i] = ERESULT_TYPE_NO;
-    this->spMemStatePkt->IsREF_ready[i] = ERESULT_TYPE_NO;
-    this->spMemStatePkt->forced_PRE[i] = ERESULT_TYPE_NO;
-    this->spMemStatePkt->forced_REFI[i] = ERESULT_TYPE_NO;
+    // this->spMemStatePkt->IsREF_ready[i] = ERESULT_TYPE_NO;
+    // this->spMemStatePkt->forced_PRE[i] = ERESULT_TYPE_NO;
+    // this->spMemStatePkt->forced_REFI[i] = ERESULT_TYPE_NO;
     this->spMemStatePkt->IsFirstData_ready[i] = ERESULT_TYPE_NO;
     this->spMemStatePkt->IsBankPrepared[i] = ERESULT_TYPE_NO;
     this->spMemStatePkt->nActivatedRow[i] = -1;
@@ -767,12 +767,14 @@ EResultType CSLV::Do_Ax_fwd_MC_Backend_Request(int64_t nCycle) {
 
   // Get cmd
   if (spScheduledMUD != NULL) {
+    /*
     // Check forced-REF
     if (this->spMemStatePkt->forced_REFI[spScheduledMUD->spMemCmdPkt->nBank] == ERESULT_TYPE_YES) {
       this->SetMemCmdPkt(EMEM_CMD_TYPE_NOP, -1, -1);
       this->cpMem->SetMemCmdPkt(EMEM_CMD_TYPE_NOP, -1, -1);
       return (ERESULT_TYPE_SUCCESS);
     };
+    */
 
   } else {
     this->SetMemCmdPkt(EMEM_CMD_TYPE_NOP, -1, -1);
@@ -1384,6 +1386,7 @@ this->previous_nBank = -1; } return (ERESULT_TYPE_SUCCESS);
 }
   */
 
+  /*
   for (int element = 0; element < BANK_NUM; element++) {
     if (this->spMemStatePkt->forced_REFI[element] == ERESULT_TYPE_YES) {
 
@@ -1420,6 +1423,7 @@ this->previous_nBank = -1; } return (ERESULT_TYPE_SUCCESS);
       }
     }
   }
+  */
 
   return (ERESULT_TYPE_FAIL);
 }

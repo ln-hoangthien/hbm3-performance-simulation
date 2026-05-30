@@ -9,6 +9,7 @@
 #define CSLV_H
 
 #include <string>
+#include <vector>
 
 #include "CFIFO.h"
 #include "CMem.h"

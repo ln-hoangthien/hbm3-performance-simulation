@@ -101,6 +101,7 @@ CMST::CMST(string cName) {
   this->nStartAddrA = -1;
   this->nStartAddrB = -1;
   this->nStartAddrC = -1;
+  this->nCACHELINE = ::nCACHELINE;
 };
 
 // Destructor
@@ -4385,7 +4386,7 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
     SnoopType = 1; // ReadShared
 
   cpAR_new->SetSnoop(SnoopType);
-  cpAR_new->SetLen(nCACHELINE * 4 - 1);
+  cpAR_new->SetLen(this->nCACHELINE * 4 - 1);
 #endif
 
   // Check final trans application
@@ -4501,7 +4502,7 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap,
   cpAW_new->SetSnoop(SnoopType);
 
   if (SnoopType == 1) { // WriteLineUnique
-    cpAW_new->SetLen(nCACHELINE * 4 - 1);
+    cpAW_new->SetLen(this->nCACHELINE * 4 - 1);
   }
 
 #endif
@@ -5132,7 +5133,7 @@ EResultType CMST::Do_AC_bwd(int64_t nCycle) {
   upAC_new->cpAC = new CACPkt(cpAC->GetName(), cpAC->GetDir());
   upAC_new->cpAC->SetSnoop(cpAC->GetSnoop());
   upAC_new->cpAC->SetAddr(cpAC->GetAddr());
-  this->cpFIFO_AC->Push(upAC_new, MST_FIFO_LATENCY);
+  this->cpFIFO_AC->Push(upAC_new, SNOOP_LATENCY);
 
   Delete_UD(upAC_new, EUD_TYPE_AC);
 
@@ -5154,9 +5155,9 @@ EResultType CMST::Do_AC_bwd(int64_t nCycle) {
 //---------------------------------------------------------------------------------------
 EResultType CMST::Do_CR_fwd(int64_t nCycle) {
 
-  if (nCycle % SNOOP_LATENCY != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
+  // if (nCycle % SNOOP_LATENCY != 0) {
+  //   return (ERESULT_TYPE_FAIL);
+  // }
 
   if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES)
     return (ERESULT_TYPE_SUCCESS);
@@ -5164,6 +5165,10 @@ EResultType CMST::Do_CR_fwd(int64_t nCycle) {
   // Check Rx valid
   if (this->cpFIFO_AC->IsEmpty() == ERESULT_TYPE_YES)
     return (ERESULT_TYPE_SUCCESS);
+
+  if (this->cpFIFO_AC->GetHead()->nLatency > 0) {
+    return (ERESULT_TYPE_SUCCESS);
+  }
 
   CPACPkt cpAC = this->cpFIFO_AC->GetTop()->cpAC;
 
@@ -5229,7 +5234,9 @@ EResultType CMST::Do_CR_fwd(int64_t nCycle) {
   if (shouldPop) {
     this->simCDlen = 0;
     UPUD upPop = this->cpFIFO_AC->Pop();
-    Delete_UD(upPop, EUD_TYPE_AC);
+    if (upPop != NULL) {
+      Delete_UD(upPop, EUD_TYPE_AC);
+    }
   }
 
   return (ERESULT_TYPE_SUCCESS);
@@ -5270,15 +5277,19 @@ EResultType CMST::Do_CR_bwd(int64_t nCycle) {
 //---------------------------------------------------------------------------------------
 EResultType CMST::Do_CD_fwd(int64_t nCycle) {
 
-  if (nCycle % SNOOP_LATENCY != 0) {
-    return (ERESULT_TYPE_FAIL);
-  }
+  // if (nCycle % SNOOP_LATENCY != 0) {
+  //   return (ERESULT_TYPE_FAIL);
+  // }
 
   int nLen = 4; // FIXME: The length of CD should be determined by the MASTER
                 // and encoded in CR response. Here we just set it as a fixed
                 // value for simulation.
 
   if (this->cpFIFO_AC->IsEmpty() == ERESULT_TYPE_YES) {
+    return (ERESULT_TYPE_SUCCESS);
+  }
+
+  if (this->cpFIFO_AC->GetHead()->nLatency > 0) {
     return (ERESULT_TYPE_SUCCESS);
   }
 
@@ -5488,6 +5499,17 @@ EResultType CMST::Set_nAW_GEN_NUM(int nNum) {
   return (ERESULT_TYPE_YES);
 };
 
+// Set Cacheline size
+EResultType CMST::Set_nCACHELINE(int nNum) {
+  this->nCACHELINE = nNum;
+  this->cpAddrGen_AR->Set_nCACHELINE(nNum);
+  this->cpAddrGen_AW->Set_nCACHELINE(nNum);
+  return (ERESULT_TYPE_YES);
+};
+
+// Get Cacheline size
+int CMST::Get_nCACHELINE() { return (this->nCACHELINE); };
+
 // Set image horizontal size scaling factor
 EResultType CMST::Set_ScalingFactor(float Num) {
 
@@ -5661,6 +5683,7 @@ EResultType CMST::UpdateState(int64_t nCycle) {
   this->cpRx_AC->UpdateState();
   this->cpTx_CR->UpdateState();
   this->cpTx_CD->UpdateState();
+  this->cpFIFO_AC->UpdateState();
 #endif
 
 #if !defined MATRIX_MULTIPLICATION && !defined MATRIX_MULTIPLICATIONKIJ && !defined MATRIX_TRANSPOSE &&                \
@@ -5724,10 +5747,10 @@ EResultType CMST::PrintStat(int64_t nCycle, FILE *fp) {
   // Debug
   assert(this->nMO_AR == 0);
   assert(this->nMO_AW == 0);
-  assert(this->nARTransFinished == this->nARTrans * nCACHELINE);
+  assert(this->nARTransFinished == this->nARTrans * this->nCACHELINE);
   assert(this->nAWTransFinished == this->nAWTrans);
   assert(this->nAllTransFinished == this->nARTransFinished + this->nAWTransFinished);
-  assert(this->nAllTransFinished == (this->nARTrans * nCACHELINE) + this->nAWTrans);
+  assert(this->nAllTransFinished == (this->nARTrans * this->nCACHELINE) + this->nAWTrans);
 
   if (this->nAR_GEN_NUM > 0) {
     assert(this->IsARTransFinished() == ERESULT_TYPE_YES);

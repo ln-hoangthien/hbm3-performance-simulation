@@ -263,6 +263,7 @@ CAddrGen::CAddrGen(string cName, ETransDirType eDir, string cOperation, int64_t 
   this->nB = -1;
   this->nAsize = -1;
   this->nBsize = -1;
+  this->nCACHELINE = ::nCACHELINE;
 };
 
 // Construct
@@ -335,6 +336,7 @@ CAddrGen::CAddrGen(string cName, ETransDirType eDir) {
   this->nB = -1;
   this->nAsize = -1;
   this->nBsize = -1;
+  this->nCACHELINE = ::nCACHELINE;
 };
 
 // Destruct
@@ -569,6 +571,17 @@ EResultType CAddrGen::SetAddrMap(string cAddrMap) {
 
   this->cAddrMap = cAddrMap;
   return (ERESULT_TYPE_SUCCESS);
+};
+
+// Set Cacheline size
+EResultType CAddrGen::Set_nCACHELINE(int nVal) {
+  this->nCACHELINE = nVal;
+  return (ERESULT_TYPE_SUCCESS);
+};
+
+// Get Cacheline size
+int CAddrGen::Get_nCACHELINE() {
+  return (this->nCACHELINE);
 };
 
 // Set (A, B)
@@ -3501,11 +3514,11 @@ EResultType CAddrGen::UpdateState() {
     };
 #else
     // Update coordinate temp
-    if (this->nApos + (nCACHELINE * this->nNumPixelTrans) >= ImgH) {
-      this->nApos = (this->nApos + (nCACHELINE * this->nNumPixelTrans)) % ImgH;
+    if (this->nApos + (this->nCACHELINE * this->nNumPixelTrans) >= ImgH) {
+      this->nApos = (this->nApos + (this->nCACHELINE * this->nNumPixelTrans)) % ImgH;
       this->nBpos++;
     } else {
-      this->nApos = this->nApos + (TILEH * nCACHELINE);
+      this->nApos = this->nApos + (TILEH * this->nCACHELINE);
     };
 #endif
 
