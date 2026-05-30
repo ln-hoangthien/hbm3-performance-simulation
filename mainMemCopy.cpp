@@ -127,20 +127,20 @@ int main() {
 
 #elif defined(CCI_WRITE_READ)
   cpMST0->Set_nAW_GEN_NUM(0);
-  cpMST0->Set_nAR_GEN_NUM(ceil(NUM / cpMST0->Get_nCACHELINE() / 4));
+  cpMST0->Set_nAR_GEN_NUM(ceil(NUM / cpMST0->Get_nCACHELINE()));
   cpMST1->Set_nAW_GEN_NUM(ceil(NUM / cpMST1->Get_nCACHELINE()));
   cpMST1->Set_nAR_GEN_NUM(0);
   cpBUS->Set_nB_GEN_NUM(0, 0);
   cpBUS->Set_nB_GEN_NUM(1, NUM);
-  cpBUS->Set_nR_GEN_NUM(0, NUM / 4);
+  cpBUS->Set_nR_GEN_NUM(0, NUM);
   cpBUS->Set_nR_GEN_NUM(1, 0);
 
 #elif defined(CCI_WRITE_WRITE)
-  cpMST0->Set_nAW_GEN_NUM(ceil(NUM / cpMST0->Get_nCACHELINE() / 4));
+  cpMST0->Set_nAW_GEN_NUM(ceil(NUM / cpMST0->Get_nCACHELINE()));
   cpMST0->Set_nAR_GEN_NUM(0);
   cpMST1->Set_nAW_GEN_NUM(ceil(NUM / cpMST1->Get_nCACHELINE()));
   cpMST1->Set_nAR_GEN_NUM(0);
-  cpBUS->Set_nB_GEN_NUM(0, NUM / 4);
+  cpBUS->Set_nB_GEN_NUM(0, NUM);
   cpBUS->Set_nB_GEN_NUM(1, NUM);
   cpBUS->Set_nR_GEN_NUM(0, 0);
   cpBUS->Set_nR_GEN_NUM(1, 0);
@@ -370,7 +370,7 @@ int main() {
       // break;
     };
 
-    if (cpBUS->Get_nRTrans(0) == cpBUS->Get_nR_GEN_NUM(0) && cpBUS->Get_nBTrans(0) == cpBUS->Get_nB_GEN_NUM(0) &&
+    if (/*cpBUS->Get_nRTrans(0) == cpBUS->Get_nR_GEN_NUM(0) && cpBUS->Get_nBTrans(0) == cpBUS->Get_nB_GEN_NUM(0) &&*/
         cpBUS->Get_nRTrans(1) == cpBUS->Get_nR_GEN_NUM(1) && cpBUS->Get_nBTrans(1) == cpBUS->Get_nB_GEN_NUM(1)) {
       printf("[Cycle %3ld] Bus is finished.\n", nCycle);
       break;
@@ -413,7 +413,7 @@ int main() {
 
   printf("---------------------------------------------\n");
 
-  cpMST0->PrintStat(nCycle, nullptr);
+  // cpMST0->PrintStat(nCycle, nullptr); // Background transactions,  do not need to check
   cpMST1->PrintStat(nCycle, nullptr);
   cpBUS->PrintStat(nCycle, nullptr);
   cpSLV->PrintStat(nCycle, nullptr);

@@ -1961,16 +1961,6 @@ bool CBUS::ProcessCentralTransactions(int64_t nCycle) {
       continue;
     }
 
-    // Check if the current transaction is already finished
-    if (upCentral->nCounter >= upCentral->nLength) {
-
-      UPUD upPopCentral = this->cpFIFO_Central->Pop(upCentral);
-      if (upPopCentral) {
-        Delete_UD(upPopCentral, EUD_TYPE_CENTRAL);
-      }
-      return true;
-    }
-
     CPAxPkt cpAxTop = upCentral->cpCentral;
     int initMaster = GetPortNum(cpAxTop->GetID());
 
@@ -2029,18 +2019,48 @@ bool CBUS::ProcessCentralTransactions(int64_t nCycle) {
     // 1. Write to main memory
     if ((isClean && bDataTransfer) || isWrite) {
       if (TryWriteToMemory(upCentral, isClean, isWriteLineUnique, readySnoopResps, nCycle)) {
+
+        // Check if the current transaction is already finished
+        if (upCentral->nCounter >= upCentral->nLength) {
+
+          UPUD upPopCentral = this->cpFIFO_Central->Pop(upCentral);
+          if (upPopCentral) {
+            Delete_UD(upPopCentral, EUD_TYPE_CENTRAL);
+          }
+        }
+
         return true;
       }
     }
     // 2. Read the main memory
     else if (!bIsShared && !bWasUnique && !bDataTransfer && !bPassDirty) {
       if (TryReadFromMemory(upCentral, readySnoopResps, nCycle)) {
+
+        // Check if the current transaction is already finished
+        if (upCentral->nCounter >= upCentral->nLength) {
+
+          UPUD upPopCentral = this->cpFIFO_Central->Pop(upCentral);
+          if (upPopCentral) {
+            Delete_UD(upPopCentral, EUD_TYPE_CENTRAL);
+          }
+        }
+
         return true;
       }
     }
     // 3. Return response to initiating master
     else {
       if (TryReturnResponseToMaster(upCentral, initMaster, bIsShared, bPassDirty, readySnoopResps, nCycle)) {
+
+        // Check if the current transaction is already finished
+        if (upCentral->nCounter >= upCentral->nLength) {
+
+          UPUD upPopCentral = this->cpFIFO_Central->Pop(upCentral);
+          if (upPopCentral) {
+            Delete_UD(upPopCentral, EUD_TYPE_CENTRAL);
+          }
+        }
+
         return true;
       }
     }
