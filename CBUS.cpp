@@ -437,6 +437,7 @@ EResultType CBUS::Reset() {
   this->m_outstandingMemAWID.clear();
   this->m_outstandingMemARAddr.clear();
   this->m_outstandingMemAWAddr.clear();
+  this->m_outstandingMemAWIsRead.clear();
 #endif
 
   // Arb
@@ -1352,6 +1353,7 @@ EResultType CBUS::Do_AC_fwd(int64_t nCycle) {
         this->cpTx_AW->PutAx(initTrans);
         this->m_outstandingMemAWID.push_back(nID);
         this->m_outstandingMemAWAddr.push_back(initTrans->GetAddr());
+        this->m_outstandingMemAWIsRead.push_back(false);
       }
 
 #ifdef DEBUG_BUS
@@ -1736,6 +1738,12 @@ bool CBUS::TryWriteToMemory(UPUD upCentral, bool isClean, bool isWriteLineUnique
   // If this is a ReadClean transaction converted to memory writeback, track it in the AR outstanding list.
   this->m_outstandingMemAWID.push_back(cpAW->GetID());
   this->m_outstandingMemAWAddr.push_back(cpAW->GetAddr());
+
+  if (cpAxTop->GetDir() == ETRANS_DIR_TYPE_READ) {
+    this->m_outstandingMemAWIsRead.push_back(true);
+  } else {
+    this->m_outstandingMemAWIsRead.push_back(false);
+  }
 
   // For standard writes (not WriteLineUnique), consume and delete the resolved snoop response packets.
   if (!isWriteLineUnique) {
@@ -2599,6 +2607,52 @@ EResultType CBUS::Do_B_fwd(int64_t nCycle) {
     return (ERESULT_TYPE_SUCCESS);
   };
 
+  int nID = cpB->GetID();
+  auto itW = std::find(this->m_outstandingMemAWID.begin(), this->m_outstandingMemAWID.end(), nID);
+
+  // Existed in outstanding AR,
+  // means this B is for a read transaction that requires data return. We need
+  // to forward it to the master.
+  if (itW != this->m_outstandingMemAWID.end()) {
+    int index = std::distance(this->m_outstandingMemAWID.begin(), itW);
+    int nPort = GetPortNum(nID);
+
+    if (this->m_outstandingMemAWIsRead[index]) {
+
+      if (this->cpTx_R[nPort]->IsBusy() == ERESULT_TYPE_YES) {
+        return (ERESULT_TYPE_SUCCESS); // Stall
+      }
+
+      // Redirect to cpRx_R: construct CRPkt and put it onto the remote transmitter's queue (pair of cpRx_R)
+      CPRPkt cpR_new = new CRPkt;
+      cpR_new->SetPkt(nID, 0, 1, 0);
+      cpR_new->SetName(cpB->GetName());
+      cpR_new->SetLast(ERESULT_TYPE_YES);
+
+      this->cpTx_R[nPort]->PutR(cpR_new);
+
+      // Increase the counter.
+      this->nRTrans[nPort]++;
+
+      // Erase the m_outstandingMemAWIsRead
+      this->m_outstandingMemAWIsRead.erase(this->m_outstandingMemAWIsRead.begin() + index);
+
+      // Erase the m_outstandingMemAWID
+      this->m_outstandingMemAWID.erase(itW);
+      this->m_outstandingMemAWAddr.erase(this->m_outstandingMemAWAddr.begin() + index);
+
+    } else {
+      this->nBTrans[nPort]++;
+
+      // Erase the m_outstandingMemAWIsRead
+      this->m_outstandingMemAWIsRead.erase(this->m_outstandingMemAWIsRead.begin() + index);
+
+      // Erase the m_outstandingMemAWID
+      this->m_outstandingMemAWID.erase(itW);
+      this->m_outstandingMemAWAddr.erase(this->m_outstandingMemAWAddr.begin() + index);
+    }
+  }
+
   // Put Rx
   this->cpRx_B->PutB(cpB);
 
@@ -2606,56 +2660,6 @@ EResultType CBUS::Do_B_fwd(int64_t nCycle) {
   printf("[Cycle %3ld: %s.Do_B_fwd] (%s) BID 0x%x put Rx_B.\n", nCycle, this->cName.c_str(), cpB->GetName().c_str(),
          cpB->GetID());
 #endif
-
-  int nID = cpB->GetID();
-  auto itR = std::find(this->m_outstandingMemARID.begin(), this->m_outstandingMemARID.end(), nID);
-  auto itW = std::find(this->m_outstandingMemAWID.begin(), this->m_outstandingMemAWID.end(), nID);
-
-  // Existed in outstanding AR,
-  // means this B is for a read transaction that requires data return. We need
-  // to forward it to the master.
-  if (itR != this->m_outstandingMemARID.end()) {
-
-    int nPort = GetPortNum(nID);
-    if (this->cpTx_R[nPort]->IsBusy() == ERESULT_TYPE_YES) {
-      return (ERESULT_TYPE_SUCCESS); // Stall
-    }
-
-    CPBPkt cpB_new = Copy_CBPkt(cpB);
-    CPRPkt cpR_new = new CRPkt;
-
-    // For CCI, RRESP and RLAST are not used since the master can identify the
-    // transaction completion by the ID and the fast response.
-    cpR_new->SetPkt(nID, 0, 1, 0);
-    cpR_new->SetName(cpB->GetName());
-    this->cpTx_R[nPort]->PutR(cpR_new);
-    this->nR_SI[nPort]++;
-    this->nRTrans[nPort]++;
-
-    int index = std::distance(this->m_outstandingMemARID.begin(), itR);
-    this->m_outstandingMemARID.erase(itR);
-    this->m_outstandingMemARAddr.erase(this->m_outstandingMemARAddr.begin() + index);
-
-#ifdef DEBUG_BUS
-    printf("[Cycle %3ld: %s.Do_B_fwd] (%s) BID 0x%x put Tx_R.\n", nCycle, this->cName.c_str(), cpB->GetName().c_str(),
-           cpB->GetID());
-#endif
-
-    delete (cpB_new);
-    return (ERESULT_TYPE_SUCCESS);
-
-  } else if (itW != this->m_outstandingMemAWID.end()) {
-
-    int nPort = GetPortNum(nID);
-    this->nBTrans[nPort]++;
-    int index = std::distance(this->m_outstandingMemAWID.begin(), itW);
-
-    this->m_outstandingMemAWID.erase(itW);
-    this->m_outstandingMemAWAddr.erase(this->m_outstandingMemAWAddr.begin() + index);
-
-  } else {
-    assert(0);
-  }
 
   return (ERESULT_TYPE_SUCCESS);
 }

@@ -167,14 +167,17 @@ private:
   std::vector<int> m_outstandingMemAWID;
   std::vector<int64_t> m_outstandingMemARAddr;
   std::vector<int64_t> m_outstandingMemAWAddr;
+  std::vector<bool> m_outstandingMemAWIsRead;
 
   bool HasIDConflictInCentralFIFO(UPUD upCentral);
   int GetSnoopResponseCount(UPUD upCentral, int for_snoopMaster);
-  void PopSnoopResponses(int initMaster, const std::vector<UPUD>& readySnoopResps);
-  bool CheckSnoopResponses(UPUD upCentral, std::vector<UPUD>& readySnoopResps);
-  bool TryWriteToMemory(UPUD upCentral, bool isClean, bool isWriteLineUnique, const std::vector<UPUD>& readySnoopResps, int64_t nCycle);
-  bool TryReadFromMemory(UPUD upCentral, const std::vector<UPUD>& readySnoopResps, int64_t nCycle);
-  bool TryReturnResponseToMaster(UPUD upCentral, int initMaster, bool bIsShared, bool bPassDirty, const std::vector<UPUD>& readySnoopResps, int64_t nCycle);
+  void PopSnoopResponses(int initMaster, const std::vector<UPUD> &readySnoopResps);
+  bool CheckSnoopResponses(UPUD upCentral, std::vector<UPUD> &readySnoopResps);
+  bool TryWriteToMemory(UPUD upCentral, bool isClean, bool isWriteLineUnique, const std::vector<UPUD> &readySnoopResps,
+                        int64_t nCycle);
+  bool TryReadFromMemory(UPUD upCentral, const std::vector<UPUD> &readySnoopResps, int64_t nCycle);
+  bool TryReturnResponseToMaster(UPUD upCentral, int initMaster, bool bIsShared, bool bPassDirty,
+                                 const std::vector<UPUD> &readySnoopResps, int64_t nCycle);
   bool ProcessCentralTransactions(int64_t nCycle);
 #endif
 };

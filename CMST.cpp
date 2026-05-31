@@ -5159,6 +5159,11 @@ EResultType CMST::Do_CR_fwd(int64_t nCycle) {
   //   return (ERESULT_TYPE_FAIL);
   // }
 
+  bool shouldPop = false;
+  int nLen = 4; // FIXME: The length of CD should be determined by the MASTER
+                // and encoded in CR response. Here we just set it as a fixed
+                // value for simulation.
+
   if (this->cpTx_CR->IsBusy() == ERESULT_TYPE_YES)
     return (ERESULT_TYPE_SUCCESS);
 
@@ -5191,9 +5196,15 @@ EResultType CMST::Do_CR_fwd(int64_t nCycle) {
 
   if ((cpAC->GetSnoop() == 0b1101) || (cpAC->GetSnoop() == 0b1100)) { // Make*. Do not need return data.
     rresponse = 0;
+    shouldPop = true;
   } else {
     rresponse = 0 + (this->passDirty << 2) + this->simDataTransfer; // FIXME: Response decode shoulds be determine by
                                                                     // the MASTER not a fixed value.
+    if (!this->simDataTransfer) {
+      shouldPop = true;
+    } else if (this->simCDlen == nLen) {
+      shouldPop = true;
+    }
   }
 
 #endif
@@ -5201,9 +5212,6 @@ EResultType CMST::Do_CR_fwd(int64_t nCycle) {
   // Debug
   // cpR->CheckPkt();
   string cPktName = cpAC->GetName();
-  int nLen = 4; // FIXME: The length of CD should be determined by the MASTER
-                // and encoded in CR response. Here we just set it as a fixed
-                // value for simulation.
   char cCRPktName[50];
 
   // Put Rx
@@ -5224,19 +5232,16 @@ EResultType CMST::Do_CR_fwd(int64_t nCycle) {
 #endif
   }
 
-  bool shouldPop = false;
-  if (!this->simDataTransfer) {
-    shouldPop = true;
-  } else if (this->simCDlen == nLen) {
-    shouldPop = true;
-  }
-
   if (shouldPop) {
     this->simCDlen = 0;
     UPUD upPop = this->cpFIFO_AC->Pop();
     if (upPop != NULL) {
       Delete_UD(upPop, EUD_TYPE_AC);
     }
+
+#ifndef MEMCOPY
+    this->simDataTransfer = (nCycle / 10000) & 0x1; // Flip the data transfer.
+#endif
   }
 
   return (ERESULT_TYPE_SUCCESS);
@@ -5665,13 +5670,6 @@ int CMST::GetMO_AW() {
 
 // Update state
 EResultType CMST::UpdateState(int64_t nCycle) {
-
-#ifdef CCI_TESTING
-  // if (((nCycle % 10000) == 0) && (this->simCDlen == 0)) { // For testing only
-  //   this->simDataTransfer = !this->simDataTransfer;       // Flip the data transfer.
-  // }
-  this->simDataTransfer = 0;
-#endif
 
   this->cpTx_AR->UpdateState();
   this->cpTx_AW->UpdateState();
