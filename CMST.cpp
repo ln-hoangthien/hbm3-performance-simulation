@@ -4357,6 +4357,8 @@ EResultType CMST::LoadTransfer_AR(int64_t nCycle, string cAddrMap, string cOpera
   else
     assert(0);
 
+  assert((AXI_BURST_LENGTH - 1) == nLen);
+
   // Set pkt
   //			   ID,	Addr,   Len
   cpAR_new->SetPkt(ARID, nAddr, nLen);
@@ -4477,6 +4479,8 @@ EResultType CMST::LoadTransfer_AW(int64_t nCycle, string cAddrMap,
     nLen = 0;
   else
     assert(0);
+
+  assert((AXI_BURST_LENGTH - 1) == nLen);
 
   //			   ID,	Addr,  Len
   cpAW_new->SetPkt(AWID, nAddr, nLen);

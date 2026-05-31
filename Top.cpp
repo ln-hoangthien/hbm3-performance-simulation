@@ -30,6 +30,7 @@
 
 int SNOOP_MASK = 2;                          // Default value
 int nCACHELINE = 1;                          // Default value
+int SNOOP_LATENCY = 10;                      // Default value
 int TILEH = MAX_TRANS_SIZE / BYTE_PER_PIXEL; // Default: 64 bytes / 4 bytes per pixel
 bool MEMCOPY = false;
 

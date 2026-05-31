@@ -124,6 +124,7 @@
 // Max transaction size (bytes)
 //-------------------------------------------------------------
 #define MAX_TRANS_SIZE (MAX_BURST_LENGTH * BURST_SIZE) // 64 bytes when MAX_BURST_LENGTH 4 and BURST_SIZE 16 bytes
+#define AXI_BURST_LENGTH (MAX_TRANS_SIZE / TILEH)      // Temporary parameterize BURST_LENGTH.
 
 //-------------------------------------------------------------
 // Use W channel
@@ -261,7 +262,7 @@
 //-------------------------------------------------------------
 // #define MAX_BUS_NUM_PORT		6
 
-#define BUS_LATENCY 50
+#define BUS_LATENCY 5
 
 //-------------------------------------------------------------
 // (Bus) Arbiter
@@ -274,8 +275,8 @@
 //-------------------------------------------------------------
 #define CCI_ON
 #define CCI_TESTING
-#define SNOOP_LATENCY 10
 
+extern int SNOOP_LATENCY;
 extern int SNOOP_MASK;
 extern int TILEH;
 extern int nCACHELINE;

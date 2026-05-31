@@ -1806,7 +1806,7 @@ bool CBUS::TryReadFromMemory(UPUD upCentral, const std::vector<UPUD> &readySnoop
 
   // Clone transaction packet and submit to memory AR interface.
   CPAxPkt cpAR = Copy_CAxPkt(cpAxTop);
-  cpAR->SetLen(3); // FIXME: set default length for read burst.
+  cpAR->SetLen(AXI_BURST_LENGTH - 1);
   this->cpTx_AR->PutAx(cpAR);
 
   // Record this transaction as an active outstanding memory read.
