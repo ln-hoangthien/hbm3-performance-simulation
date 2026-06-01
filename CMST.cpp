@@ -5243,9 +5243,8 @@ EResultType CMST::Do_CR_fwd(int64_t nCycle) {
       Delete_UD(upPop, EUD_TYPE_AC);
     }
 
-#ifndef MEMCOPY
-    this->simDataTransfer = (nCycle / 10000) & 0x1; // Flip the data transfer.
-#endif
+    if (!MEMCOPY)                                     // Ajust CacheHit rate
+      this->simDataTransfer = (nCycle / 10000) & 0x1; // Flip the data transfer.
   }
 
   return (ERESULT_TYPE_SUCCESS);
